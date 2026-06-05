@@ -1,0 +1,879 @@
+openapi: "3.0.3"
+info:
+  title: "ChatServerGolang - Messenger API"
+  description: |
+    Полноценный сервер мессенджера на Go.
+    - Регистрация и авторизация (JWT)
+    - Личные и групповые чаты
+    - Отправка и редактирование сообщений
+    - Голосовые/видеозвонки (WebRTC signaling)
+    - Push-уведомления (FCM)
+    - WebSocket для real-time обновлений
+  version: "1.0.0"
+  contact:
+    name: "API Support"
+
+servers:
+  - url: "http://localhost:8080"
+    description: "Локальный сервер"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+            user:
+              $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+        bio:
+          type: string
+        online:
+          type: boolean
+        lastSeen:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+        bio:
+          type: string
+        online:
+          type: boolean
+        lastSeen:
+          type: string
+          format: date-time
+
+    Chat:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        avatarUrl:
+          type: string
+        type:
+          type: string
+          enum: [private, group]
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ChatResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        avatarUrl:
+          type: string
+        type:
+          type: string
+          enum: [private, group]
+        createdBy:
+          type: string
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserResponse"
+        lastMessage:
+          $ref: "#/components/schemas/MessageResponse"
+        unreadCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    MessageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        chatId:
+          type: string
+        sender:
+          $ref: "#/components/schemas/UserResponse"
+        content:
+          type: string
+        type:
+          type: string
+          enum: [text, image, file, system]
+        replyTo:
+          $ref: "#/components/schemas/MessageResponse"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        edited:
+          type: boolean
+        deleted:
+          type: boolean
+
+    Call:
+      type: object
+      properties:
+        id:
+          type: string
+        chatId:
+          type: string
+        callerId:
+          type: string
+        calleeId:
+          type: string
+        status:
+          type: string
+          enum: [initiated, ongoing, ended, missed, rejected]
+        startedAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: string
+          format: date-time
+
+    RegisterRequest:
+      type: object
+      required: [username, email, password, displayName]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 6
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 64
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    SendMessageRequest:
+      type: object
+      required: [content, type]
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+          enum: [text, image, file]
+        replyToId:
+          type: string
+
+    CreateChatRequest:
+      type: object
+      required: [type, participantIds]
+      properties:
+        name:
+          type: string
+          maxLength: 64
+        type:
+          type: string
+          enum: [private, group]
+        participantIds:
+          type: array
+          items:
+            type: string
+          minItems: 1
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+          maxLength: 64
+        bio:
+          type: string
+          maxLength: 256
+        avatarUrl:
+          type: string
+
+    UpdatePushTokenRequest:
+      type: object
+      required: [token, provider]
+      properties:
+        token:
+          type: string
+        provider:
+          type: string
+          enum: [fcm, apns]
+
+    WebSocketEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - message:new
+            - message:edited
+            - message:deleted
+            - message:read
+            - user:typing
+            - user:stop_typing
+            - user:online
+            - user:offline
+            - chat:created
+            - chat:updated
+            - chat:deleted
+            - call:offer
+            - call:answer
+            - call:ice
+            - call:end
+            - call:missed
+            - call:reject
+            - call:accept
+        payload:
+          type: object
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: "Регистрация нового пользователя"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: "Успешная регистрация"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: "Ошибка валидации"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: "Вход в систему"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: "Успешный вход"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: "Неверные учетные данные"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/users/profile:
+    get:
+      tags: [Users]
+      summary: "Получить профиль текущего пользователя"
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: "Профиль пользователя"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/UserResponse"
+        "401":
+          description: "Не авторизован"
+    put:
+      tags: [Users]
+      summary: "Обновить профиль"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: "Профиль обновлен"
+
+  /api/users/push-token:
+    put:
+      tags: [Users]
+      summary: "Обновить push-токен для уведомлений"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePushTokenRequest"
+      responses:
+        "200":
+          description: "Push-токен обновлен"
+
+  /api/users/search:
+    get:
+      tags: [Users]
+      summary: "Поиск пользователей"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Поисковый запрос (username или displayName)"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: "Список пользователей"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserResponse"
+
+  /api/users/{id}:
+    get:
+      tags: [Users]
+      summary: "Получить пользователя по ID"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Пользователь найден"
+        "404":
+          description: "Пользователь не найден"
+
+  /api/users/username/{username}:
+    get:
+      tags: [Users]
+      summary: "Получить пользователя по username"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Пользователь найден"
+        "404":
+          description: "Пользователь не найден"
+
+  /api/chats:
+    get:
+      tags: [Chats]
+      summary: "Список чатов пользователя"
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: "Список чатов"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChatResponse"
+    post:
+      tags: [Chats]
+      summary: "Создать новый чат"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChatRequest"
+      responses:
+        "201":
+          description: "Чат создан"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/ChatResponse"
+
+  /api/chats/{id}:
+    get:
+      tags: [Chats]
+      summary: "Получить информацию о чате"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Информация о чате"
+        "404":
+          description: "Чат не найден"
+    delete:
+      tags: [Chats]
+      summary: "Удалить чат (только создатель)"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Чат удален"
+
+  /api/chats/{id}/participants:
+    post:
+      tags: [Chats]
+      summary: "Добавить участника в групповой чат"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+      responses:
+        "200":
+          description: "Участник добавлен"
+
+  /api/chats/{id}/participants/{userId}:
+    delete:
+      tags: [Chats]
+      summary: "Удалить участника из чата"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Участник удален"
+
+  /api/chats/{id}/read:
+    post:
+      tags: [Chats]
+      summary: "Отметить чат как прочитанный"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Чат отмечен как прочитанный"
+
+  /api/chats/{id}/messages:
+    get:
+      tags: [Messages]
+      summary: "Получить сообщения чата"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: "Сообщения чата"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MessageResponse"
+    post:
+      tags: [Messages]
+      summary: "Отправить сообщение"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "201":
+          description: "Сообщение отправлено"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/MessageResponse"
+
+  /api/messages/{id}:
+    put:
+      tags: [Messages]
+      summary: "Редактировать сообщение"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+      responses:
+        "200":
+          description: "Сообщение отредактировано"
+    delete:
+      tags: [Messages]
+      summary: "Удалить сообщение"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Сообщение удалено"
+
+  /api/calls/initiate:
+    post:
+      tags: [Calls]
+      summary: "Инициировать звонок"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [chatId]
+              properties:
+                chatId:
+                  type: string
+      responses:
+        "201":
+          description: "Звонок инициирован"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/Call"
+
+  /api/calls/{id}/respond:
+    post:
+      tags: [Calls]
+      summary: "Ответить на звонок (принять/отклонить)"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [accept, reject]
+      responses:
+        "200":
+          description: "Ответ на звонок отправлен"
+
+  /api/calls/{id}/end:
+    post:
+      tags: [Calls]
+      summary: "Завершить звонок"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Звонок завершен"
+
+  /api/calls/{id}:
+    get:
+      tags: [Calls]
+      summary: "Получить информацию о звонке"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Информация о звонке"
+
+  /api/chats/{chatId}/calls:
+    get:
+      tags: [Calls]
+      summary: "История звонков в чате"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "История звонков"
+
+  /ws:
+    get:
+      tags: [WebSocket]
+      summary: "WebSocket подключение для real-time обновлений"
+      description: |
+        Подключитесь к WebSocket с JWT токеном в query параметре `token`.
+        После подключения сервер будет отправлять события в реальном времени.
+
+        **Поддерживаемые события (type):**
+        - `message:new` - новое сообщение
+        - `message:edited` - сообщение изменено
+        - `message:deleted` - сообщение удалено
+        - `message:read` - сообщение прочитано
+        - `user:typing` - пользователь печатает
+        - `user:stop_typing` - пользователь перестал печатать
+        - `user:online` - пользователь онлайн
+        - `user:offline` - пользователь офлайн
+        - `chat:created` - создан новый чат
+        - `chat:updated` - чат обновлен
+        - `chat:deleted` - чат удален
+        - `call:offer` - WebRTC offer (входящий звонок)
+        - `call:answer` - WebRTC answer (ответ на звонок)
+        - `call:ice` - ICE кандидат
+        - `call:end` - звонок завершен
+        - `call:missed` - пропущенный звонок
+        - `call:reject` - звонок отклонен
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "JWT токен авторизации"
+      responses:
+        "101":
+          description: "WebSocket протокол переключен"
+
+  /health:
+    get:
+      tags: [System]
+      summary: "Проверка здоровья сервера"
+      responses:
+        "200":
+          description: "Сервер работает"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"

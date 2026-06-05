@@ -1,0 +1,107 @@
+package repository
+
+import (
+	"database/sql"
+	"time"
+
+	"ChatServerGolang/internal/domain"
+)
+
+type CallRepository struct {
+	db *sql.DB
+}
+
+func NewCallRepository(db *sql.DB) *CallRepository {
+	return &CallRepository{db: db}
+}
+
+func (r *CallRepository) Create(call *domain.Call) error {
+	var endedAt *string
+	if call.EndedAt != nil {
+		s := call.EndedAt.Format(time.RFC3339)
+		endedAt = &s
+	}
+	_, err := r.db.Exec(
+		`INSERT INTO calls (id, chat_id, caller_id, callee_id, status, started_at, ended_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		call.ID, call.ChatID, call.CallerID, call.CalleeID, call.Status,
+		call.StartedAt.Format(time.RFC3339), endedAt,
+	)
+	return err
+}
+
+func (r *CallRepository) FindByID(id string) (*domain.Call, error) {
+	row := r.db.QueryRow(
+		`SELECT id, chat_id, caller_id, callee_id, status, started_at, ended_at
+		FROM calls WHERE id = ?`, id,
+	)
+	return scanCall(row)
+}
+
+func (r *CallRepository) FindActiveByUser(userID string) (*domain.Call, error) {
+	row := r.db.QueryRow(
+		`SELECT id, chat_id, caller_id, callee_id, status, started_at, ended_at
+		FROM calls WHERE (caller_id = ? OR callee_id = ?) AND status IN ('initiated', 'ongoing')
+		ORDER BY started_at DESC LIMIT 1`,
+		userID, userID,
+	)
+	return scanCall(row)
+}
+
+func (r *CallRepository) FindByChatAndUser(chatID, userID string) ([]*domain.Call, error) {
+	rows, err := r.db.Query(
+		`SELECT id, chat_id, caller_id, callee_id, status, started_at, ended_at
+		FROM calls WHERE chat_id = ? AND (caller_id = ? OR callee_id = ?)
+		ORDER BY started_at DESC LIMIT 50`,
+		chatID, userID, userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	calls := make([]*domain.Call, 0)
+	for rows.Next() {
+		c, err := scanCall(rows)
+		if err != nil {
+			return nil, err
+		}
+		calls = append(calls, c)
+	}
+	return calls, nil
+}
+
+func (r *CallRepository) UpdateStatus(id string, status domain.CallStatus) error {
+	var endedAt *string
+	if status == domain.CallEnded || status == domain.CallMissed || status == domain.CallRejected {
+		s := time.Now().Format(time.RFC3339)
+		endedAt = &s
+	}
+	_, err := r.db.Exec(
+		`UPDATE calls SET status=?, ended_at=? WHERE id=?`,
+		status, endedAt, id,
+	)
+	return err
+}
+
+type callScanner interface {
+	Scan(dest ...interface{}) error
+}
+
+func scanCall(row callScanner) (*domain.Call, error) {
+	var (
+		c        domain.Call
+		startedAt string
+		endedAt  sql.NullString
+	)
+	err := row.Scan(&c.ID, &c.ChatID, &c.CallerID, &c.CalleeID, &c.Status, &startedAt, &endedAt)
+	if err != nil {
+		return nil, err
+	}
+	c.StartedAt, _ = time.Parse(time.RFC3339, startedAt)
+	if endedAt.Valid {
+		t, _ := time.Parse(time.RFC3339, endedAt.String)
+		c.EndedAt = &t
+	}
+	return &c, nil
+}

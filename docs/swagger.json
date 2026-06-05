@@ -1,0 +1,641 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ChatServerGolang - Messenger API",
+    "description": "Полноценный сервер мессенджера на Go.\n- Регистрация и авторизация (JWT)\n- Личные и групповые чаты\n- Отправка и редактирование сообщений\n- Голосовые/видеозвонки (WebRTC signaling)\n- Push-уведомления (FCM)\n- WebSocket для real-time обновлений",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "Локальный сервер" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["username", "email", "password", "displayName"],
+        "properties": {
+          "username": { "type": "string", "minLength": 3, "maxLength": 32 },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "format": "password", "minLength": 6 },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 64 }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "format": "password" }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "token": { "type": "string" },
+              "user": { "$ref": "#/components/schemas/User" }
+            }
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "email": { "type": "string" },
+          "displayName": { "type": "string" },
+          "avatarUrl": { "type": "string" },
+          "bio": { "type": "string" },
+          "status": { "type": "string", "description": "Статус пользователя (Available, Busy, At work, ...)" },
+          "online": { "type": "boolean" },
+          "lastSeen": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "displayName": { "type": "string" },
+          "avatarUrl": { "type": "string" },
+          "bio": { "type": "string" },
+          "status": { "type": "string", "description": "Статус пользователя" },
+          "online": { "type": "boolean" },
+          "lastSeen": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ChatResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "avatarUrl": { "type": "string" },
+          "type": { "type": "string", "enum": ["private", "group"] },
+          "createdBy": { "type": "string" },
+          "participants": { "type": "array", "items": { "$ref": "#/components/schemas/UserResponse" } },
+          "lastMessage": { "$ref": "#/components/schemas/MessageResponse" },
+          "unreadCount": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateChatRequest": {
+        "type": "object",
+        "required": ["type", "participantIds"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 64 },
+          "type": { "type": "string", "enum": ["private", "group"] },
+          "participantIds": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+        }
+      },
+      "MessageResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "chatId": { "type": "string" },
+          "sender": { "$ref": "#/components/schemas/UserResponse" },
+          "content": { "type": "string" },
+          "type": { "type": "string", "enum": ["text", "image", "file", "system"] },
+          "replyTo": { "$ref": "#/components/schemas/MessageResponse" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "edited": { "type": "boolean" },
+          "deleted": { "type": "boolean" }
+        }
+      },
+      "SendMessageRequest": {
+        "type": "object",
+        "required": ["content", "type"],
+        "properties": {
+          "content": { "type": "string" },
+          "type": { "type": "string", "enum": ["text", "image", "file"] },
+          "replyToId": { "type": "string" }
+        }
+      },
+      "Call": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "chatId": { "type": "string" },
+          "callerId": { "type": "string" },
+          "calleeId": { "type": "string" },
+          "status": { "type": "string", "enum": ["initiated", "ongoing", "ended", "missed", "rejected"] },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "endedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "error": { "type": "string" }
+        }
+      }
+    }
+  },
+  "security": [{ "BearerAuth": [] }],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Регистрация нового пользователя",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } }
+          }
+        },
+        "responses": {
+          "201": { "description": "Успешная регистрация", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "400": { "description": "Ошибка валидации", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Вход в систему",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } }
+          }
+        },
+        "responses": {
+          "200": { "description": "Успешный вход", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "401": { "description": "Неверные данные", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/users/profile": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Профиль текущего пользователя",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Профиль пользователя" },
+          "401": { "description": "Не авторизован" }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Обновить профиль",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": { "type": "string", "maxLength": 64 },
+                  "bio": { "type": "string", "maxLength": 256 },
+                  "avatarUrl": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Профиль обновлен" } }
+      }
+    },
+    "/api/users/push-token": {
+      "put": {
+        "tags": ["Users"],
+        "summary": "Обновить push-токен",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["token", "provider"],
+                "properties": {
+                  "token": { "type": "string" },
+                  "provider": { "type": "string", "enum": ["fcm", "apns"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Push-токен обновлен" } }
+      }
+    },
+    "/api/users/push-test": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Отправить тестовое push-уведомление",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "body"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "body": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Тестовый push отправлен" } }
+      }
+    },
+    "/api/users/status": {
+      "put": {
+        "tags": ["Users"],
+        "summary": "Обновить статус (как в WhatsApp)",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "example": "Available", "description": "Новый статус (Available, Busy, At work, Sleeping, ...)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Статус обновлен" } }
+      }
+    },
+    "/api/users/search": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Поиск пользователей",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": { "description": "Список пользователей" }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Пользователь по ID",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Пользователь найден" },
+          "404": { "description": "Не найден" }
+        }
+      }
+    },
+    "/api/chats": {
+      "get": {
+        "tags": ["Chats"],
+        "summary": "Список чатов",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "description": "Список чатов" } }
+      },
+      "post": {
+        "tags": ["Chats"],
+        "summary": "Создать чат",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateChatRequest" } }
+          }
+        },
+        "responses": { "201": { "description": "Чат создан" } }
+      }
+    },
+    "/api/chats/{id}": {
+      "get": {
+        "tags": ["Chats"],
+        "summary": "Детали чата",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Информация о чате" },
+          "404": { "description": "Чат не найден" }
+        }
+      },
+      "put": {
+        "tags": ["Chats"],
+        "summary": "Обновить группу (имя, описание, аватар)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "maxLength": 64 },
+                  "description": { "type": "string", "maxLength": 256 },
+                  "avatarUrl": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Группа обновлена" } }
+      },
+      "delete": {
+        "tags": ["Chats"],
+        "summary": "Удалить чат",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Чат удален" } }
+      }
+    },
+    "/api/chats/{id}/participants": {
+      "post": {
+        "tags": ["Chats"],
+        "summary": "Добавить участника",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId"],
+                "properties": { "userId": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Участник добавлен" } }
+      }
+    },
+    "/api/chats/{id}/participants/{userId}": {
+      "delete": {
+        "tags": ["Chats"],
+        "summary": "Удалить участника",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Участник удален" } }
+      }
+    },
+    "/api/chats/{id}/participants/{userId}/role": {
+      "put": {
+        "tags": ["Chats"],
+        "summary": "Назначить роль (admin/member)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["role"],
+                "properties": {
+                  "role": { "type": "string", "enum": ["admin", "member"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Роль обновлена" } }
+      }
+    },
+    "/api/chats/{id}/leave": {
+      "post": {
+        "tags": ["Chats"],
+        "summary": "Покинуть групповой чат",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Вы вышли из чата" } }
+      }
+    },
+    "/api/chats/{id}/read": {
+      "post": {
+        "tags": ["Chats"],
+        "summary": "Отметить прочитанным",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Помечено" } }
+      }
+    },
+    "/api/chats/{id}/messages": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "Сообщения чата",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": { "200": { "description": "Сообщения" } }
+      },
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Отправить сообщение",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/SendMessageRequest" } }
+          }
+        },
+        "responses": { "201": { "description": "Сообщение отправлено" } }
+      }
+    },
+    "/api/messages/{id}": {
+      "put": {
+        "tags": ["Messages"],
+        "summary": "Редактировать сообщение",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": { "content": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Сообщение изменено" } }
+      },
+      "delete": {
+        "tags": ["Messages"],
+        "summary": "Удалить сообщение",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Сообщение удалено" } }
+      }
+    },
+    "/api/calls/initiate": {
+      "post": {
+        "tags": ["Calls"],
+        "summary": "Начать звонок",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["chatId"],
+                "properties": { "chatId": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Звонок инициирован" } }
+      }
+    },
+    "/api/calls/{id}/respond": {
+      "post": {
+        "tags": ["Calls"],
+        "summary": "Ответить на звонок",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                  "action": { "type": "string", "enum": ["accept", "reject"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Ответ отправлен" } }
+      }
+    },
+    "/api/calls/{id}/end": {
+      "post": {
+        "tags": ["Calls"],
+        "summary": "Завершить звонок",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Звонок завершен" } }
+      }
+    },
+    "/api/calls/{id}": {
+      "get": {
+        "tags": ["Calls"],
+        "summary": "Информация о звонке",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Информация" } }
+      }
+    },
+    "/api/calls/history/{chatId}": {
+      "get": {
+        "tags": ["Calls"],
+        "summary": "История звонков в чате",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "chatId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "История звонков" } }
+      }
+    },
+    "/api/users/username/{username}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Пользователь по username",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "username", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Пользователь найден" }, "404": { "description": "Не найден" } }
+      }
+    },
+    "/ws": {
+      "get": {
+        "tags": ["WebSocket"],
+        "summary": "WebSocket подключение для real-time",
+        "description": "WebSocket подключение с JWT токеном.\n\nПодключение: ws://localhost:8080/ws?token=JWT_TOKEN\n\nСервер отмечает пользователя онлайн и рассылает событие user:online. При отключении - user:offline.\n\nФормат сообщения: JSON с полями type (строка) и payload (объект).\n\nСобытия сервера:\n- message:new - новое сообщение\n- message:edited - сообщение изменено\n- message:deleted - сообщение удалено (payload: messageId, chatId)\n- message:read - сообщение прочитано (payload: chatId, userId)\n- user:typing - пользователь печатает (payload: chatId, userId)\n- user:stop_typing - перестал печатать (payload: chatId, userId)\n- user:online - пользователь онлайн (payload: userId, online)\n- user:offline - пользователь офлайн (payload: userId, online)\n- chat:created - создан чат\n- chat:updated - чат обновлён\n- chat:deleted - чат удалён (payload: chatId)\n- call:offer - входящий звонок (payload: callId, chatId, sdp, callerId)\n- call:answer - ответ на звонок (payload: callId, sdp)\n- call:ice - ICE кандидат (payload: callId, candidate, sdpMLineIdx)\n- call:end - звонок завершён (payload: callId)\n- call:missed - пропущенный звонок (payload: callId, callerId)\n- call:reject - звонок отклонён (payload: callId)\n- call:accept - звонок принят (payload: callId, userId)\n\nКоманды клиента:\n- user:typing - отправить статус печатает (payload: chatId)\n- user:stop_typing - отправить статус не печатает (payload: chatId)\n\nПример JS:\nconst ws = new WebSocket('ws://localhost:8080/ws?token=' + jwt);\nws.onmessage = e => { const m = JSON.parse(e.data); };\nws.send(JSON.stringify({ type: 'user:typing', payload: { chatId: '...' } }));",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "JWT токен авторизации"
+          }
+        ],
+        "responses": {
+          "101": { "description": "WebSocket protocol upgrade (Switching Protocols)" },
+          "400": { "description": "Missing token parameter" },
+          "401": { "description": "Invalid or expired JWT token" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Healthcheck",
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      }
+    }
+  }
+}
