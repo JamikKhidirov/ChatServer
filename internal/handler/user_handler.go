@@ -49,6 +49,17 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	response.JSON(c, 200, profile)
 }
 
+func (h *UserHandler) DeleteAccount(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
+	if err := h.userService.DeleteAccount(userID.(string)); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "account deleted"})
+}
+
 func (h *UserHandler) SearchUsers(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -141,4 +152,82 @@ func (h *UserHandler) UpdatePushToken(c *gin.Context) {
 	}
 
 	response.JSON(c, 200, gin.H{"message": "push token updated"})
+}
+
+// Block
+func (h *UserHandler) BlockUser(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
+	var req domain.BlockUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.userService.BlockUser(userID.(string), req.BlockedID); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "user blocked"})
+}
+
+func (h *UserHandler) UnblockUser(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	blockedID := c.Param("userId")
+
+	if err := h.userService.UnblockUser(userID.(string), blockedID); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "user unblocked"})
+}
+
+func (h *UserHandler) GetBlockedUsers(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
+	users, err := h.userService.GetBlockedUsers(userID.(string))
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, users)
+}
+
+// Notification settings
+func (h *UserHandler) SetNotificationMuted(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	chatID := c.Param("id")
+
+	var req domain.UpdateNotificationSettingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.userService.SetNotificationMuted(userID.(string), chatID, req.Muted); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	action := "unmuted"
+	if req.Muted {
+		action = "muted"
+	}
+	response.JSON(c, 200, gin.H{"message": "notifications " + action})
+}
+
+func (h *UserHandler) IsNotificationMuted(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	chatID := c.Param("id")
+
+	muted, err := h.userService.IsNotificationMuted(userID.(string), chatID)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"muted": muted})
 }

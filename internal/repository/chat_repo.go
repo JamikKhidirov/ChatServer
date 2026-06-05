@@ -166,6 +166,27 @@ func (r *ChatRepository) GetUnreadCount(chatID, userID string) (int, error) {
 	return count, err
 }
 
+// Notification settings
+func (r *ChatRepository) SetNotificationMuted(userID, chatID string, muted bool) error {
+	_, err := r.db.Exec(
+		`INSERT OR REPLACE INTO notification_settings (user_id, chat_id, muted) VALUES (?, ?, ?)`,
+		userID, chatID, boolToInt(muted),
+	)
+	return err
+}
+
+func (r *ChatRepository) IsNotificationMuted(userID, chatID string) (bool, error) {
+	var mutedInt int
+	err := r.db.QueryRow(
+		`SELECT COALESCE(muted, 0) FROM notification_settings WHERE user_id = ? AND chat_id = ?`,
+		userID, chatID,
+	).Scan(&mutedInt)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	return mutedInt == 1, err
+}
+
 func scanChat(row scanner) (*domain.Chat, error) {
 	var (
 		c         domain.Chat

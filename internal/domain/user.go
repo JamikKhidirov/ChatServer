@@ -15,6 +15,7 @@ type User struct {
 	PushProvider string    `json:"-"`
 	Online       bool      `json:"online"`
 	LastSeen     time.Time `json:"lastSeen"`
+	Deleted      bool      `json:"-"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
@@ -36,6 +37,10 @@ type AuthResponse struct {
 	User  *User  `json:"user"`
 }
 
+type RefreshTokenResponse struct {
+	Token string `json:"token"`
+}
+
 type UpdateProfileRequest struct {
 	DisplayName string `json:"displayName" binding:"min=1,max=64"`
 	Bio         string `json:"bio" binding:"max=256"`
@@ -51,6 +56,11 @@ type UpdateStatusRequest struct {
 	Status string `json:"status" binding:"max=100"`
 }
 
+type ChangePasswordRequest struct {
+	OldPassword string `json:"oldPassword" binding:"required"`
+	NewPassword string `json:"newPassword" binding:"required,min=6"`
+}
+
 type UserResponse struct {
 	ID          string    `json:"id"`
 	Username    string    `json:"username"`
@@ -60,6 +70,26 @@ type UserResponse struct {
 	Status      string    `json:"status"`
 	Online      bool      `json:"online"`
 	LastSeen    time.Time `json:"lastSeen"`
+}
+
+type Block struct {
+	UserID    string    `json:"userId"`
+	BlockedID string    `json:"blockedId"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type BlockUserRequest struct {
+	BlockedID string `json:"blockedId" binding:"required"`
+}
+
+type NotificationSetting struct {
+	UserID string `json:"userId"`
+	ChatID string `json:"chatId"`
+	Muted  bool   `json:"muted"`
+}
+
+type UpdateNotificationSettingRequest struct {
+	Muted bool `json:"muted"`
 }
 
 func (u *User) ToResponse() *UserResponse {

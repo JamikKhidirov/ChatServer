@@ -13,10 +13,11 @@ import (
 
 type UserService struct {
 	userRepo *repository.UserRepository
+	chatRepo *repository.ChatRepository
 }
 
-func NewUserService(userRepo *repository.UserRepository) *UserService {
-	return &UserService{userRepo: userRepo}
+func NewUserService(userRepo *repository.UserRepository, chatRepo *repository.ChatRepository) *UserService {
+	return &UserService{userRepo: userRepo, chatRepo: chatRepo}
 }
 
 func (s *UserService) GetProfile(userID string) (*domain.UserResponse, error) {
@@ -148,4 +149,65 @@ func (s *UserService) CreateUser(username, email, password, displayName string) 
 		return nil, err
 	}
 	return user, nil
+}
+
+// Delete account
+func (s *UserService) DeleteAccount(userID string) error {
+	_, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return errors.New("user not found")
+	}
+	return s.userRepo.SoftDelete(userID)
+}
+
+// Block/unblock
+func (s *UserService) BlockUser(userID, blockedID string) error {
+	if userID == blockedID {
+		return errors.New("cannot block yourself")
+	}
+	_, err := s.userRepo.FindByID(blockedID)
+	if err != nil {
+		return errors.New("user not found")
+	}
+	return s.userRepo.BlockUser(userID, blockedID)
+}
+
+func (s *UserService) UnblockUser(userID, blockedID string) error {
+	return s.userRepo.UnblockUser(userID, blockedID)
+}
+
+func (s *UserService) GetBlockedUsers(userID string) ([]*domain.UserResponse, error) {
+	users, err := s.userRepo.GetBlockedUsers(userID)
+	if err != nil {
+		return nil, err
+	}
+	responses := make([]*domain.UserResponse, 0)
+	for _, u := range users {
+		responses = append(responses, u.ToResponse())
+	}
+	return responses, nil
+}
+
+func (s *UserService) IsBlocked(userID, blockedID string) (bool, error) {
+	blocked, err := s.userRepo.IsBlocked(blockedID, userID)
+	if err != nil {
+		return false, err
+	}
+	if blocked {
+		return true, nil
+	}
+	return s.userRepo.IsBlocked(userID, blockedID)
+}
+
+// Notification settings
+func (s *UserService) SetNotificationMuted(userID, chatID string, muted bool) error {
+	isParticipant, _ := s.chatRepo.IsParticipant(chatID, userID)
+	if !isParticipant {
+		return errors.New("access denied")
+	}
+	return s.chatRepo.SetNotificationMuted(userID, chatID, muted)
+}
+
+func (s *UserService) IsNotificationMuted(userID, chatID string) (bool, error) {
+	return s.chatRepo.IsNotificationMuted(userID, chatID)
 }

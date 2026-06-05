@@ -51,11 +51,28 @@ func (h *AuthHandler) Login(c *gin.Context) {
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	userID, _ := c.Get("userID")
 
-	resp, err := h.authService.Register(&domain.RegisterRequest{})
+	token, err := h.authService.RefreshToken(userID.(string))
 	if err != nil {
-		_ = userID
-		response.InternalError(c, "token refresh not implemented via this endpoint")
+		response.Unauthorized(c, err.Error())
 		return
 	}
-	_ = resp
+
+	response.JSON(c, 200, domain.RefreshTokenResponse{Token: token})
+}
+
+func (h *AuthHandler) ChangePassword(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
+	var req domain.ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.authService.ChangePassword(userID.(string), req.OldPassword, req.NewPassword); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "password changed"})
 }

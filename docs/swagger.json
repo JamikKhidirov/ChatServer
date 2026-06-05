@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "ChatServerGolang - Messenger API",
-    "description": "Полноценный сервер мессенджера на Go.\n- Регистрация и авторизация (JWT)\n- Личные и групповые чаты\n- Отправка и редактирование сообщений\n- Голосовые/видеозвонки (WebRTC signaling)\n- Push-уведомления (FCM)\n- WebSocket для real-time обновлений",
-    "version": "1.0.0"
+    "title": "ChatServerGolang — Messenger API",
+    "description": "Полноценный сервер мессенджера на Go.\n\n**Функции:**\n- Регистрация и авторизация (JWT с refresh)\n- Личные и групповые чаты\n- Отправка, редактирование, удаление, поиск сообщений\n- Ответы (reply) и пересылка (forward) сообщений\n- Реакции на сообщения (emoji)\n- Закреплённые сообщения (pin)\n- Статус прочтения (read receipts)\n- Загрузка файлов и изображений\n- Голосовые/видеозвонки (WebRTC signaling)\n- Push-уведомления (FCM)\n- WebSocket real-time (онлайн статус, печатание, события)\n- Статус пользователя (WhatsApp-like)\n- Блокировка пользователей\n- Настройки уведомлений на чат (mute)\n- Rate limiting\n- Смена пароля\n- Удаление аккаунта",
+    "version": "2.0.0"
   },
   "servers": [
     { "url": "http://localhost:8080", "description": "Локальный сервер" }
@@ -21,10 +21,10 @@
         "type": "object",
         "required": ["username", "email", "password", "displayName"],
         "properties": {
-          "username": { "type": "string", "minLength": 3, "maxLength": 32 },
-          "email": { "type": "string", "format": "email" },
-          "password": { "type": "string", "format": "password", "minLength": 6 },
-          "displayName": { "type": "string", "minLength": 1, "maxLength": 64 }
+          "username": { "type": "string", "minLength": 3, "maxLength": 32, "example": "john_doe" },
+          "email": { "type": "string", "format": "email", "example": "john@example.com" },
+          "password": { "type": "string", "format": "password", "minLength": 6, "example": "secret123" },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 64, "example": "John Doe" }
         }
       },
       "LoginRequest": {
@@ -72,7 +72,7 @@
           "displayName": { "type": "string" },
           "avatarUrl": { "type": "string" },
           "bio": { "type": "string" },
-          "status": { "type": "string", "description": "Статус пользователя" },
+          "status": { "type": "string" },
           "online": { "type": "boolean" },
           "lastSeen": { "type": "string", "format": "date-time" }
         }
@@ -82,6 +82,7 @@
         "properties": {
           "id": { "type": "string" },
           "name": { "type": "string" },
+          "description": { "type": "string" },
           "avatarUrl": { "type": "string" },
           "type": { "type": "string", "enum": ["private", "group"] },
           "createdBy": { "type": "string" },
@@ -95,7 +96,8 @@
         "type": "object",
         "required": ["type", "participantIds"],
         "properties": {
-          "name": { "type": "string", "maxLength": 64 },
+          "name": { "type": "string", "maxLength": 64, "description": "Название группового чата" },
+          "description": { "type": "string", "maxLength": 512 },
           "type": { "type": "string", "enum": ["private", "group"] },
           "participantIds": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
         }
@@ -109,6 +111,13 @@
           "content": { "type": "string" },
           "type": { "type": "string", "enum": ["text", "image", "file", "system"] },
           "replyTo": { "$ref": "#/components/schemas/MessageResponse" },
+          "forwardFrom": { "$ref": "#/components/schemas/UserResponse" },
+          "fileName": { "type": "string" },
+          "fileSize": { "type": "integer" },
+          "fileUrl": { "type": "string" },
+          "reactions": { "type": "array", "items": { "$ref": "#/components/schemas/Reaction" } },
+          "pinned": { "type": "boolean" },
+          "readBy": { "type": "array", "items": { "$ref": "#/components/schemas/UserResponse" } },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" },
           "edited": { "type": "boolean" },
@@ -119,9 +128,20 @@
         "type": "object",
         "required": ["content", "type"],
         "properties": {
-          "content": { "type": "string" },
+          "content": { "type": "string", "description": "Текст сообщения" },
           "type": { "type": "string", "enum": ["text", "image", "file"] },
-          "replyToId": { "type": "string" }
+          "replyToId": { "type": "string", "description": "ID сообщения для ответа" },
+          "forwardMsgId": { "type": "string", "description": "ID сообщения для пересылки" }
+        }
+      },
+      "Reaction": {
+        "type": "object",
+        "properties": {
+          "messageId": { "type": "string" },
+          "userId": { "type": "string" },
+          "emoji": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "user": { "$ref": "#/components/schemas/UserResponse" }
         }
       },
       "Call": {
@@ -151,15 +171,14 @@
       "post": {
         "tags": ["Auth"],
         "summary": "Регистрация нового пользователя",
+        "security": [],
         "requestBody": {
           "required": true,
-          "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } }
-          }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } } }
         },
         "responses": {
-          "201": { "description": "Успешная регистрация", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
-          "400": { "description": "Ошибка валидации", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+          "201": { "description": "Успешная регистрация" },
+          "400": { "description": "Ошибка валидации" }
         }
       }
     },
@@ -167,32 +186,56 @@
       "post": {
         "tags": ["Auth"],
         "summary": "Вход в систему",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Успешный вход" },
+          "401": { "description": "Неверные данные" }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Обновить JWT токен",
+        "description": "Создаёт новый JWT токен для текущего пользователя без повторного входа",
+        "responses": { "200": { "description": "Новый токен" } }
+      }
+    },
+    "/api/auth/change-password": {
+      "put": {
+        "tags": ["Auth"],
+        "summary": "Сменить пароль",
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } }
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["oldPassword", "newPassword"],
+                "properties": {
+                  "oldPassword": { "type": "string", "format": "password" },
+                  "newPassword": { "type": "string", "format": "password", "minLength": 6 }
+                }
+              }
+            }
           }
         },
-        "responses": {
-          "200": { "description": "Успешный вход", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
-          "401": { "description": "Неверные данные", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
-        }
+        "responses": { "200": { "description": "Пароль изменён" }, "400": { "description": "Ошибка" } }
       }
     },
     "/api/users/profile": {
       "get": {
         "tags": ["Users"],
         "summary": "Профиль текущего пользователя",
-        "security": [{ "BearerAuth": [] }],
-        "responses": {
-          "200": { "description": "Профиль пользователя" },
-          "401": { "description": "Не авторизован" }
-        }
+        "responses": { "200": { "description": "Профиль пользователя" } }
       },
       "put": {
         "tags": ["Users"],
         "summary": "Обновить профиль",
-        "security": [{ "BearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -208,14 +251,34 @@
             }
           }
         },
-        "responses": { "200": { "description": "Профиль обновлен" } }
+        "responses": { "200": { "description": "Профиль обновлён" } }
+      }
+    },
+    "/api/users/status": {
+      "put": {
+        "tags": ["Users"],
+        "summary": "Обновить статус (как в WhatsApp)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "example": "Available", "description": "Новый статус (Available, Busy, At work, Sleeping, ...)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Статус обновлён" } }
       }
     },
     "/api/users/push-token": {
       "put": {
         "tags": ["Users"],
         "summary": "Обновить push-токен",
-        "security": [{ "BearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -231,14 +294,13 @@
             }
           }
         },
-        "responses": { "200": { "description": "Push-токен обновлен" } }
+        "responses": { "200": { "description": "Push-токен обновлён" } }
       }
     },
     "/api/users/push-test": {
       "post": {
         "tags": ["Users"],
         "summary": "Отправить тестовое push-уведомление",
-        "security": [{ "BearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -257,73 +319,93 @@
         "responses": { "200": { "description": "Тестовый push отправлен" } }
       }
     },
-    "/api/users/status": {
-      "put": {
-        "tags": ["Users"],
-        "summary": "Обновить статус (как в WhatsApp)",
-        "security": [{ "BearerAuth": [] }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["status"],
-                "properties": {
-                  "status": { "type": "string", "example": "Available", "description": "Новый статус (Available, Busy, At work, Sleeping, ...)" }
-                }
-              }
-            }
-          }
-        },
-        "responses": { "200": { "description": "Статус обновлен" } }
-      }
-    },
     "/api/users/search": {
       "get": {
         "tags": ["Users"],
         "summary": "Поиск пользователей",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
-          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" }, "description": "Поисковый запрос" },
           { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 } },
           { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
         ],
-        "responses": {
-          "200": { "description": "Список пользователей" }
-        }
+        "responses": { "200": { "description": "Список пользователей" } }
       }
     },
     "/api/users/{id}": {
       "get": {
         "tags": ["Users"],
         "summary": "Пользователь по ID",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": {
-          "200": { "description": "Пользователь найден" },
-          "404": { "description": "Не найден" }
-        }
+        "responses": { "200": { "description": "Пользователь найден" }, "404": { "description": "Не найден" } }
+      }
+    },
+    "/api/users/username/{username}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Пользователь по username",
+        "parameters": [
+          { "name": "username", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Пользователь найден" }, "404": { "description": "Не найден" } }
+      }
+    },
+    "/api/users/block": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Заблокировать пользователя",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["blockedId"],
+                "properties": { "blockedId": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Пользователь заблокирован" } }
+      }
+    },
+    "/api/users/block/{userId}": {
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Разблокировать пользователя",
+        "parameters": [
+          { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Пользователь разблокирован" } }
+      }
+    },
+    "/api/users/blocked": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Список заблокированных пользователей",
+        "responses": { "200": { "description": "Список заблокированных" } }
+      }
+    },
+    "/api/users/account": {
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Удалить аккаунт (soft delete)",
+        "responses": { "200": { "description": "Аккаунт удалён" } }
       }
     },
     "/api/chats": {
       "get": {
         "tags": ["Chats"],
-        "summary": "Список чатов",
-        "security": [{ "BearerAuth": [] }],
+        "summary": "Список чатов текущего пользователя",
         "responses": { "200": { "description": "Список чатов" } }
       },
       "post": {
         "tags": ["Chats"],
-        "summary": "Создать чат",
-        "security": [{ "BearerAuth": [] }],
+        "summary": "Создать чат (личный или групповой)",
         "requestBody": {
           "required": true,
-          "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/CreateChatRequest" } }
-          }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateChatRequest" } } }
         },
         "responses": { "201": { "description": "Чат создан" } }
       }
@@ -332,19 +414,14 @@
       "get": {
         "tags": ["Chats"],
         "summary": "Детали чата",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": {
-          "200": { "description": "Информация о чате" },
-          "404": { "description": "Чат не найден" }
-        }
+        "responses": { "200": { "description": "Информация о чате" }, "404": { "description": "Чат не найден" } }
       },
       "put": {
         "tags": ["Chats"],
         "summary": "Обновить группу (имя, описание, аватар)",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -367,19 +444,17 @@
       },
       "delete": {
         "tags": ["Chats"],
-        "summary": "Удалить чат",
-        "security": [{ "BearerAuth": [] }],
+        "summary": "Удалить чат (только создатель)",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "Чат удален" } }
+        "responses": { "200": { "description": "Чат удалён" } }
       }
     },
     "/api/chats/{id}/participants": {
       "post": {
         "tags": ["Chats"],
-        "summary": "Добавить участника",
-        "security": [{ "BearerAuth": [] }],
+        "summary": "Добавить участника в группу",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -401,20 +476,18 @@
     "/api/chats/{id}/participants/{userId}": {
       "delete": {
         "tags": ["Chats"],
-        "summary": "Удалить участника",
-        "security": [{ "BearerAuth": [] }],
+        "summary": "Удалить участника из группы",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
           { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "Участник удален" } }
+        "responses": { "200": { "description": "Участник удалён" } }
       }
     },
     "/api/chats/{id}/participants/{userId}/role": {
       "put": {
         "tags": ["Chats"],
         "summary": "Назначить роль (admin/member)",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
           { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }
@@ -440,7 +513,6 @@
       "post": {
         "tags": ["Chats"],
         "summary": "Покинуть групповой чат",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -450,18 +522,47 @@
     "/api/chats/{id}/read": {
       "post": {
         "tags": ["Chats"],
-        "summary": "Отметить прочитанным",
-        "security": [{ "BearerAuth": [] }],
+        "summary": "Отметить чат прочитанным",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
         "responses": { "200": { "description": "Помечено" } }
       }
     },
+    "/api/chats/{id}/notifications": {
+      "put": {
+        "tags": ["Chats"],
+        "summary": "Включить/выключить уведомления (mute)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["muted"],
+                "properties": { "muted": { "type": "boolean", "description": "true — отключить уведомления" } }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Настройки обновлены" } }
+      },
+      "get": {
+        "tags": ["Chats"],
+        "summary": "Проверить статус уведомлений",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Статус уведомлений" } }
+      }
+    },
     "/api/chats/{id}/messages": {
       "get": {
         "tags": ["Messages"],
-        "summary": "Сообщения чата",
+        "summary": "Получить сообщения чата",
         "security": [{ "BearerAuth": [] }],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
@@ -473,24 +574,87 @@
       "post": {
         "tags": ["Messages"],
         "summary": "Отправить сообщение",
-        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SendMessageRequest" } } }
+        },
+        "responses": { "201": { "description": "Сообщение отправлено" } }
+      }
+    },
+    "/api/chats/{id}/messages/search": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "Поиск по сообщениям в чате",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" }, "description": "Поисковый запрос" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": { "200": { "description": "Результаты поиска" } }
+      }
+    },
+    "/api/chats/{id}/messages/file": {
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Загрузить файл/изображение",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/SendMessageRequest" } }
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" },
+                  "replyToId": { "type": "string", "description": "ID сообщения для ответа" }
+                }
+              }
+            }
           }
         },
-        "responses": { "201": { "description": "Сообщение отправлено" } }
+        "responses": { "201": { "description": "Файл загружен" } }
+      }
+    },
+    "/api/chats/{id}/messages/{msgId}/resend": {
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Переслать сообщение (resend)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "msgId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "201": { "description": "Сообщение переслано" } }
+      }
+    },
+    "/api/chats/{id}/pinned": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "Закреплённые сообщения чата",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Список закреплённых сообщений" } }
       }
     },
     "/api/messages/{id}": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "Получить сообщение по ID",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Сообщение" }, "404": { "description": "Не найдено" } }
+      },
       "put": {
         "tags": ["Messages"],
         "summary": "Редактировать сообщение",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -510,19 +674,80 @@
       },
       "delete": {
         "tags": ["Messages"],
-        "summary": "Удалить сообщение",
-        "security": [{ "BearerAuth": [] }],
+        "summary": "Удалить сообщение (soft delete)",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
         "responses": { "200": { "description": "Сообщение удалено" } }
       }
     },
+    "/api/messages/{id}/reactions": {
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Добавить реакцию (emoji) к сообщению",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["emoji"],
+                "properties": { "emoji": { "type": "string", "example": "👍" } }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Реакция добавлена" } }
+      },
+      "delete": {
+        "tags": ["Messages"],
+        "summary": "Удалить реакцию с сообщения",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "emoji", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Реакция удалена" } }
+      }
+    },
+    "/api/messages/{id}/pin": {
+      "put": {
+        "tags": ["Messages"],
+        "summary": "Закрепить/открепить сообщение",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["pin"],
+                "properties": { "pin": { "type": "boolean", "description": "true — закрепить, false — открепить" } }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Статус закрепления обновлён" } }
+      }
+    },
+    "/api/messages/{id}/read": {
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Отметить сообщение как прочитанное",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Отмечено" } }
+      }
+    },
     "/api/calls/initiate": {
       "post": {
         "tags": ["Calls"],
         "summary": "Начать звонок",
-        "security": [{ "BearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -541,8 +766,7 @@
     "/api/calls/{id}/respond": {
       "post": {
         "tags": ["Calls"],
-        "summary": "Ответить на звонок",
-        "security": [{ "BearerAuth": [] }],
+        "summary": "Ответить на звонок (accept/reject)",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -567,64 +791,44 @@
       "post": {
         "tags": ["Calls"],
         "summary": "Завершить звонок",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "Звонок завершен" } }
+        "responses": { "200": { "description": "Звонок завершён" } }
       }
     },
     "/api/calls/{id}": {
       "get": {
         "tags": ["Calls"],
         "summary": "Информация о звонке",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "Информация" } }
+        "responses": { "200": { "description": "Информация о звонке" } }
       }
     },
     "/api/calls/history/{chatId}": {
       "get": {
         "tags": ["Calls"],
         "summary": "История звонков в чате",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
           { "name": "chatId", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
         "responses": { "200": { "description": "История звонков" } }
       }
     },
-    "/api/users/username/{username}": {
-      "get": {
-        "tags": ["Users"],
-        "summary": "Пользователь по username",
-        "security": [{ "BearerAuth": [] }],
-        "parameters": [
-          { "name": "username", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "responses": { "200": { "description": "Пользователь найден" }, "404": { "description": "Не найден" } }
-      }
-    },
     "/ws": {
       "get": {
         "tags": ["WebSocket"],
-        "summary": "WebSocket подключение для real-time",
-        "description": "WebSocket подключение с JWT токеном.\n\nПодключение: ws://localhost:8080/ws?token=JWT_TOKEN\n\nСервер отмечает пользователя онлайн и рассылает событие user:online. При отключении - user:offline.\n\nФормат сообщения: JSON с полями type (строка) и payload (объект).\n\nСобытия сервера:\n- message:new - новое сообщение\n- message:edited - сообщение изменено\n- message:deleted - сообщение удалено (payload: messageId, chatId)\n- message:read - сообщение прочитано (payload: chatId, userId)\n- user:typing - пользователь печатает (payload: chatId, userId)\n- user:stop_typing - перестал печатать (payload: chatId, userId)\n- user:online - пользователь онлайн (payload: userId, online)\n- user:offline - пользователь офлайн (payload: userId, online)\n- chat:created - создан чат\n- chat:updated - чат обновлён\n- chat:deleted - чат удалён (payload: chatId)\n- call:offer - входящий звонок (payload: callId, chatId, sdp, callerId)\n- call:answer - ответ на звонок (payload: callId, sdp)\n- call:ice - ICE кандидат (payload: callId, candidate, sdpMLineIdx)\n- call:end - звонок завершён (payload: callId)\n- call:missed - пропущенный звонок (payload: callId, callerId)\n- call:reject - звонок отклонён (payload: callId)\n- call:accept - звонок принят (payload: callId, userId)\n\nКоманды клиента:\n- user:typing - отправить статус печатает (payload: chatId)\n- user:stop_typing - отправить статус не печатает (payload: chatId)\n\nПример JS:\nconst ws = new WebSocket('ws://localhost:8080/ws?token=' + jwt);\nws.onmessage = e => { const m = JSON.parse(e.data); };\nws.send(JSON.stringify({ type: 'user:typing', payload: { chatId: '...' } }));",
+        "summary": "WebSocket подключение для real-time обновлений",
+        "description": "Подключение: ws://localhost:8080/ws?token=JWT_TOKEN\n\nСервер отмечает пользователя онлайн и рассылает событие user:online. При отключении — user:offline.\n\nФормат сообщения: JSON { \"type\": \"...\", \"payload\": {...} }\n\nСобытия сервера:\n- message:new — новое сообщение\n- message:edited — сообщение изменено\n- message:deleted — сообщение удалено (payload: messageId, chatId)\n- message:read — прочитано (payload: chatId, userId)\n- user:typing — пользователь печатает (payload: chatId, userId)\n- user:stop_typing — перестал печатать (payload: chatId, userId)\n- user:online — онлайн (payload: userId, online)\n- user:offline — офлайн (payload: userId, online)\n- user:reaction — реакция на сообщение (payload: messageId, userId, emoji)\n- chat:created — создан чат\n- chat:updated — чат обновлён\n- chat:deleted — чат удалён (payload: chatId)\n- call:offer — входящий звонок (payload: callerId, chatId)\n- call:answer — ответ на звонок\n- call:ice — ICE кандидат\n- call:end — звонок завершён\n- call:missed — пропущенный звонок\n- call:reject — звонок отклонён\n- call:accept — звонок принят\n\nКоманды клиента:\n- user:typing — печатает (payload: { chatId })\n- user:stop_typing — не печатает (payload: { chatId })\n\nПример:\nconst ws = new WebSocket('ws://localhost:8080/ws?token=' + token);\nws.send(JSON.stringify({ type: 'user:typing', payload: { chatId: '...' } }));",
         "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "JWT токен авторизации"
-          }
+          { "name": "token", "in": "query", "required": true, "schema": { "type": "string" }, "description": "JWT токен" }
         ],
         "responses": {
-          "101": { "description": "WebSocket protocol upgrade (Switching Protocols)" },
-          "400": { "description": "Missing token parameter" },
-          "401": { "description": "Invalid or expired JWT token" }
+          "101": { "description": "WebSocket protocol upgrade" },
+          "400": { "description": "Missing token" },
+          "401": { "description": "Invalid token" }
         }
       }
     },
@@ -632,9 +836,8 @@
       "get": {
         "tags": ["System"],
         "summary": "Healthcheck",
-        "responses": {
-          "200": { "description": "OK" }
-        }
+        "security": [],
+        "responses": { "200": { "description": "OK" } }
       }
     }
   }
