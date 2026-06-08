@@ -16,10 +16,10 @@ import (
 )
 
 type MessageHandler struct {
-	messageService *service.MessageService
+	messageService service.MessageService
 }
 
-func NewMessageHandler(messageService *service.MessageService) *MessageHandler {
+func NewMessageHandler(messageService service.MessageService) *MessageHandler {
 	return &MessageHandler{messageService: messageService}
 }
 
@@ -166,9 +166,10 @@ func (h *MessageHandler) UploadFile(c *gin.Context) {
 
 func (h *MessageHandler) DownloadFile(c *gin.Context) {
 	fileName := c.Param("filename")
-	filePath := filepath.Join("uploads", fileName)
+	filePath := filepath.Join("uploads", filepath.Clean(fileName))
 
-	if !strings.HasPrefix(filepath.Clean(filePath), "uploads") {
+	absPath, _ := filepath.Abs(filePath)
+	if !strings.Contains(absPath, "uploads") {
 		response.NotFound(c, "file not found")
 		return
 	}
@@ -181,7 +182,6 @@ func (h *MessageHandler) DownloadFile(c *gin.Context) {
 	c.File(filePath)
 }
 
-// Reactions
 func (h *MessageHandler) AddReaction(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	msgID := c.Param("id")
@@ -220,7 +220,6 @@ func (h *MessageHandler) RemoveReaction(c *gin.Context) {
 	response.JSON(c, 200, msg)
 }
 
-// Pinned
 func (h *MessageHandler) TogglePin(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	msgID := c.Param("id")
@@ -253,7 +252,6 @@ func (h *MessageHandler) GetPinned(c *gin.Context) {
 	response.JSON(c, 200, messages)
 }
 
-// Read receipts
 func (h *MessageHandler) MarkMessageRead(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	msgID := c.Param("id")
@@ -266,7 +264,6 @@ func (h *MessageHandler) MarkMessageRead(c *gin.Context) {
 	response.JSON(c, 200, gin.H{"message": "marked as read"})
 }
 
-// Resend
 func (h *MessageHandler) ResendMessage(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	chatID := c.Param("id")
@@ -281,7 +278,6 @@ func (h *MessageHandler) ResendMessage(c *gin.Context) {
 	response.JSON(c, 201, msg)
 }
 
-// Rate-limited test handler
 func (h *MessageHandler) GetMessageByID(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	msgID := c.Param("id")

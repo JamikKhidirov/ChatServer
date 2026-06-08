@@ -13,23 +13,23 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthService struct {
-	userRepo *repository.UserRepository
+type authService struct {
+	userRepo repository.UserRepository
 	cfg      *config.Config
 }
 
-func NewAuthService(userRepo *repository.UserRepository, cfg *config.Config) *AuthService {
-	return &AuthService{userRepo: userRepo, cfg: cfg}
+func NewAuthService(userRepo repository.UserRepository, cfg *config.Config) AuthService {
+	return &authService{userRepo: userRepo, cfg: cfg}
 }
 
-func (s *AuthService) Register(req *domain.RegisterRequest) (*domain.AuthResponse, error) {
-	existing, _ := s.userRepo.FindByEmail(req.Email)
-	if existing != nil {
+func (s *authService) Register(req *domain.RegisterRequest) (*domain.AuthResponse, error) {
+	existing, err := s.userRepo.FindByEmail(req.Email)
+	if err == nil && existing != nil {
 		return nil, errors.New("email already registered")
 	}
 
-	existing, _ = s.userRepo.FindByUsername(req.Username)
-	if existing != nil {
+	existing, err = s.userRepo.FindByUsername(req.Username)
+	if err == nil && existing != nil {
 		return nil, errors.New("username already taken")
 	}
 
@@ -63,7 +63,7 @@ func (s *AuthService) Register(req *domain.RegisterRequest) (*domain.AuthRespons
 	return &domain.AuthResponse{Token: token, User: user}, nil
 }
 
-func (s *AuthService) Login(req *domain.LoginRequest) (*domain.AuthResponse, error) {
+func (s *authService) Login(req *domain.LoginRequest) (*domain.AuthResponse, error) {
 	user, err := s.userRepo.FindByEmail(req.Email)
 	if err != nil {
 		return nil, errors.New("invalid email or password")
@@ -81,16 +81,15 @@ func (s *AuthService) Login(req *domain.LoginRequest) (*domain.AuthResponse, err
 	return &domain.AuthResponse{Token: token, User: user}, nil
 }
 
-func (s *AuthService) RefreshToken(userID string) (string, error) {
+func (s *authService) RefreshToken(userID string) (string, error) {
 	_, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return "", errors.New("user not found")
 	}
-
 	return s.generateToken(userID)
 }
 
-func (s *AuthService) ChangePassword(userID, oldPassword, newPassword string) error {
+func (s *authService) ChangePassword(userID, oldPassword, newPassword string) error {
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return errors.New("user not found")
@@ -108,7 +107,7 @@ func (s *AuthService) ChangePassword(userID, oldPassword, newPassword string) er
 	return s.userRepo.UpdatePassword(userID, string(hash))
 }
 
-func (s *AuthService) ValidateToken(tokenString string) (string, error) {
+func (s *authService) ValidateToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
@@ -132,7 +131,7 @@ func (s *AuthService) ValidateToken(tokenString string) (string, error) {
 	return userID, nil
 }
 
-func (s *AuthService) generateToken(userID string) (string, error) {
+func (s *authService) generateToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
 		"iat": time.Now().Unix(),

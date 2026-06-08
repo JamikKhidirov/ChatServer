@@ -80,7 +80,10 @@ func (h *Hub) SendToUser(userID string, msg WSOutgoingMessage) {
 	client, ok := h.clients[userID]
 	h.mu.RUnlock()
 	if ok {
-		client.Send <- msg
+		select {
+		case client.Send <- msg:
+		default:
+		}
 	}
 }
 
@@ -99,4 +102,31 @@ func (h *Hub) IsOnline(userID string) bool {
 
 func (h *Hub) BroadcastToChat(chatParticipants []string, msg WSOutgoingMessage) {
 	h.SendToUsers(chatParticipants, msg)
+}
+
+func (h *Hub) BroadcastToChatExcept(excludeIDs []string, msg WSOutgoingMessage) {
+	exclude := make(map[string]bool)
+	for _, id := range excludeIDs {
+		exclude[id] = true
+	}
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for userID, client := range h.clients {
+		if !exclude[userID] {
+			select {
+			case client.Send <- msg:
+			default:
+			}
+		}
+	}
+}
+
+func (h *Hub) GetConnectedUsers() []string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	users := make([]string, 0, len(h.clients))
+	for uid := range h.clients {
+		users = append(users, uid)
+	}
+	return users
 }

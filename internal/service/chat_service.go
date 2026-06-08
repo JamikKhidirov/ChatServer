@@ -11,20 +11,20 @@ import (
 	"github.com/google/uuid"
 )
 
-type ChatService struct {
-	chatRepo    *repository.ChatRepository
-	userRepo    *repository.UserRepository
-	messageRepo *repository.MessageRepository
-	userService *UserService
+type chatService struct {
+	chatRepo    repository.ChatRepository
+	userRepo    repository.UserRepository
+	messageRepo repository.MessageRepository
+	userService UserService
 }
 
 func NewChatService(
-	chatRepo *repository.ChatRepository,
-	userRepo *repository.UserRepository,
-	messageRepo *repository.MessageRepository,
-	userService *UserService,
-) *ChatService {
-	return &ChatService{
+	chatRepo repository.ChatRepository,
+	userRepo repository.UserRepository,
+	messageRepo repository.MessageRepository,
+	userService UserService,
+) ChatService {
+	return &chatService{
 		chatRepo:    chatRepo,
 		userRepo:    userRepo,
 		messageRepo: messageRepo,
@@ -32,7 +32,7 @@ func NewChatService(
 	}
 }
 
-func (s *ChatService) CreateChat(userID string, req *domain.CreateChatRequest) (*domain.ChatResponse, error) {
+func (s *chatService) CreateChat(userID string, req *domain.CreateChatRequest) (*domain.ChatResponse, error) {
 	if req.Type == domain.ChatPrivate && len(req.ParticipantIDs) != 1 {
 		return nil, errors.New("private chat must have exactly 2 participants")
 	}
@@ -73,7 +73,7 @@ func (s *ChatService) CreateChat(userID string, req *domain.CreateChatRequest) (
 	return s.GetChat(chat.ID, userID)
 }
 
-func (s *ChatService) GetChat(chatID, userID string) (*domain.ChatResponse, error) {
+func (s *chatService) GetChat(chatID, userID string) (*domain.ChatResponse, error) {
 	chat, err := s.chatRepo.FindByID(chatID)
 	if err != nil {
 		return nil, errors.New("chat not found")
@@ -89,29 +89,23 @@ func (s *ChatService) GetChat(chatID, userID string) (*domain.ChatResponse, erro
 		return nil, err
 	}
 
-	var userResponses []*domain.UserResponse
-	for _, p := range participants {
-		u, err := s.userRepo.FindByID(p.UserID)
-		if err != nil {
-			continue
-		}
-		userResponses = append(userResponses, u.ToResponse())
-	}
+	userResponses := s.fetchUserResponses(participants)
 
 	lastMsg, _ := s.messageRepo.GetLastMessage(chatID)
 	var lastMsgResponse *domain.MessageResponse
 	if lastMsg != nil {
 		sender, _ := s.userRepo.FindByID(lastMsg.SenderID)
-		senderResp := sender.ToResponse()
-		lastMsgResponse = &domain.MessageResponse{
-			ID:        lastMsg.ID,
-			ChatID:    lastMsg.ChatID,
-			Sender:    senderResp,
-			Content:   lastMsg.Content,
-			Type:      lastMsg.Type,
-			CreatedAt: lastMsg.CreatedAt,
-			UpdatedAt: lastMsg.UpdatedAt,
-			Deleted:   lastMsg.DeletedAt != nil,
+		if sender != nil {
+			lastMsgResponse = &domain.MessageResponse{
+				ID:        lastMsg.ID,
+				ChatID:    lastMsg.ChatID,
+				Sender:    sender.ToResponse(),
+				Content:   lastMsg.Content,
+				Type:      lastMsg.Type,
+				CreatedAt: lastMsg.CreatedAt,
+				UpdatedAt: lastMsg.UpdatedAt,
+				Deleted:   lastMsg.DeletedAt != nil,
+			}
 		}
 	}
 
@@ -131,37 +125,91 @@ func (s *ChatService) GetChat(chatID, userID string) (*domain.ChatResponse, erro
 	}, nil
 }
 
-func (s *ChatService) ListChats(userID string) ([]*domain.ChatResponse, error) {
-	chats, err := s.chatRepo.FindByUserID(userID)
+func (s *chatService) ListChats(userID string) ([]*domain.ChatResponse, error) {
+	chats, err := s.chatRepo.FindByUserIDExcludeHidden(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	responses := make([]*domain.ChatResponse, 0)
+	responses := make([]*domain.ChatResponse, 0, len(chats))
 	for _, chat := range chats {
-		resp, err := s.GetChat(chat.ID, userID)
+		resp, err := s.buildChatResponse(chat, userID)
 		if err != nil {
 			continue
 		}
 		responses = append(responses, resp)
 	}
 
-	if len(responses) > 0 {
-			sort.Slice(responses, func(i, j int) bool {
-			if responses[i].LastMessage != nil && responses[j].LastMessage != nil {
-				return responses[i].LastMessage.CreatedAt.After(responses[j].LastMessage.CreatedAt)
-			}
-			if responses[i].LastMessage != nil {
-				return true
-			}
-			return false
-		})
-	}
+	sort.Slice(responses, func(i, j int) bool {
+		ti := responses[i].LastMessage
+		tj := responses[j].LastMessage
+		if ti != nil && tj != nil {
+			return ti.CreatedAt.After(tj.CreatedAt)
+		}
+		if ti != nil {
+			return true
+		}
+		return false
+	})
 
 	return responses, nil
 }
 
-func (s *ChatService) DeleteChat(chatID, userID string) error {
+func (s *chatService) buildChatResponse(chat *domain.Chat, userID string) (*domain.ChatResponse, error) {
+	participants, err := s.chatRepo.GetParticipants(chat.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	userResponses := s.fetchUserResponses(participants)
+
+	lastMsg, _ := s.messageRepo.GetLastMessage(chat.ID)
+	var lastMsgResponse *domain.MessageResponse
+	if lastMsg != nil {
+		sender, _ := s.userRepo.FindByID(lastMsg.SenderID)
+		if sender != nil {
+			lastMsgResponse = &domain.MessageResponse{
+				ID:        lastMsg.ID,
+				ChatID:    lastMsg.ChatID,
+				Sender:    sender.ToResponse(),
+				Content:   lastMsg.Content,
+				Type:      lastMsg.Type,
+				CreatedAt: lastMsg.CreatedAt,
+				UpdatedAt: lastMsg.UpdatedAt,
+				Deleted:   lastMsg.DeletedAt != nil,
+			}
+		}
+	}
+
+	unreadCount, _ := s.chatRepo.GetUnreadCount(chat.ID, userID)
+
+	return &domain.ChatResponse{
+		ID:           chat.ID,
+		Name:         chat.Name,
+		Description:  chat.Description,
+		AvatarURL:    chat.AvatarURL,
+		Type:         chat.Type,
+		CreatedBy:    chat.CreatedBy,
+		Participants: userResponses,
+		LastMessage:  lastMsgResponse,
+		UnreadCount:  unreadCount,
+		CreatedAt:    chat.CreatedAt,
+	}, nil
+}
+
+func (s *chatService) fetchUserResponses(participants []*domain.ChatParticipant) []*domain.UserResponse {
+	responses := make([]*domain.UserResponse, 0, len(participants))
+	for _, p := range participants {
+		u, err := s.userRepo.FindByID(p.UserID)
+		if err != nil {
+			continue
+		}
+		responses = append(responses, u.ToResponse())
+	}
+	return responses
+}
+
+func (s *chatService) DeleteChat(chatID, userID string) error {
 	chat, err := s.chatRepo.FindByID(chatID)
 	if err != nil {
 		return errors.New("chat not found")
@@ -171,15 +219,10 @@ func (s *ChatService) DeleteChat(chatID, userID string) error {
 		return errors.New("only the creator can delete the chat")
 	}
 
-	participants, _ := s.chatRepo.GetParticipants(chatID)
-	for _, p := range participants {
-		s.chatRepo.RemoveParticipant(chatID, p.UserID)
-	}
-
 	return s.chatRepo.Delete(chatID)
 }
 
-func (s *ChatService) AddParticipant(chatID, userID, requesterID string) error {
+func (s *chatService) AddParticipant(chatID, userID, requesterID string) error {
 	chat, err := s.chatRepo.FindByID(chatID)
 	if err != nil {
 		return errors.New("chat not found")
@@ -202,7 +245,7 @@ func (s *ChatService) AddParticipant(chatID, userID, requesterID string) error {
 	return s.chatRepo.AddParticipant(chatID, userID, "member")
 }
 
-func (s *ChatService) RemoveParticipant(chatID, userID, requesterID string) error {
+func (s *chatService) RemoveParticipant(chatID, userID, requesterID string) error {
 	chat, err := s.chatRepo.FindByID(chatID)
 	if err != nil {
 		return errors.New("chat not found")
@@ -219,7 +262,7 @@ func (s *ChatService) RemoveParticipant(chatID, userID, requesterID string) erro
 	return s.chatRepo.RemoveParticipant(chatID, userID)
 }
 
-func (s *ChatService) MarkAsRead(chatID, userID string) error {
+func (s *chatService) MarkAsRead(chatID, userID string) error {
 	isParticipant, _ := s.chatRepo.IsParticipant(chatID, userID)
 	if !isParticipant {
 		return errors.New("access denied")
@@ -227,11 +270,11 @@ func (s *ChatService) MarkAsRead(chatID, userID string) error {
 	return s.chatRepo.UpdateLastRead(chatID, userID)
 }
 
-func (s *ChatService) GetUnreadCount(chatID, userID string) (int, error) {
+func (s *chatService) GetUnreadCount(chatID, userID string) (int, error) {
 	return s.chatRepo.GetUnreadCount(chatID, userID)
 }
 
-func (s *ChatService) SetRole(chatID, targetUserID, requesterID, role string) error {
+func (s *chatService) SetRole(chatID, targetUserID, requesterID, role string) error {
 	chat, err := s.chatRepo.FindByID(chatID)
 	if err != nil {
 		return errors.New("chat not found")
@@ -242,9 +285,9 @@ func (s *ChatService) SetRole(chatID, targetUserID, requesterID, role string) er
 	}
 
 	if chat.CreatedBy != requesterID {
-		requesterRole, _ := s.chatRepo.GetParticipants(chatID)
+		participants, _ := s.chatRepo.GetParticipants(chatID)
 		isAdmin := false
-		for _, p := range requesterRole {
+		for _, p := range participants {
 			if p.UserID == requesterID && p.Role == "admin" {
 				isAdmin = true
 				break
@@ -262,7 +305,7 @@ func (s *ChatService) SetRole(chatID, targetUserID, requesterID, role string) er
 	return s.chatRepo.SetRole(chatID, targetUserID, role)
 }
 
-func (s *ChatService) LeaveGroup(chatID, userID string) error {
+func (s *chatService) LeaveGroup(chatID, userID string) error {
 	chat, err := s.chatRepo.FindByID(chatID)
 	if err != nil {
 		return errors.New("chat not found")
@@ -279,7 +322,7 @@ func (s *ChatService) LeaveGroup(chatID, userID string) error {
 	return s.chatRepo.RemoveParticipant(chatID, userID)
 }
 
-func (s *ChatService) UpdateGroup(chatID, userID string, req *domain.UpdateGroupRequest) error {
+func (s *chatService) UpdateGroup(chatID, userID string, req *domain.UpdateGroupRequest) error {
 	chat, err := s.chatRepo.FindByID(chatID)
 	if err != nil {
 		return errors.New("chat not found")
@@ -304,4 +347,12 @@ func (s *ChatService) UpdateGroup(chatID, userID string, req *domain.UpdateGroup
 	}
 
 	return s.chatRepo.Update(chat)
+}
+
+func (s *chatService) HideChat(chatID, userID string) error {
+	return s.chatRepo.HideChat(userID, chatID)
+}
+
+func (s *chatService) GetParticipants(chatID string) ([]*domain.ChatParticipant, error) {
+	return s.chatRepo.GetParticipants(chatID)
 }

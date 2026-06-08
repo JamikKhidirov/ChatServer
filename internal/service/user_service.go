@@ -6,21 +6,19 @@ import (
 
 	"ChatServerGolang/internal/domain"
 	"ChatServerGolang/internal/repository"
-
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
-type UserService struct {
-	userRepo *repository.UserRepository
-	chatRepo *repository.ChatRepository
+type userService struct {
+	userRepo repository.UserRepository
+	chatRepo repository.ChatRepository
+	accRepo  repository.AccountSettingRepository
 }
 
-func NewUserService(userRepo *repository.UserRepository, chatRepo *repository.ChatRepository) *UserService {
-	return &UserService{userRepo: userRepo, chatRepo: chatRepo}
+func NewUserService(userRepo repository.UserRepository, chatRepo repository.ChatRepository, accRepo repository.AccountSettingRepository) UserService {
+	return &userService{userRepo: userRepo, chatRepo: chatRepo, accRepo: accRepo}
 }
 
-func (s *UserService) GetProfile(userID string) (*domain.UserResponse, error) {
+func (s *userService) GetProfile(userID string) (*domain.UserResponse, error) {
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -28,7 +26,7 @@ func (s *UserService) GetProfile(userID string) (*domain.UserResponse, error) {
 	return user.ToResponse(), nil
 }
 
-func (s *UserService) UpdateProfile(userID string, req *domain.UpdateProfileRequest) (*domain.UserResponse, error) {
+func (s *userService) UpdateProfile(userID string, req *domain.UpdateProfileRequest) (*domain.UserResponse, error) {
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -39,6 +37,15 @@ func (s *UserService) UpdateProfile(userID string, req *domain.UpdateProfileRequ
 	}
 	if req.Bio != "" {
 		user.Bio = req.Bio
+	}
+	if req.Phone != "" {
+		user.Phone = req.Phone
+	}
+	if req.Gender != "" {
+		user.Gender = req.Gender
+	}
+	if req.DateOfBirth != "" {
+		user.DateOfBirth = req.DateOfBirth
 	}
 	if req.AvatarURL != "" {
 		user.AvatarURL = req.AvatarURL
@@ -52,7 +59,7 @@ func (s *UserService) UpdateProfile(userID string, req *domain.UpdateProfileRequ
 	return user.ToResponse(), nil
 }
 
-func (s *UserService) SearchUsers(query string, limit, offset int) ([]*domain.UserResponse, error) {
+func (s *userService) SearchUsers(query string, limit, offset int) ([]*domain.UserResponse, error) {
 	if query == "" {
 		return nil, errors.New("search query is required")
 	}
@@ -67,7 +74,7 @@ func (s *UserService) SearchUsers(query string, limit, offset int) ([]*domain.Us
 	return responses, nil
 }
 
-func (s *UserService) UpdatePushToken(userID, token, provider string) error {
+func (s *userService) UpdatePushToken(userID, token, provider string) error {
 	_, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return errors.New("user not found")
@@ -75,11 +82,11 @@ func (s *UserService) UpdatePushToken(userID, token, provider string) error {
 	return s.userRepo.UpdatePushToken(userID, token, provider)
 }
 
-func (s *UserService) GetUserByID(id string) (*domain.User, error) {
+func (s *userService) GetUserByID(id string) (*domain.User, error) {
 	return s.userRepo.FindByID(id)
 }
 
-func (s *UserService) GetUsersByIDs(ids []string) (map[string]*domain.UserResponse, error) {
+func (s *userService) GetUsersByIDs(ids []string) (map[string]*domain.UserResponse, error) {
 	result := make(map[string]*domain.UserResponse)
 	for _, id := range ids {
 		u, err := s.userRepo.FindByID(id)
@@ -91,7 +98,7 @@ func (s *UserService) GetUsersByIDs(ids []string) (map[string]*domain.UserRespon
 	return result, nil
 }
 
-func (s *UserService) UpdateStatus(userID, status string) (*domain.UserResponse, error) {
+func (s *userService) UpdateStatus(userID, status string) (*domain.UserResponse, error) {
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -104,7 +111,7 @@ func (s *UserService) UpdateStatus(userID, status string) (*domain.UserResponse,
 	return user.ToResponse(), nil
 }
 
-func (s *UserService) GetByUsername(username string) (*domain.UserResponse, error) {
+func (s *userService) GetByUsername(username string) (*domain.UserResponse, error) {
 	user, err := s.userRepo.FindByUsername(username)
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -112,47 +119,7 @@ func (s *UserService) GetByUsername(username string) (*domain.UserResponse, erro
 	return user.ToResponse(), nil
 }
 
-func (s *UserService) GetUserByUsername(username string) (*domain.User, error) {
-	return s.userRepo.FindByUsername(username)
-}
-
-func (s *UserService) CreateUser(username, email, password, displayName string) (*domain.User, error) {
-	existing, _ := s.userRepo.FindByEmail(email)
-	if existing != nil {
-		return nil, errors.New("email already registered")
-	}
-
-	existing, _ = s.userRepo.FindByUsername(username)
-	if existing != nil {
-		return nil, errors.New("username already taken")
-	}
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
-	}
-
-	now := time.Now()
-	user := &domain.User{
-		ID:           uuid.New().String(),
-		Username:     username,
-		Email:        email,
-		PasswordHash: string(hash),
-		DisplayName:  displayName,
-		Status:       "Available",
-		LastSeen:     now,
-		CreatedAt:    now,
-		UpdatedAt:    now,
-	}
-
-	if err := s.userRepo.Create(user); err != nil {
-		return nil, err
-	}
-	return user, nil
-}
-
-// Delete account
-func (s *UserService) DeleteAccount(userID string) error {
+func (s *userService) DeleteAccount(userID string) error {
 	_, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return errors.New("user not found")
@@ -160,8 +127,7 @@ func (s *UserService) DeleteAccount(userID string) error {
 	return s.userRepo.SoftDelete(userID)
 }
 
-// Block/unblock
-func (s *UserService) BlockUser(userID, blockedID string) error {
+func (s *userService) BlockUser(userID, blockedID string) error {
 	if userID == blockedID {
 		return errors.New("cannot block yourself")
 	}
@@ -172,11 +138,11 @@ func (s *UserService) BlockUser(userID, blockedID string) error {
 	return s.userRepo.BlockUser(userID, blockedID)
 }
 
-func (s *UserService) UnblockUser(userID, blockedID string) error {
+func (s *userService) UnblockUser(userID, blockedID string) error {
 	return s.userRepo.UnblockUser(userID, blockedID)
 }
 
-func (s *UserService) GetBlockedUsers(userID string) ([]*domain.UserResponse, error) {
+func (s *userService) GetBlockedUsers(userID string) ([]*domain.UserResponse, error) {
 	users, err := s.userRepo.GetBlockedUsers(userID)
 	if err != nil {
 		return nil, err
@@ -188,7 +154,7 @@ func (s *UserService) GetBlockedUsers(userID string) ([]*domain.UserResponse, er
 	return responses, nil
 }
 
-func (s *UserService) IsBlocked(userID, blockedID string) (bool, error) {
+func (s *userService) IsBlocked(userID, blockedID string) (bool, error) {
 	blocked, err := s.userRepo.IsBlocked(blockedID, userID)
 	if err != nil {
 		return false, err
@@ -199,8 +165,7 @@ func (s *UserService) IsBlocked(userID, blockedID string) (bool, error) {
 	return s.userRepo.IsBlocked(userID, blockedID)
 }
 
-// Notification settings
-func (s *UserService) SetNotificationMuted(userID, chatID string, muted bool) error {
+func (s *userService) SetNotificationMuted(userID, chatID string, muted bool) error {
 	isParticipant, _ := s.chatRepo.IsParticipant(chatID, userID)
 	if !isParticipant {
 		return errors.New("access denied")
@@ -208,6 +173,57 @@ func (s *UserService) SetNotificationMuted(userID, chatID string, muted bool) er
 	return s.chatRepo.SetNotificationMuted(userID, chatID, muted)
 }
 
-func (s *UserService) IsNotificationMuted(userID, chatID string) (bool, error) {
+func (s *userService) IsNotificationMuted(userID, chatID string) (bool, error) {
 	return s.chatRepo.IsNotificationMuted(userID, chatID)
+}
+
+func (s *userService) GetAccountSetting(userID string) (*domain.AccountSetting, error) {
+	setting, err := s.accRepo.GetByUserID(userID)
+	if err != nil {
+		return &domain.AccountSetting{
+			UserID:        userID,
+			Language:      "en",
+			Theme:         "light",
+			Notifications: true,
+			SoundEnabled:  true,
+			LastSeenMode:  "everyone",
+		}, nil
+	}
+	return setting, nil
+}
+
+func (s *userService) UpdateAccountSetting(userID string, req *domain.UpdateAccountSettingRequest) (*domain.AccountSetting, error) {
+	setting, err := s.accRepo.GetByUserID(userID)
+	if err != nil {
+		setting = &domain.AccountSetting{
+			UserID:        userID,
+			Language:      "en",
+			Theme:         "light",
+			Notifications: true,
+			SoundEnabled:  true,
+			LastSeenMode:  "everyone",
+		}
+	}
+
+	if req.Language != nil {
+		setting.Language = *req.Language
+	}
+	if req.Theme != nil {
+		setting.Theme = *req.Theme
+	}
+	if req.Notifications != nil {
+		setting.Notifications = *req.Notifications
+	}
+	if req.SoundEnabled != nil {
+		setting.SoundEnabled = *req.SoundEnabled
+	}
+	if req.LastSeenMode != nil {
+		setting.LastSeenMode = *req.LastSeenMode
+	}
+
+	if err := s.accRepo.Upsert(setting); err != nil {
+		return nil, err
+	}
+
+	return setting, nil
 }

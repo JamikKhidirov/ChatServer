@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 
 	"ChatServerGolang/internal/service"
@@ -22,36 +21,37 @@ var upgrader = websocket.Upgrader{
 
 type WSHandler struct {
 	hub         *ws.Hub
-	authService *service.AuthService
-	userRepo    *repository.UserRepository
-	chatRepo    *repository.ChatRepository
+	authService service.AuthService
+	userRepo    repository.UserRepository
+	chatRepo    repository.ChatRepository
 }
 
-func NewWSHandler(hub *ws.Hub, authService *service.AuthService, userRepo *repository.UserRepository, chatRepo *repository.ChatRepository) *WSHandler {
+func NewWSHandler(hub *ws.Hub, authService service.AuthService, userRepo repository.UserRepository, chatRepo repository.ChatRepository) *WSHandler {
 	return &WSHandler{hub: hub, authService: authService, userRepo: userRepo, chatRepo: chatRepo}
 }
 
 func (h *WSHandler) HandleWebSocket(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "token required"})
+		c.JSON(401, gin.H{"error": "token required"})
 		return
 	}
 
 	userID, err := h.authService.ValidateToken(token)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		c.JSON(401, gin.H{"error": "invalid token"})
 		return
 	}
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		log.Printf("WebSocket upgrade failed: %v", err)
 		return
 	}
 
-	h.userRepo.SetOnline(userID, true)
-	h.broadcastOnlineStatus(userID, true)
+	go func() {
+		h.userRepo.SetOnline(userID, true)
+		h.broadcastOnlineStatus(userID, true)
+	}()
 
 	client := ws.NewClient(h.hub, conn, userID, func() {
 		h.userRepo.SetOnline(userID, false)

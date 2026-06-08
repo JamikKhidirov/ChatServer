@@ -7,15 +7,15 @@ import (
 	"ChatServerGolang/internal/domain"
 )
 
-type ChatRepository struct {
+type chatRepository struct {
 	db *sql.DB
 }
 
-func NewChatRepository(db *sql.DB) *ChatRepository {
-	return &ChatRepository{db: db}
+func NewChatRepository(db *sql.DB) ChatRepository {
+	return &chatRepository{db: db}
 }
 
-func (r *ChatRepository) Create(chat *domain.Chat) error {
+func (r *chatRepository) Create(chat *domain.Chat) error {
 	_, err := r.db.Exec(
 		`INSERT INTO chats (id, name, description, avatar_url, type, created_by, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -25,7 +25,7 @@ func (r *ChatRepository) Create(chat *domain.Chat) error {
 	return err
 }
 
-func (r *ChatRepository) FindByID(id string) (*domain.Chat, error) {
+func (r *chatRepository) FindByID(id string) (*domain.Chat, error) {
 	row := r.db.QueryRow(
 		`SELECT id, name, COALESCE(description,''), avatar_url, type, created_by, created_at, updated_at
 		FROM chats WHERE id = ?`, id,
@@ -33,7 +33,7 @@ func (r *ChatRepository) FindByID(id string) (*domain.Chat, error) {
 	return scanChat(row)
 }
 
-func (r *ChatRepository) FindByUserID(userID string) ([]*domain.Chat, error) {
+func (r *chatRepository) FindByUserID(userID string) ([]*domain.Chat, error) {
 	rows, err := r.db.Query(
 		`SELECT c.id, c.name, COALESCE(c.description,''), c.avatar_url, c.type, c.created_by, c.created_at, c.updated_at
 		FROM chats c
@@ -57,7 +57,7 @@ func (r *ChatRepository) FindByUserID(userID string) ([]*domain.Chat, error) {
 	return chats, nil
 }
 
-func (r *ChatRepository) Update(chat *domain.Chat) error {
+func (r *chatRepository) Update(chat *domain.Chat) error {
 	_, err := r.db.Exec(
 		`UPDATE chats SET name=?, description=?, avatar_url=?, updated_at=? WHERE id=?`,
 		chat.Name, chat.Description, chat.AvatarURL, time.Now().Format(time.RFC3339), chat.ID,
@@ -65,12 +65,20 @@ func (r *ChatRepository) Update(chat *domain.Chat) error {
 	return err
 }
 
-func (r *ChatRepository) Delete(id string) error {
-	_, err := r.db.Exec(`DELETE FROM chats WHERE id = ?`, id)
+func (r *chatRepository) Delete(id string) error {
+	_, err := r.db.Exec(`DELETE FROM chat_participants WHERE chat_id = ?`, id)
+	if err != nil {
+		return err
+	}
+	_, err = r.db.Exec(`UPDATE messages SET deleted_at=? WHERE chat_id=?`, time.Now().Format(time.RFC3339), id)
+	if err != nil {
+		return err
+	}
+	_, err = r.db.Exec(`DELETE FROM chats WHERE id = ?`, id)
 	return err
 }
 
-func (r *ChatRepository) AddParticipant(chatID, userID, role string) error {
+func (r *chatRepository) AddParticipant(chatID, userID, role string) error {
 	_, err := r.db.Exec(
 		`INSERT OR IGNORE INTO chat_participants (chat_id, user_id, role, joined_at, last_read_at)
 		VALUES (?, ?, ?, ?, ?)`,
@@ -79,7 +87,7 @@ func (r *ChatRepository) AddParticipant(chatID, userID, role string) error {
 	return err
 }
 
-func (r *ChatRepository) RemoveParticipant(chatID, userID string) error {
+func (r *chatRepository) RemoveParticipant(chatID, userID string) error {
 	_, err := r.db.Exec(
 		`DELETE FROM chat_participants WHERE chat_id = ? AND user_id = ?`,
 		chatID, userID,
@@ -87,7 +95,7 @@ func (r *ChatRepository) RemoveParticipant(chatID, userID string) error {
 	return err
 }
 
-func (r *ChatRepository) GetParticipants(chatID string) ([]*domain.ChatParticipant, error) {
+func (r *chatRepository) GetParticipants(chatID string) ([]*domain.ChatParticipant, error) {
 	rows, err := r.db.Query(
 		`SELECT chat_id, user_id, role, joined_at, last_read_at
 		FROM chat_participants WHERE chat_id = ?`, chatID,
@@ -107,14 +115,14 @@ func (r *ChatRepository) GetParticipants(chatID string) ([]*domain.ChatParticipa
 		if err := rows.Scan(&p.ChatID, &p.UserID, &p.Role, &joinedAt, &lastRead); err != nil {
 			return nil, err
 		}
-		p.JoinedAt, _ = time.Parse(time.RFC3339, joinedAt)
-		p.LastReadAt, _ = time.Parse(time.RFC3339, lastRead)
+		p.JoinedAt = parseTime(joinedAt)
+		p.LastReadAt = parseTime(lastRead)
 		participants = append(participants, &p)
 	}
 	return participants, nil
 }
 
-func (r *ChatRepository) IsParticipant(chatID, userID string) (bool, error) {
+func (r *chatRepository) IsParticipant(chatID, userID string) (bool, error) {
 	var count int
 	err := r.db.QueryRow(
 		`SELECT COUNT(*) FROM chat_participants WHERE chat_id = ? AND user_id = ?`,
@@ -123,7 +131,7 @@ func (r *ChatRepository) IsParticipant(chatID, userID string) (bool, error) {
 	return count > 0, err
 }
 
-func (r *ChatRepository) GetPrivateChat(user1ID, user2ID string) (*domain.Chat, error) {
+func (r *chatRepository) GetPrivateChat(user1ID, user2ID string) (*domain.Chat, error) {
 	row := r.db.QueryRow(
 		`SELECT c.id, c.name, COALESCE(c.description,''), c.avatar_url, c.type, c.created_by, c.created_at, c.updated_at
 		FROM chats c
@@ -135,7 +143,7 @@ func (r *ChatRepository) GetPrivateChat(user1ID, user2ID string) (*domain.Chat, 
 	return scanChat(row)
 }
 
-func (r *ChatRepository) SetRole(chatID, userID, role string) error {
+func (r *chatRepository) SetRole(chatID, userID, role string) error {
 	_, err := r.db.Exec(
 		`UPDATE chat_participants SET role = ? WHERE chat_id = ? AND user_id = ?`,
 		role, chatID, userID,
@@ -143,7 +151,7 @@ func (r *ChatRepository) SetRole(chatID, userID, role string) error {
 	return err
 }
 
-func (r *ChatRepository) UpdateLastRead(chatID, userID string) error {
+func (r *chatRepository) UpdateLastRead(chatID, userID string) error {
 	_, err := r.db.Exec(
 		`UPDATE chat_participants SET last_read_at = ? WHERE chat_id = ? AND user_id = ?`,
 		time.Now().Format(time.RFC3339), chatID, userID,
@@ -151,7 +159,7 @@ func (r *ChatRepository) UpdateLastRead(chatID, userID string) error {
 	return err
 }
 
-func (r *ChatRepository) GetUnreadCount(chatID, userID string) (int, error) {
+func (r *chatRepository) GetUnreadCount(chatID, userID string) (int, error) {
 	var count int
 	err := r.db.QueryRow(
 		`SELECT COUNT(*) FROM messages m
@@ -166,8 +174,7 @@ func (r *ChatRepository) GetUnreadCount(chatID, userID string) (int, error) {
 	return count, err
 }
 
-// Notification settings
-func (r *ChatRepository) SetNotificationMuted(userID, chatID string, muted bool) error {
+func (r *chatRepository) SetNotificationMuted(userID, chatID string, muted bool) error {
 	_, err := r.db.Exec(
 		`INSERT OR REPLACE INTO notification_settings (user_id, chat_id, muted) VALUES (?, ?, ?)`,
 		userID, chatID, boolToInt(muted),
@@ -175,7 +182,7 @@ func (r *ChatRepository) SetNotificationMuted(userID, chatID string, muted bool)
 	return err
 }
 
-func (r *ChatRepository) IsNotificationMuted(userID, chatID string) (bool, error) {
+func (r *chatRepository) IsNotificationMuted(userID, chatID string) (bool, error) {
 	var mutedInt int
 	err := r.db.QueryRow(
 		`SELECT COALESCE(muted, 0) FROM notification_settings WHERE user_id = ? AND chat_id = ?`,
@@ -185,6 +192,48 @@ func (r *ChatRepository) IsNotificationMuted(userID, chatID string) (bool, error
 		return false, nil
 	}
 	return mutedInt == 1, err
+}
+
+func (r *chatRepository) HideChat(userID, chatID string) error {
+	_, err := r.db.Exec(
+		`INSERT OR REPLACE INTO hidden_chats (user_id, chat_id, hidden_at) VALUES (?, ?, ?)`,
+		userID, chatID, time.Now().Format(time.RFC3339),
+	)
+	return err
+}
+
+func (r *chatRepository) IsHidden(userID, chatID string) (bool, error) {
+	var count int
+	err := r.db.QueryRow(
+		`SELECT COUNT(*) FROM hidden_chats WHERE user_id = ? AND chat_id = ?`,
+		userID, chatID,
+	).Scan(&count)
+	return count > 0, err
+}
+
+func (r *chatRepository) FindByUserIDExcludeHidden(userID string) ([]*domain.Chat, error) {
+	rows, err := r.db.Query(
+		`SELECT c.id, c.name, COALESCE(c.description,''), c.avatar_url, c.type, c.created_by, c.created_at, c.updated_at
+		FROM chats c
+		INNER JOIN chat_participants cp ON cp.chat_id = c.id
+		LEFT JOIN hidden_chats hc ON hc.chat_id = c.id AND hc.user_id = ?
+		WHERE cp.user_id = ? AND hc.chat_id IS NULL
+		ORDER BY c.updated_at DESC`, userID, userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	chats := make([]*domain.Chat, 0)
+	for rows.Next() {
+		c, err := scanChat(rows)
+		if err != nil {
+			return nil, err
+		}
+		chats = append(chats, c)
+	}
+	return chats, nil
 }
 
 func scanChat(row scanner) (*domain.Chat, error) {
@@ -197,7 +246,7 @@ func scanChat(row scanner) (*domain.Chat, error) {
 	if err != nil {
 		return nil, err
 	}
-	c.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-	c.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+	c.CreatedAt = parseTime(createdAt)
+	c.UpdatedAt = parseTime(updatedAt)
 	return &c, nil
 }

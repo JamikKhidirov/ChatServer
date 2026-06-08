@@ -1,321 +1,347 @@
-# 🚀 Chat Messenger Server
+# Chat Messenger Server
 
-**Сервер мессенджера на Go** с REST API, WebSocket, WebRTC звонками, push-уведомлениями и Swagger UI.
-
----
-
-## 📋 Содержание
-
-- [Быстрый старт](#-быстрый-старт)
-- [Архитектура](#-архитектура)
-- [API Endpoints](#-api-endpoints)
-  - [Auth](#auth)
-  - [Users](#users)
-  - [Chats](#chats)
-  - [Messages](#messages)
-  - [Calls](#calls)
-  - [WebSocket](#websocket)
-  - [System](#system)
-- [WebSocket Events](#-websocket-events)
-- [Переменные окружения](#-переменные-окружения)
-- [Push-уведомления (FCM)](#-push-уведомления-fcm)
-- [Работа со Swagger](#-работа-со-swagger)
-- [Примеры curl](#-примеры-curl)
+**Сервер мессенджера на Go** с REST API, WebSocket real-time, WebRTC звонками, push-уведомлениями, загрузкой файлов, реакциями, закреплением сообщений, read-ресиптами, блокировками, rate limiting, refresh-токенами, настройками аккаунта, контактами телефона, аватарками и полным профилем пользователя.
 
 ---
 
-## 🚀 Быстрый старт
-
-### 1. Запуск бинарника
+## Быстрый старт
 
 ```bash
-# Windows
 ./ChatServer.exe
 
-# Linux
-./chat-server-linux-amd64
-```
+# Swagger UI: http://localhost:8080/swagger/index.html
 
-### 2. Открой Swagger UI
-
-```
-http://localhost:8080/swagger/index.html
-```
-
-### 3. Зарегистрируй пользователя
-
-```bash
+# Register
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username":"john","email":"john@mail.com","password":"secret123","displayName":"John"}'
 ```
 
-### 4. Получи JWT и авторизуйся в Swagger
-
-Нажми **Authorize** → вставь `Bearer <токен>`.
-
 ---
 
-## 🏗 Архитектура
-
-```
-├── main.go              # Точка входа, роутинг
-├── config/              # Конфигурация (env vars)
-├── docs/                # Swagger спецификация (swagger.json)
-├── internal/
-│   ├── domain/          # Модели данных (User, Chat, Message, Call)
-│   ├── database/        # SQLite подключение + миграции
-│   ├── repository/      # Запросы к БД (CRUD)
-│   ├── service/         # Бизнес-логика
-│   ├── handler/         # HTTP обработчики + WebSocket events
-│   ├── middleware/      # JWT, CORS, Rate Limiter
-│   └── ws/              # WebSocket hub + client
-└── pkg/response/        # Утилиты для JSON-ответов
-```
-
-**Слои:** `domain → repository → service → handler → main`
-
----
-
-## 📡 API Endpoints
+## API Endpoints (54 endpoints)
 
 ### Auth
 
-| Method | Endpoint | Описание |
-|--------|----------|----------|
-| `POST` | `/api/auth/register` | Регистрация нового пользователя |
-| `POST` | `/api/auth/login` | Вход в систему |
-| `GET` | `/api/auth/refresh` | Обновить JWT токен |
-| `PUT` | `/api/auth/change-password` | Сменить пароль |
+| Method | Endpoint | Auth | Описание |
+|--------|----------|------|----------|
+| `POST` | `/api/auth/register` | ❌ | Регистрация |
+| `POST` | `/api/auth/login` | ❌ | Вход |
+| `GET` | `/api/auth/refresh` | ✅ | Обновить JWT |
+| `PUT` | `/api/auth/change-password` | ✅ | Сменить пароль |
 
 ### Users
 
 | Method | Endpoint | Описание |
 |--------|----------|----------|
-| `GET` | `/api/users/profile` | Профиль текущего пользователя |
+| `GET` | `/api/users/profile` | Профиль (phone, gender, dateOfBirth) |
 | `PUT` | `/api/users/profile` | Обновить профиль |
-| `PUT` | `/api/users/status` | Обновить статус (Available, Busy, ...) |
-| `PUT` | `/api/users/push-token` | Обновить push-токен |
-| `POST` | `/api/users/push-test` | Отправить тестовый push |
-| `GET` | `/api/users/search?q=` | Поиск пользователей |
-| `GET` | `/api/users/{id}` | Пользователь по ID |
-| `GET` | `/api/users/username/{username}` | Пользователь по username |
-| `POST` | `/api/users/block` | Заблокировать пользователя |
-| `DELETE` | `/api/users/block/{userId}` | Разблокировать пользователя |
+| `POST` | `/api/users/avatar` | Загрузить аватарку (multipart) |
+| `PUT` | `/api/users/status` | Статус (Available, Busy...) |
+| `PUT` | `/api/users/push-token` | Push-токен |
+| `POST` | `/api/users/push-test` | Тестовый push |
+| `GET` | `/api/users/search?q=` | Поиск |
+| `GET` | `/api/users/{id}` | По ID |
+| `GET` | `/api/users/username/{username}` | По username |
+| `POST` | `/api/users/block` | Заблокировать |
+| `DELETE` | `/api/users/block/{userId}` | Разблокировать |
 | `GET` | `/api/users/blocked` | Список заблокированных |
 | `DELETE` | `/api/users/account` | Удалить аккаунт |
+
+### Account Settings
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| `GET` | `/api/account/settings` | Получить настройки |
+| `PUT` | `/api/account/settings` | Обновить настройки |
+
+Поля: `language` (en/ru), `theme` (light/dark), `notifications`, `soundEnabled`, `lastSeenMode` (everyone/nobody/contacts).
+
+### Contacts
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| `POST` | `/api/contacts/sync` | Синхронизировать телефонную книгу |
+| `GET` | `/api/contacts` | Получить все контакты |
+| `GET` | `/api/contacts/search?q=` | Поиск по номеру |
+| `GET` | `/api/contacts/registered` | Найти пользователей сервера среди контактов |
+
+При синхронизации контакты сохраняются в БД. Endpoint `/contacts/registered` ищет пользователей, чей номер телефона совпадает с сохранёнными контактами.
 
 ### Chats
 
 | Method | Endpoint | Описание |
 |--------|----------|----------|
-| `GET` | `/api/chats` | Список чатов |
-| `POST` | `/api/chats` | Создать чат (private/group) |
-| `GET` | `/api/chats/{id}` | Детали чата |
+| `GET` | `/api/chats` | Список чатов (скрытые не показываются) |
+| `POST` | `/api/chats` | Создать (private/group) |
+| `GET` | `/api/chats/{id}` | Детали |
 | `PUT` | `/api/chats/{id}` | Обновить группу |
-| `DELETE` | `/api/chats/{id}` | Удалить чат |
+| `DELETE` | `/api/chats/{id}` | Удалить (только создатель) |
 | `POST` | `/api/chats/{id}/participants` | Добавить участника |
 | `DELETE` | `/api/chats/{id}/participants/{userId}` | Удалить участника |
-| `PUT` | `/api/chats/{id}/participants/{userId}/role` | Назначить роль (admin/member) |
+| `PUT` | `/api/chats/{id}/participants/{userId}/role` | Роль (admin/member) |
 | `POST` | `/api/chats/{id}/leave` | Покинуть группу |
 | `POST` | `/api/chats/{id}/read` | Отметить прочитанным |
-| `PUT` | `/api/chats/{id}/notifications` | Включить/выключить уведомления |
+| `POST` | `/api/chats/{id}/hide` | Скрыть чат для себя |
+| `PUT` | `/api/chats/{id}/notifications` | Mute/unmute |
 | `GET` | `/api/chats/{id}/notifications` | Статус уведомлений |
+
+**Hide chat**: скрывает чат только для текущего пользователя. Другие участники всё ещё видят чат. Чат не удаляется — его можно вернуть, создав новое сообщение.
 
 ### Messages
 
 | Method | Endpoint | Описание |
 |--------|----------|----------|
 | `GET` | `/api/chats/{id}/messages` | Сообщения чата |
-| `POST` | `/api/chats/{id}/messages` | Отправить сообщение |
-| `GET` | `/api/chats/{id}/messages/search?q=` | Поиск по сообщениям |
+| `POST` | `/api/chats/{id}/messages` | Отправить |
+| `GET` | `/api/chats/{id}/messages/search?q=` | Поиск |
 | `POST` | `/api/chats/{id}/messages/file` | Загрузить файл (multipart) |
-| `POST` | `/api/chats/{id}/messages/{msgId}/resend` | Переслать сообщение |
-| `GET` | `/api/chats/{id}/pinned` | Закреплённые сообщения |
-| `GET` | `/api/messages/{id}` | Сообщение по ID |
-| `PUT` | `/api/messages/{id}` | Редактировать сообщение |
-| `DELETE` | `/api/messages/{id}` | Удалить сообщение |
-| `POST` | `/api/messages/{id}/reactions` | Добавить реакцию (emoji) |
+| `POST` | `/api/chats/{id}/messages/{msgId}/resend` | Переслать |
+| `GET` | `/api/chats/{id}/pinned` | Закреплённые |
+| `GET` | `/api/messages/{id}` | По ID |
+| `PUT` | `/api/messages/{id}` | Редактировать |
+| `DELETE` | `/api/messages/{id}` | Удалить |
+| `POST` | `/api/messages/{id}/reactions` | Реакция (emoji) |
 | `DELETE` | `/api/messages/{id}/reactions?emoji=` | Удалить реакцию |
 | `PUT` | `/api/messages/{id}/pin` | Закрепить/открепить |
-| `POST` | `/api/messages/{id}/read` | Отметить прочитанным |
+| `POST` | `/api/messages/{id}/read` | Прочитано |
+
+**Типы сообщений:** `text`, `image`, `file`, `gif`, `voice`, `video`, `system`.
+
+### Files
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| `GET` | `/api/files/{filename}` | Скачать файл |
 
 ### Calls
 
 | Method | Endpoint | Описание |
 |--------|----------|----------|
 | `POST` | `/api/calls/initiate` | Начать звонок |
-| `POST` | `/api/calls/{id}/respond` | Ответить на звонок (accept/reject) |
-| `POST` | `/api/calls/{id}/end` | Завершить звонок |
-| `GET` | `/api/calls/{id}` | Информация о звонке |
-| `GET` | `/api/calls/history/{chatId}` | История звонков в чате |
+| `POST` | `/api/calls/{id}/respond` | Ответить (accept/reject) |
+| `POST` | `/api/calls/{id}/end` | Завершить |
+| `GET` | `/api/calls/{id}` | Информация |
+| `GET` | `/api/calls/history/{chatId}` | История |
 
 ### WebSocket
 
 | Endpoint | Описание |
 |----------|----------|
-| `ws://localhost:8080/ws?token=JWT` | Real-time соединение |
+| `ws://localhost:8080/ws?token=JWT` | Real-time |
 
 ### System
 
 | Method | Endpoint | Описание |
 |--------|----------|----------|
 | `GET` | `/health` | Healthcheck |
+| `GET` | `/swagger/*any` | Swagger UI |
 
 ---
 
-## 🔌 WebSocket Events
+## WebSocket Events
 
-### События сервера (сервер → клиент)
+Подключение: `ws://localhost:8080/ws?token=JWT`
 
-| Событие | Описание | Payload |
-|---------|----------|---------|
+Сервер отмечает пользователя **online** при подключении и **offline** при отключении.
+
+### Сервер → Клиент (сервер отправляет)
+
+| Событие | Когда | Payload |
+|---------|-------|---------|
 | `message:new` | Новое сообщение | `MessageResponse` |
 | `message:edited` | Сообщение изменено | `MessageResponse` |
 | `message:deleted` | Сообщение удалено | `{ messageId, chatId }` |
-| `message:read` | Сообщение прочитано | `{ chatId, userId }` |
-| `user:online` | Пользователь онлайн | `{ userId, online: true }` |
-| `user:offline` | Пользователь офлайн | `{ userId, online: false }` |
+| `message:read` | Прочитано | `{ chatId, userId }` |
 | `user:typing` | Пользователь печатает | `{ chatId, userId }` |
 | `user:stop_typing` | Перестал печатать | `{ chatId, userId }` |
+| `user:online` | Появился в сети | `{ userId, online: true }` |
+| `user:offline` | Ушёл | `{ userId, online: false }` |
 | `chat:created` | Создан чат | `ChatResponse` |
 | `chat:updated` | Чат обновлён | `ChatResponse` |
 | `chat:deleted` | Чат удалён | `{ chatId }` |
 | `call:offer` | Входящий звонок | `{ chatId, callerId }` |
 | `call:accept` | Звонок принят | `{ callId, userId }` |
-| `call:end` | Звонок завершён | `{ callId }` |
+| `call:end` | Звонок завершён | `{ callId, userId }` |
 
-### Команды клиента (клиент → сервер)
+### Клиент → Сервер (клиент отправляет)
 
-```json
-{ "type": "user:typing", "payload": { "chatId": "..." } }
-{ "type": "user:stop_typing", "payload": { "chatId": "..." } }
-```
+| Событие | Payload | Описание |
+|---------|---------|----------|
+| `user:typing` | `{ chatId }` | Печатает (рассылается всем, кроме отправителя) |
+| `user:stop_typing` | `{ chatId }` | Не печатает |
+| `call:offer` | `{ chatId, callId, sdp }` | WebRTC offer (ретранслируется) |
+| `call:answer` | `{ callId, sdp }` | WebRTC answer (ретранслируется) |
+| `call:ice` | `{ callId, candidate, sdpMLineIdx }` | ICE candidate (ретранслируется) |
+| `call:reject` | `{ callId, chatId }` | Отклонить звонок |
+
+**Важно:** typing-события приходят **всем участникам чата, кроме отправителя**. WebRTC события ретранслируются через сервер к другому участнику (signaling relay).
 
 ---
 
-## 🔧 Переменные окружения
+## Настройки профиля
+
+```
+PUT /api/users/profile
+```
+
+```json
+{
+  "displayName": "New Name",
+  "bio": "About me",
+  "phone": "+79001234567",
+  "gender": "female",
+  "dateOfBirth": "1995-06-15",
+  "avatarUrl": "/uploads/avatars/userid.jpg"
+}
+```
+
+- `gender`: `male`, `female`, `other`
+- `dateOfBirth`: формат `YYYY-MM-DD`
+- `phone`: любой формат номера
+
+---
+
+## Контакты телефона
+
+Пользователь может загрузить свою телефонную книгу на сервер:
+
+```bash
+# Sync contacts
+curl -X POST http://localhost:8080/api/contacts/sync \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"contacts":[{"phone":"+79001234567","name":"Alice"},{"phone":"+79876543210","name":"Bob"}]}'
+
+# Find registered users
+curl http://localhost:8080/api/contacts/registered \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Endpoint `/contacts/registered` возвращает пользователей сервера, чьи номера телефонов есть в контактах (поле `phone` в профиле).
+
+---
+
+## Типы сообщений
+
+- `text` — текстовое сообщение
+- `image` — изображение
+- `file` — файл
+- `gif` — GIF-анимация
+- `voice` — голосовое сообщение
+- `video` — видеосообщение/кружок
+- `system` — системное (серверное) сообщение
+
+---
+
+## Переменные окружения
 
 | Переменная | По умолч. | Описание |
 |------------|-----------|----------|
-| `SERVER_PORT` | `8080` | Порт сервера |
-| `DATABASE_PATH` | `file:chat.db?cache=shared&mode=rwc` | Путь к SQLite БД |
-| `JWT_SECRET` | `super-secret-key-change-in-production` | Секрет для JWT |
-| `JWT_TTL` | `86400` | Время жизни токена (сек) |
-| `PUSH_ENABLED` | `false` | Включить push-уведомления |
-| `FIREBASE_CREDENTIALS` | — | Server Key Firebase Cloud Messaging |
+| `SERVER_PORT` | `8080` | Порт |
+| `DATABASE_PATH` | `file:chat.db?cache=shared&mode=rwc` | SQLite |
+| `JWT_SECRET` | `super-secret-key-...` | Секрет JWT |
+| `JWT_TTL` | `86400` | TTL токена (сек) |
+| `ALLOW_ORIGINS` | `*` | CORS origin |
+| `PUSH_ENABLED` | `false` | Push-уведомления |
+| `FIREBASE_CREDENTIALS` | — | Server Key FCM |
 
 ---
 
-## 📬 Push-уведомления (FCM)
-
-1. Получи **Server Key** из Firebase Console → Project Settings → Cloud Messaging
-2. Установи переменные окружения:
+## Push-уведомления (FCM)
 
 ```bash
 set PUSH_ENABLED=true
 set FIREBASE_CREDENTIALS=AIzaSy...
-```
 
-3. Обнови push-токен пользователя:
-
-```bash
 curl -X PUT http://localhost:8080/api/users/push-token \
   -H "Authorization: Bearer <JWT>" \
   -H "Content-Type: application/json" \
   -d '{"token":"<FCM_TOKEN>","provider":"fcm"}'
-```
 
-4. Отправь тестовое уведомление:
-
-```bash
 curl -X POST http://localhost:8080/api/users/push-test \
   -H "Authorization: Bearer <JWT>" \
   -H "Content-Type: application/json" \
-  -d '{"title":"Привет!","body":"Тестовое уведомление"}'
+  -d '{"title":"Hello!","body":"Test"}'
 ```
 
 ---
 
-## 📖 Работа со Swagger
+## Optimizations & Scaling
 
-Swagger UI доступен по адресу:
+### Database
+- **WAL mode** — параллельные чтения не блокируют запись
+- **Connection pool** — 25 max open, 5 idle
+- **Busy timeout** — 5 секунд ожидания блокировки
+- **Индексы** — на все ключевые поля
 
-```
-http://localhost:8080/swagger/index.html
-```
+### Stability
+- **Graceful shutdown** — `server.Shutdown(ctx)` с таймаутом 10s
+- **Rate limiter** — 100 requests/min per IP с `stopCh`
+- **Auto-miss call** — горутина `time.Sleep(30s)` для автоматического пропуска
+- **WebSocket ping/pong** — 60s timeout, автоматическое переподключение
 
-**Авторизация:**
-1. Зарегистрируйся через `POST /api/auth/register`
-2. Скопируй `token` из ответа
-3. Нажми **Authorize** в Swagger UI
-4. Вставь `Bearer <токен>` → **Authorize**
+### WebSocket
+- **Typing events** — рассылаются всем, кроме отправителя
+- **Online/offline** — при подключении/отключении WS
+- **WebRTC relay** — сервер ретранслирует SDP/ICE между участниками
+
+### Безопасность
+- **Проверка блокировки** при отправке сообщений (в обе стороны)
+- **Доступ к чату** только для участников
+- **Редактирование/удаление** только своих сообщений (или админом)
 
 ---
 
-## 📝 Примеры curl
-
-<details>
-<summary>Полный рабочий процесс</summary>
+## Примеры curl
 
 ```bash
-# 1. Регистрация
+# Register
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username":"alice","email":"alice@mail.com","password":"123456","displayName":"Alice"}'
 
-# Сохрани token из ответа
-TOKEN="eyJhbG..."
-
-# 2. Обновить статус
-curl -X PUT http://localhost:8080/api/users/status \
+# Update profile with phone, gender, date of birth
+curl -X PUT http://localhost:8080/api/users/profile \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"status":"Busy"}'
+  -d '{"phone":"+79001234567","gender":"female","dateOfBirth":"1995-06-15"}'
 
-# 3. Поиск пользователей
-curl -X GET "http://localhost:8080/api/users/search?q=bob" \
+# Upload avatar
+curl -X POST http://localhost:8080/api/users/avatar \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "avatar=@photo.jpg"
+
+# Sync contacts
+curl -X POST http://localhost:8080/api/contacts/sync \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"contacts":[{"phone":"+79001234567","name":"Friend"}]}'
+
+# Find registered contacts
+curl http://localhost:8080/api/contacts/registered \
   -H "Authorization: Bearer $TOKEN"
 
-# 4. Создать чат (private)
-curl -X POST http://localhost:8080/api/chats \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"type":"private","participantIds":["USER_ID_2"]}'
-
-# 5. Отправить сообщение
+# Send GIF
 curl -X POST http://localhost:8080/api/chats/CHAT_ID/messages \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"content":"Привет!","type":"text"}'
+  -d '{"content":"funny.gif","type":"gif"}'
 
-# 6. Добавить реакцию
-curl -X POST http://localhost:8080/api/messages/MSG_ID/reactions \
+# Send voice
+curl -X POST http://localhost:8080/api/chats/CHAT_ID/messages \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"emoji":"👍"}'
+  -d '{"content":"voice.ogg","type":"voice"}'
 
-# 7. Закрепить сообщение
-curl -X PUT http://localhost:8080/api/messages/MSG_ID/pin \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"pin":true}'
-
-# 8. Поиск по сообщениям
-curl -X GET "http://localhost:8080/api/chats/CHAT_ID/messages/search?q=Привет" \
+# Hide chat
+curl -X POST http://localhost:8080/api/chats/CHAT_ID/hide \
   -H "Authorization: Bearer $TOKEN"
-
-# 9. Начать звонок
-curl -X POST http://localhost:8080/api/calls/initiate \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"chatId":"CHAT_ID"}'
 ```
-</details>
 
 ---
 
-## 🛠 Сборка из исходников
+## Сборка
 
 ```bash
 # Windows
@@ -325,10 +351,10 @@ go build -o ChatServer.exe .
 GOOS=linux GOARCH=amd64 go build -o chat-server-linux-amd64 .
 ```
 
-Требования: Go 1.21+.
+**Go 1.21+**
 
 ---
 
-## 📄 Лицензия
+## Лицензия
 
 MIT

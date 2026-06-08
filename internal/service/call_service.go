@@ -10,20 +10,20 @@ import (
 	"github.com/google/uuid"
 )
 
-type CallService struct {
-	callRepo    *repository.CallRepository
-	chatRepo    *repository.ChatRepository
-	userRepo    *repository.UserRepository
-	userService *UserService
+type callService struct {
+	callRepo    repository.CallRepository
+	chatRepo    repository.ChatRepository
+	userRepo    repository.UserRepository
+	userService UserService
 }
 
 func NewCallService(
-	callRepo *repository.CallRepository,
-	chatRepo *repository.ChatRepository,
-	userRepo *repository.UserRepository,
-	userService *UserService,
-) *CallService {
-	return &CallService{
+	callRepo repository.CallRepository,
+	chatRepo repository.ChatRepository,
+	userRepo repository.UserRepository,
+	userService UserService,
+) CallService {
+	return &callService{
 		callRepo:    callRepo,
 		chatRepo:    chatRepo,
 		userRepo:    userRepo,
@@ -31,7 +31,7 @@ func NewCallService(
 	}
 }
 
-func (s *CallService) InitiateCall(chatID, callerID string) (*domain.Call, error) {
+func (s *callService) InitiateCall(chatID, callerID string) (*domain.Call, error) {
 	_, err := s.chatRepo.FindByID(chatID)
 	if err != nil {
 		return nil, errors.New("chat not found")
@@ -74,10 +74,16 @@ func (s *CallService) InitiateCall(chatID, callerID string) (*domain.Call, error
 		return nil, err
 	}
 
+	// Schedule auto-miss after 30 seconds
+	go func() {
+		time.Sleep(30 * time.Second)
+		s.MissCall(call.ID)
+	}()
+
 	return call, nil
 }
 
-func (s *CallService) AcceptCall(callID, userID string) error {
+func (s *callService) AcceptCall(callID, userID string) error {
 	call, err := s.callRepo.FindByID(callID)
 	if err != nil {
 		return errors.New("call not found")
@@ -94,7 +100,7 @@ func (s *CallService) AcceptCall(callID, userID string) error {
 	return s.callRepo.UpdateStatus(callID, domain.CallOngoing)
 }
 
-func (s *CallService) EndCall(callID, userID string) error {
+func (s *callService) EndCall(callID, userID string) error {
 	call, err := s.callRepo.FindByID(callID)
 	if err != nil {
 		return errors.New("call not found")
@@ -111,10 +117,10 @@ func (s *CallService) EndCall(callID, userID string) error {
 	return s.callRepo.UpdateStatus(callID, domain.CallEnded)
 }
 
-func (s *CallService) MissCall(callID string) error {
+func (s *callService) MissCall(callID string) error {
 	call, err := s.callRepo.FindByID(callID)
 	if err != nil {
-		return errors.New("call not found")
+		return nil
 	}
 
 	if call.Status != domain.CallInitiated {
@@ -124,7 +130,7 @@ func (s *CallService) MissCall(callID string) error {
 	return s.callRepo.UpdateStatus(callID, domain.CallMissed)
 }
 
-func (s *CallService) RejectCall(callID, userID string) error {
+func (s *callService) RejectCall(callID, userID string) error {
 	call, err := s.callRepo.FindByID(callID)
 	if err != nil {
 		return errors.New("call not found")
@@ -137,17 +143,21 @@ func (s *CallService) RejectCall(callID, userID string) error {
 	return s.callRepo.UpdateStatus(callID, domain.CallRejected)
 }
 
-func (s *CallService) GetCallByID(callID string) (*domain.Call, error) {
-	return s.callRepo.FindByID(callID)
+func (s *callService) GetCallByID(callID string) (*domain.Call, error) {
+	call, err := s.callRepo.FindByID(callID)
+	if err != nil {
+		return nil, errors.New("call not found")
+	}
+	return call, nil
 }
 
-func (s *CallService) GetCallHistory(chatID, userID string) ([]*domain.CallResponse, error) {
+func (s *callService) GetCallHistory(chatID, userID string) ([]*domain.CallResponse, error) {
 	calls, err := s.callRepo.FindByChatAndUser(chatID, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	responses := make([]*domain.CallResponse, 0)
+	responses := make([]*domain.CallResponse, 0, len(calls))
 	for _, call := range calls {
 		resp, err := s.toCallResponse(call)
 		if err != nil {
@@ -158,7 +168,7 @@ func (s *CallService) GetCallHistory(chatID, userID string) ([]*domain.CallRespo
 	return responses, nil
 }
 
-func (s *CallService) toCallResponse(call *domain.Call) (*domain.CallResponse, error) {
+func (s *callService) toCallResponse(call *domain.Call) (*domain.CallResponse, error) {
 	caller, err := s.userRepo.FindByID(call.CallerID)
 	if err != nil {
 		return nil, err

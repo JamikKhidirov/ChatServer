@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"io"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"ChatServerGolang/internal/domain"
@@ -11,11 +14,11 @@ import (
 )
 
 type UserHandler struct {
-	userService *service.UserService
-	pushService *service.PushService
+	userService service.UserService
+	pushService service.PushService
 }
 
-func NewUserHandler(userService *service.UserService, pushService *service.PushService) *UserHandler {
+func NewUserHandler(userService service.UserService, pushService service.PushService) *UserHandler {
 	return &UserHandler{userService: userService, pushService: pushService}
 }
 
@@ -147,14 +150,13 @@ func (h *UserHandler) UpdatePushToken(c *gin.Context) {
 	}
 
 	if err := h.userService.UpdatePushToken(userID.(string), req.Token, req.Provider); err != nil {
-		response.InternalError(c, err.Error())
+		response.BadRequest(c, err.Error())
 		return
 	}
 
 	response.JSON(c, 200, gin.H{"message": "push token updated"})
 }
 
-// Block
 func (h *UserHandler) BlockUser(c *gin.Context) {
 	userID, _ := c.Get("userID")
 
@@ -189,14 +191,13 @@ func (h *UserHandler) GetBlockedUsers(c *gin.Context) {
 
 	users, err := h.userService.GetBlockedUsers(userID.(string))
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.BadRequest(c, err.Error())
 		return
 	}
 
 	response.JSON(c, 200, users)
 }
 
-// Notification settings
 func (h *UserHandler) SetNotificationMuted(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	chatID := c.Param("id")
@@ -225,9 +226,87 @@ func (h *UserHandler) IsNotificationMuted(c *gin.Context) {
 
 	muted, err := h.userService.IsNotificationMuted(userID.(string), chatID)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.BadRequest(c, err.Error())
 		return
 	}
 
 	response.JSON(c, 200, gin.H{"muted": muted})
+}
+
+func (h *UserHandler) UploadAvatar(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
+	file, header, err := c.Request.FormFile("avatar")
+	if err != nil {
+		response.BadRequest(c, "avatar file required")
+		return
+	}
+	defer file.Close()
+
+	ext := filepath.Ext(header.Filename)
+	if ext == "" {
+		ext = ".jpg"
+	}
+
+	uploadDir := "uploads/avatars"
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		response.InternalError(c, "failed to create upload directory")
+		return
+	}
+
+	fileName := userID.(string) + ext
+	filePath := filepath.Join(uploadDir, fileName)
+
+	out, err := os.Create(filePath)
+	if err != nil {
+		response.InternalError(c, "failed to save file")
+		return
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, file); err != nil {
+		response.InternalError(c, "failed to save file")
+		return
+	}
+
+	avatarURL := "/uploads/avatars/" + fileName
+
+	updated, err := h.userService.UpdateProfile(userID.(string), &domain.UpdateProfileRequest{AvatarURL: avatarURL})
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, updated)
+}
+
+// Account settings
+func (h *UserHandler) GetAccountSetting(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
+	setting, err := h.userService.GetAccountSetting(userID.(string))
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, setting)
+}
+
+func (h *UserHandler) UpdateAccountSetting(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
+	var req domain.UpdateAccountSettingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	setting, err := h.userService.UpdateAccountSetting(userID.(string), &req)
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, setting)
 }

@@ -11,14 +11,14 @@ import (
 	"ChatServerGolang/internal/repository"
 )
 
-type PushService struct {
-	userRepo *repository.UserRepository
+type pushService struct {
+	userRepo repository.UserRepository
 	cfg      *config.Config
 	client   *http.Client
 }
 
-func NewPushService(userRepo *repository.UserRepository, cfg *config.Config) *PushService {
-	return &PushService{
+func NewPushService(userRepo repository.UserRepository, cfg *config.Config) PushService {
+	return &pushService{
 		userRepo: userRepo,
 		cfg:      cfg,
 		client:   &http.Client{},
@@ -26,9 +26,9 @@ func NewPushService(userRepo *repository.UserRepository, cfg *config.Config) *Pu
 }
 
 type FCMRequest struct {
-	To       string           `json:"to"`
-	Priority string           `json:"priority"`
-	Data     *FCMData         `json:"data,omitempty"`
+	To           string           `json:"to"`
+	Priority     string           `json:"priority"`
+	Data         *FCMData         `json:"data,omitempty"`
 	Notification *FCMNotification `json:"notification,omitempty"`
 }
 
@@ -46,7 +46,7 @@ type FCMNotification struct {
 	Body  string `json:"body"`
 }
 
-func (s *PushService) SendMessageNotification(senderID, chatID, msgID, msgContent, msgType string) {
+func (s *pushService) SendMessageNotification(senderID, chatID, msgID, msgContent, msgType string) {
 	if !s.cfg.PushEnabled {
 		return
 	}
@@ -68,7 +68,6 @@ func (s *PushService) SendMessageNotification(senderID, chatID, msgID, msgConten
 		}
 
 		title := sender.DisplayName
-
 		var body string
 		switch msgType {
 		case "text":
@@ -80,7 +79,6 @@ func (s *PushService) SendMessageNotification(senderID, chatID, msgID, msgConten
 		default:
 			body = msgContent
 		}
-
 		if len(body) > 200 {
 			body = body[:200] + "..."
 		}
@@ -97,7 +95,7 @@ func (s *PushService) SendMessageNotification(senderID, chatID, msgID, msgConten
 	}
 }
 
-func (s *PushService) SendCallNotification(callerID, chatID, callID, callType string) {
+func (s *pushService) SendCallNotification(callerID, chatID, callID, callType string) {
 	if !s.cfg.PushEnabled {
 		return
 	}
@@ -131,7 +129,7 @@ func (s *PushService) SendCallNotification(callerID, chatID, callID, callType st
 	}
 }
 
-func (s *PushService) SendTestPush(userID, title, body string) {
+func (s *pushService) SendTestPush(userID, title, body string) {
 	sender, err := s.userRepo.FindByID(userID)
 	if err != nil || sender.PushToken == "" {
 		log.Printf("[Push] No push token for user %s", userID)
@@ -144,7 +142,7 @@ func (s *PushService) SendTestPush(userID, title, body string) {
 	})
 }
 
-func (s *PushService) sendFCM(token, title, body string, data *FCMData) {
+func (s *pushService) sendFCM(token, title, body string, data *FCMData) {
 	if s.cfg.FirebaseCredentials == "" {
 		log.Printf("[FCM] Would send push (no credentials configured): title=%s, body=%s", title, body)
 		return

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -13,6 +14,7 @@ type rateLimiter struct {
 	visitors map[string]*visitor
 	limit    int
 	window   time.Duration
+	stopCh   chan struct{}
 }
 
 type visitor struct {
@@ -25,6 +27,7 @@ func NewRateLimiter(limit int, window time.Duration) gin.HandlerFunc {
 		visitors: make(map[string]*visitor),
 		limit:    limit,
 		window:   window,
+		stopCh:   make(chan struct{}),
 	}
 
 	go rl.cleanup()
@@ -65,16 +68,28 @@ func NewRateLimiter(limit int, window time.Duration) gin.HandlerFunc {
 	}
 }
 
+func (rl *rateLimiter) Stop() {
+	close(rl.stopCh)
+}
+
 func (rl *rateLimiter) cleanup() {
 	ticker := time.NewTicker(5 * time.Minute)
-	for range ticker.C {
-		rl.mu.Lock()
-		now := time.Now()
-		for ip, v := range rl.visitors {
-			if now.Sub(v.lastSeen) > rl.window*2 {
-				delete(rl.visitors, ip)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			rl.mu.Lock()
+			now := time.Now()
+			for ip, v := range rl.visitors {
+				if now.Sub(v.lastSeen) > rl.window*2 {
+					delete(rl.visitors, ip)
+				}
 			}
+			rl.mu.Unlock()
+		case <-rl.stopCh:
+			log.Println("Rate limiter cleanup stopped")
+			return
 		}
-		rl.mu.Unlock()
 	}
 }

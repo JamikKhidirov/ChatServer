@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
-
 	"ChatServerGolang/internal/domain"
 	"ChatServerGolang/internal/service"
 	"ChatServerGolang/internal/ws"
@@ -11,26 +9,29 @@ import (
 )
 
 type WebSocketEvents struct {
-	hub           *ws.Hub
-	chatService   *service.ChatService
-	messageService *service.MessageService
-	userService   *service.UserService
-	pushService   *service.PushService
+	hub            *ws.Hub
+	chatService    service.ChatService
+	messageService service.MessageService
+	userService    service.UserService
+	pushService    service.PushService
+	callService    service.CallService
 }
 
 func NewWebSocketEvents(
 	hub *ws.Hub,
-	chatService *service.ChatService,
-	messageService *service.MessageService,
-	userService *service.UserService,
-	pushService *service.PushService,
+	chatService service.ChatService,
+	messageService service.MessageService,
+	userService service.UserService,
+	pushService service.PushService,
+	callService service.CallService,
 ) *WebSocketEvents {
 	return &WebSocketEvents{
-		hub:           hub,
-		chatService:   chatService,
+		hub:            hub,
+		chatService:    chatService,
 		messageService: messageService,
-		userService:   userService,
-		pushService:   pushService,
+		userService:    userService,
+		pushService:    pushService,
+		callService:    callService,
 	}
 }
 
@@ -42,24 +43,22 @@ func (e *WebSocketEvents) WrapSendMessage(handler gin.HandlerFunc) gin.HandlerFu
 		handler(c)
 
 		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
-			go func() {
-				chat, _ := e.chatService.GetChat(chatID, userID.(string))
-				if chat != nil && chat.LastMessage != nil {
-					var userIDs []string
-					for _, p := range chat.Participants {
-						if p.ID != userID.(string) {
-							userIDs = append(userIDs, p.ID)
-						}
+			chat, _ := e.chatService.GetChat(chatID, userID.(string))
+			if chat != nil && chat.LastMessage != nil {
+				var userIDs []string
+				for _, p := range chat.Participants {
+					if p.ID != userID.(string) {
+						userIDs = append(userIDs, p.ID)
 					}
-
-					e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
-						Type:    ws.MsgNewMessage,
-						Payload: chat.LastMessage,
-					})
-
-					e.pushService.SendMessageNotification(userID.(string), chatID, chat.LastMessage.ID, chat.LastMessage.Content, string(chat.LastMessage.Type))
 				}
-			}()
+
+				e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
+					Type:    ws.MsgNewMessage,
+					Payload: chat.LastMessage,
+				})
+
+				e.pushService.SendMessageNotification(userID.(string), chatID, chat.LastMessage.ID, chat.LastMessage.Content, string(chat.LastMessage.Type))
+			}
 		}
 	}
 }
@@ -72,24 +71,22 @@ func (e *WebSocketEvents) WrapEditMessage(handler gin.HandlerFunc) gin.HandlerFu
 		handler(c)
 
 		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
-			go func() {
-				msg, err := e.messageService.GetMessageByID(msgID, userID.(string))
-				if err == nil && msg != nil {
-					participants, _ := e.chatService.GetChat(msg.ChatID, userID.(string))
-					if participants != nil {
-						var userIDs []string
-						for _, p := range participants.Participants {
-							if p.ID != userID.(string) {
-								userIDs = append(userIDs, p.ID)
-							}
+			msg, err := e.messageService.GetMessageByID(msgID, userID.(string))
+			if err == nil && msg != nil {
+				chat, _ := e.chatService.GetChat(msg.ChatID, userID.(string))
+				if chat != nil {
+					var userIDs []string
+					for _, p := range chat.Participants {
+						if p.ID != userID.(string) {
+							userIDs = append(userIDs, p.ID)
 						}
-						e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
-							Type:    ws.MsgEditMessage,
-							Payload: msg,
-						})
 					}
+					e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
+						Type:    ws.MsgEditMessage,
+						Payload: msg,
+					})
 				}
-			}()
+			}
 		}
 	}
 }
@@ -102,24 +99,22 @@ func (e *WebSocketEvents) WrapDeleteMessage(handler gin.HandlerFunc) gin.Handler
 		handler(c)
 
 		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
-			go func() {
-				participants, _ := e.chatService.ListChats(userID.(string))
-				for _, chat := range participants {
-					var userIDs []string
-					for _, p := range chat.Participants {
-						if p.ID != userID.(string) {
-							userIDs = append(userIDs, p.ID)
-						}
+			chats, _ := e.chatService.ListChats(userID.(string))
+			for _, chat := range chats {
+				var userIDs []string
+				for _, p := range chat.Participants {
+					if p.ID != userID.(string) {
+						userIDs = append(userIDs, p.ID)
 					}
-					e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
-						Type: ws.MsgDeleteMessage,
-						Payload: map[string]string{
-							"messageId": msgID,
-							"chatId":    chat.ID,
-						},
-					})
 				}
-			}()
+				e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
+					Type: ws.MsgDeleteMessage,
+					Payload: map[string]string{
+						"messageId": msgID,
+						"chatId":    chat.ID,
+					},
+				})
+			}
 		}
 	}
 }
@@ -131,29 +126,19 @@ func (e *WebSocketEvents) WrapCreateChat(handler gin.HandlerFunc) gin.HandlerFun
 		handler(c)
 
 		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
-			var resp struct {
-				Data *domain.ChatResponse `json:"data"`
-			}
-			if data, exists := c.Get("response"); exists {
-				resp.Data = data.(*domain.ChatResponse)
-			}
-
-			go func() {
-				if resp.Data != nil {
-					var userIDs []string
-					for _, p := range resp.Data.Participants {
-						if p.ID != userID.(string) {
-							userIDs = append(userIDs, p.ID)
-						}
+			if resp, exists := c.Get("chatResponse"); exists {
+				chatResp := resp.(*domain.ChatResponse)
+				var userIDs []string
+				for _, p := range chatResp.Participants {
+					if p.ID != userID.(string) {
+						userIDs = append(userIDs, p.ID)
 					}
-					payload, _ := json.Marshal(resp.Data)
-					_ = payload
-					e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
-						Type:    ws.MsgChatCreated,
-						Payload: resp.Data,
-					})
 				}
-			}()
+				e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
+					Type:    ws.MsgChatCreated,
+					Payload: chatResp,
+				})
+			}
 		}
 	}
 }
@@ -174,14 +159,12 @@ func (e *WebSocketEvents) WrapDeleteChat(handler gin.HandlerFunc) gin.HandlerFun
 		handler(c)
 
 		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
-			go func() {
-				e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
-					Type: ws.MsgChatDeleted,
-					Payload: map[string]string{
-						"chatId": chatID,
-					},
-				})
-			}()
+			e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
+				Type: ws.MsgChatDeleted,
+				Payload: map[string]string{
+					"chatId": chatID,
+				},
+			})
 		}
 	}
 }
@@ -195,22 +178,20 @@ func (e *WebSocketEvents) WrapInitiateCall(handler gin.HandlerFunc) gin.HandlerF
 		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
 			if resp, exists := c.Get("callResponse"); exists {
 				if callResp, ok := resp.(*domain.Call); ok {
-					go func() {
-						chat, _ := e.chatService.GetChat(callResp.ChatID, userID.(string))
-						if chat != nil {
-							var userIDs []string
-							for _, p := range chat.Participants {
-								if p.ID != userID.(string) {
-									userIDs = append(userIDs, p.ID)
-								}
+					chat, _ := e.chatService.GetChat(callResp.ChatID, userID.(string))
+					if chat != nil {
+						var userIDs []string
+						for _, p := range chat.Participants {
+							if p.ID != userID.(string) {
+								userIDs = append(userIDs, p.ID)
 							}
-							e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
-								Type:    ws.MsgCallOffer,
-								Payload: map[string]string{"chatId": callResp.ChatID, "callerId": userID.(string)},
-							})
-							e.pushService.SendCallNotification(userID.(string), callResp.ChatID, callResp.ID, "voice")
 						}
-					}()
+						e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
+							Type:    ws.MsgCallOffer,
+							Payload: map[string]string{"chatId": callResp.ChatID, "callerId": userID.(string)},
+						})
+						e.pushService.SendCallNotification(userID.(string), callResp.ChatID, callResp.ID, "voice")
+					}
 				}
 			}
 		}
@@ -225,25 +206,23 @@ func (e *WebSocketEvents) WrapRespondCall(handler gin.HandlerFunc) gin.HandlerFu
 		handler(c)
 
 		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
-			go func() {
-				call, err := e.chatService.GetChat(callID, userID.(string))
-				if err == nil && call != nil {
+			call, err := e.callService.GetCallByID(callID)
+			if err == nil && call != nil {
+				chat, _ := e.chatService.GetChat(call.ChatID, userID.(string))
+				if chat != nil {
 					var userIDs []string
-					for _, p := range call.Participants {
+					for _, p := range chat.Participants {
 						if p.ID != userID.(string) {
 							userIDs = append(userIDs, p.ID)
 						}
 					}
 
-					var actionType ws.MessageType
-					actionType = ws.MsgCallAccept
-
 					e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
-						Type:    actionType,
+						Type:    ws.MsgCallAccept,
 						Payload: map[string]string{"callId": callID, "userId": userID.(string)},
 					})
 				}
-			}()
+			}
 		}
 	}
 }
@@ -256,9 +235,10 @@ func (e *WebSocketEvents) WrapEndCall(handler gin.HandlerFunc) gin.HandlerFunc {
 		handler(c)
 
 		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
-			go func() {
-				chats, _ := e.chatService.ListChats(userID.(string))
-				for _, chat := range chats {
+			call, err := e.callService.GetCallByID(callID)
+			if err == nil && call != nil {
+				chat, _ := e.chatService.GetChat(call.ChatID, userID.(string))
+				if chat != nil {
 					var userIDs []string
 					for _, p := range chat.Participants {
 						if p.ID != userID.(string) {
@@ -270,7 +250,7 @@ func (e *WebSocketEvents) WrapEndCall(handler gin.HandlerFunc) gin.HandlerFunc {
 						Payload: map[string]string{"callId": callID, "userId": userID.(string)},
 					})
 				}
-			}()
+			}
 		}
 	}
 }

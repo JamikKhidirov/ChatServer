@@ -57,6 +57,9 @@
           "displayName": { "type": "string" },
           "avatarUrl": { "type": "string" },
           "bio": { "type": "string" },
+          "phone": { "type": "string" },
+          "gender": { "type": "string", "enum": ["male", "female", "other", ""] },
+          "dateOfBirth": { "type": "string" },
           "status": { "type": "string", "description": "Статус пользователя (Available, Busy, At work, ...)" },
           "online": { "type": "boolean" },
           "lastSeen": { "type": "string", "format": "date-time" },
@@ -72,6 +75,9 @@
           "displayName": { "type": "string" },
           "avatarUrl": { "type": "string" },
           "bio": { "type": "string" },
+          "phone": { "type": "string" },
+          "gender": { "type": "string", "enum": ["male", "female", "other", ""] },
+          "dateOfBirth": { "type": "string" },
           "status": { "type": "string" },
           "online": { "type": "boolean" },
           "lastSeen": { "type": "string", "format": "date-time" }
@@ -109,7 +115,7 @@
           "chatId": { "type": "string" },
           "sender": { "$ref": "#/components/schemas/UserResponse" },
           "content": { "type": "string" },
-          "type": { "type": "string", "enum": ["text", "image", "file", "system"] },
+          "type": { "type": "string", "enum": ["text", "image", "file", "gif", "voice", "video", "system"] },
           "replyTo": { "$ref": "#/components/schemas/MessageResponse" },
           "forwardFrom": { "$ref": "#/components/schemas/UserResponse" },
           "fileName": { "type": "string" },
@@ -129,7 +135,7 @@
         "required": ["content", "type"],
         "properties": {
           "content": { "type": "string", "description": "Текст сообщения" },
-          "type": { "type": "string", "enum": ["text", "image", "file"] },
+          "type": { "type": "string", "enum": ["text", "image", "file", "gif", "voice", "video"] },
           "replyToId": { "type": "string", "description": "ID сообщения для ответа" },
           "forwardMsgId": { "type": "string", "description": "ID сообщения для пересылки" }
         }
@@ -154,6 +160,42 @@
           "status": { "type": "string", "enum": ["initiated", "ongoing", "ended", "missed", "rejected"] },
           "startedAt": { "type": "string", "format": "date-time" },
           "endedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Contact": {
+        "type": "object",
+        "properties": {
+          "phone": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      },
+      "SyncContactsRequest": {
+        "type": "object",
+        "required": ["contacts"],
+        "properties": {
+          "contacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["phone", "name"],
+              "properties": {
+                "phone": { "type": "string" },
+                "name": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "AccountSetting": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string" },
+          "language": { "type": "string", "description": "Язык интерфейса (en, ru, ...)" },
+          "theme": { "type": "string", "description": "Тема оформления (light, dark)" },
+          "notifications": { "type": "boolean" },
+          "soundEnabled": { "type": "boolean" },
+          "lastSeenMode": { "type": "string", "enum": ["everyone", "nobody", "contacts"], "description": "Кто видит время последнего визита" },
+          "updatedAt": { "type": "string", "format": "date-time" }
         }
       },
       "Error": {
@@ -394,6 +436,94 @@
         "responses": { "200": { "description": "Аккаунт удалён" } }
       }
     },
+    "/api/users/avatar": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Загрузить аватарку профиля (multipart/form-data)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Профиль с обновлённым avatarUrl" } }
+      }
+    },
+    "/api/contacts/sync": {
+      "post": {
+        "tags": ["Contacts"],
+        "summary": "Синхронизировать контакты телефона",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SyncContactsRequest" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Контакты синхронизированы" } }
+      }
+    },
+    "/api/contacts": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Получить синхронизированные контакты",
+        "responses": { "200": { "description": "Список контактов" } }
+      }
+    },
+    "/api/contacts/search": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Поиск контактов по номеру телефона",
+        "parameters": [
+          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Найденные контакты" } }
+      }
+    },
+    "/api/contacts/registered": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Найти зарегистрированных пользователей среди контактов",
+        "responses": { "200": { "description": "Пользователи, чьи номера совпадают с контактами" } }
+      }
+    },
+    "/api/account/settings": {
+      "get": {
+        "tags": ["Account Settings"],
+        "summary": "Получить настройки аккаунта",
+        "responses": { "200": { "description": "Настройки аккаунта" } }
+      },
+      "put": {
+        "tags": ["Account Settings"],
+        "summary": "Обновить настройки аккаунта",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "language": { "type": "string", "description": "Язык интерфейса (en, ru)" },
+                  "theme": { "type": "string", "description": "Тема (light, dark)" },
+                  "notifications": { "type": "boolean" },
+                  "soundEnabled": { "type": "boolean" },
+                  "lastSeenMode": { "type": "string", "enum": ["everyone", "nobody", "contacts"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Настройки обновлены" } }
+      }
+    },
     "/api/chats": {
       "get": {
         "tags": ["Chats"],
@@ -507,6 +637,16 @@
           }
         },
         "responses": { "200": { "description": "Роль обновлена" } }
+      }
+    },
+    "/api/chats/{id}/hide": {
+      "post": {
+        "tags": ["Chats"],
+        "summary": "Скрыть чат для себя (не удаляет для других)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Чат скрыт" } }
       }
     },
     "/api/chats/{id}/leave": {
@@ -817,11 +957,24 @@
         "responses": { "200": { "description": "История звонков" } }
       }
     },
+    "/api/files/{filename}": {
+      "get": {
+        "tags": ["Files"],
+        "summary": "Скачать загруженный файл",
+        "parameters": [
+          { "name": "filename", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Файл" },
+          "404": { "description": "Файл не найден" }
+        }
+      }
+    },
     "/ws": {
       "get": {
         "tags": ["WebSocket"],
         "summary": "WebSocket подключение для real-time обновлений",
-        "description": "Подключение: ws://localhost:8080/ws?token=JWT_TOKEN\n\nСервер отмечает пользователя онлайн и рассылает событие user:online. При отключении — user:offline.\n\nФормат сообщения: JSON { \"type\": \"...\", \"payload\": {...} }\n\nСобытия сервера:\n- message:new — новое сообщение\n- message:edited — сообщение изменено\n- message:deleted — сообщение удалено (payload: messageId, chatId)\n- message:read — прочитано (payload: chatId, userId)\n- user:typing — пользователь печатает (payload: chatId, userId)\n- user:stop_typing — перестал печатать (payload: chatId, userId)\n- user:online — онлайн (payload: userId, online)\n- user:offline — офлайн (payload: userId, online)\n- user:reaction — реакция на сообщение (payload: messageId, userId, emoji)\n- chat:created — создан чат\n- chat:updated — чат обновлён\n- chat:deleted — чат удалён (payload: chatId)\n- call:offer — входящий звонок (payload: callerId, chatId)\n- call:answer — ответ на звонок\n- call:ice — ICE кандидат\n- call:end — звонок завершён\n- call:missed — пропущенный звонок\n- call:reject — звонок отклонён\n- call:accept — звонок принят\n\nКоманды клиента:\n- user:typing — печатает (payload: { chatId })\n- user:stop_typing — не печатает (payload: { chatId })\n\nПример:\nconst ws = new WebSocket('ws://localhost:8080/ws?token=' + token);\nws.send(JSON.stringify({ type: 'user:typing', payload: { chatId: '...' } }));",
+        "description": "---\n## Подключение\n\nws://localhost:8080/ws?token=JWT_TOKEN\n\nПосле подключения сервер:\n1. Устанавливает online=true для пользователя\n2. Рассылает событие **user:online** всем участникам общих чатов\n3. При отключении (закрытие вкладки, потеря сети) — **user:offline**\n\nСервер поддерживает соединение **ping/pong** (60s timeout).\n\n---\n## Формат всех сообщений\n\nОднотипный JSON:\n```json\n{\n  \"type\": \"событие\",\n  \"payload\": { ... }\n}\n```\n\n---\n## 1. События сервера → клиент (сервер отправляет)\n\n### 📩 Сообщения\n\n**message:new** — новое сообщение в чате\n```json\n{\n  \"type\": \"message:new\",\n  \"payload\": {\n    \"id\": \"msg-uuid\",\n    \"chatId\": \"chat-uuid\",\n    \"sender\": { \"id\": \"...\", \"displayName\": \"Alice\", \"avatarUrl\": \"...\" },\n    \"content\": \"Привет!\",\n    \"type\": \"text\",\n    \"replyTo\": null,\n    \"forwardFrom\": null,\n    \"fileName\": \"\",\n    \"fileSize\": 0,\n    \"fileUrl\": \"\",\n    \"reactions\": [],\n    \"pinned\": false,\n    \"readBy\": [{\"id\":\"...\",\"displayName\":\"Alice\"}],\n    \"createdAt\": \"2026-01-01T12:00:00Z\",\n    \"updatedAt\": \"2026-01-01T12:00:00Z\",\n    \"edited\": false,\n    \"deleted\": false\n  }\n}\n```\nТриггер: POST /api/chats/{id}/messages\n\n**message:edited** — сообщение изменено\n```json\n{\n  \"type\": \"message:edited\",\n  \"payload\": { /* MessageResponse с обновлённым content + edited:true */ }\n}\n```\nТриггер: PUT /api/messages/{id}\n\n**message:deleted** — сообщение удалено\n```json\n{\n  \"type\": \"message:deleted\",\n  \"payload\": { \"messageId\": \"msg-uuid\", \"chatId\": \"chat-uuid\" }\n}\n```\nТриггер: DELETE /api/messages/{id}\n\n**message:read** — отметка о прочтении\n```json\n{\n  \"type\": \"message:read\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/chats/{id}/read или POST /api/messages/{id}/read\n\n### 👤 Пользователи\n\n**user:typing** — пользователь печатает\n```json\n{\n  \"type\": \"user:typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\n\n**user:stop_typing** — перестал печатать\n```json\n{\n  \"type\": \"user:stop_typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\n\n**user:online** — пользователь появился в сети\n```json\n{\n  \"type\": \"user:online\",\n  \"payload\": { \"userId\": \"user-uuid\", \"online\": true }\n}\n```\nТриггер: Подключение к WebSocket\n\n**user:offline** — пользователь ушёл\n```json\n{\n  \"type\": \"user:offline\",\n  \"payload\": { \"userId\": \"user-uuid\", \"online\": false }\n}\n```\nТриггер: Отключение WebSocket\n\n### 💬 Чаты\n\n**chat:created** — создан новый чат\n```json\n{\n  \"type\": \"chat:created\",\n  \"payload\": { /* ChatResponse с participants, lastMessage, unreadCount */ }\n}\n```\nТриггер: POST /api/chats\n\n**chat:updated** — чат обновлён (название, описание, аватар)\n```json\n{\n  \"type\": \"chat:updated\",\n  \"payload\": { /* ChatResponse */ }\n}\n```\n\n**chat:deleted** — чат удалён\n```json\n{\n  \"type\": \"chat:deleted\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nТриггер: DELETE /api/chats/{id}\n\n### 📞 Звонки\n\n**call:offer** — входящий звонок\n```json\n{\n  \"type\": \"call:offer\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"callerId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/calls/initiate\n\n**call:accept** — звонок принят\n```json\n{\n  \"type\": \"call:accept\",\n  \"payload\": { \"callId\": \"call-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/calls/{id}/respond с action=accept\n\n**call:end** — звонок завершён\n```json\n{\n  \"type\": \"call:end\",\n  \"payload\": { \"callId\": \"call-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/calls/{id}/end\n\n---\n## 2. Команды клиента → сервер (клиент отправляет)\n\n### ✏️ Печатание\n\n```json\n{\n  \"type\": \"user:typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nСервер пересылает всем участникам чата (кроме отправителя) событие **user:typing** с полем userId.\n\n```json\n{\n  \"type\": \"user:stop_typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nСервер пересылает **user:stop_typing** всем участникам, кроме отправителя.\n\n### WebRTC (транзит, сервер не обрабатывает)\n\n```json\n{ \"type\": \"call:answer\", \"payload\": { \"callId\": \"...\", \"sdp\": \"...\" } }\n{ \"type\": \"call:ice\", \"payload\": { \"callId\": \"...\", \"candidate\": \"...\", \"sdpMLineIdx\": 0 } }\n{ \"type\": \"call:reject\", \"payload\": { \"callId\": \"...\" } }\n```\nЭти сообщения сервер принимает, но **не валидирует и не обрабатывает** — они зарезервированы для будущего прямого WebRTC peer-to-peer signalling.\n\n---\n## 3. Пример JavaScript\n\n```javascript\n// Подключение\nconst ws = new WebSocket('ws://localhost:8080/ws?token=' + token);\n\n// При получении сообщения\nws.onmessage = (event) => {\n  const msg = JSON.parse(event.data);\n  switch (msg.type) {\n    case 'message:new':\n      console.log('Новое сообщение:', msg.payload.content);\n      break;\n    case 'user:typing':\n      console.log('Пользователь печатает:', msg.payload.userId);\n      break;\n    case 'user:online':\n      console.log('Пользователь онлайн:', msg.payload.userId);\n      break;\n    case 'call:offer':\n      console.log('Входящий звонок от:', msg.payload.callerId);\n      break;\n  }\n};\n\n// Отправить событие печатания\nws.send(JSON.stringify({\n  type: 'user:typing',\n  payload: { chatId: 'chat-uuid' }\n}));\n\n// Перестать печатать\nws.send(JSON.stringify({\n  type: 'user:stop_typing',\n  payload: { chatId: 'chat-uuid' }\n}));\n```\n\n---\n## 4. Примечания\n\n- typing-события приходят **всем участникам чата, кроме отправителя**\n- Сервер автоматически шлёт **ping** каждые 54 секунды; клиент должен отвечать **pong**\n- Если от клиента нет pong в течение 60 секунд — соединение закрывается\n- При переподключении старый сокет автоматически заменяется новым\n- Формат всех сообщений: JSON { \"type\": \"string\", \"payload\": object }",
         "parameters": [
           { "name": "token", "in": "query", "required": true, "schema": { "type": "string" }, "description": "JWT токен" }
         ],

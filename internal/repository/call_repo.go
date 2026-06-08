@@ -7,15 +7,15 @@ import (
 	"ChatServerGolang/internal/domain"
 )
 
-type CallRepository struct {
+type callRepository struct {
 	db *sql.DB
 }
 
-func NewCallRepository(db *sql.DB) *CallRepository {
-	return &CallRepository{db: db}
+func NewCallRepository(db *sql.DB) CallRepository {
+	return &callRepository{db: db}
 }
 
-func (r *CallRepository) Create(call *domain.Call) error {
+func (r *callRepository) Create(call *domain.Call) error {
 	var endedAt *string
 	if call.EndedAt != nil {
 		s := call.EndedAt.Format(time.RFC3339)
@@ -30,7 +30,7 @@ func (r *CallRepository) Create(call *domain.Call) error {
 	return err
 }
 
-func (r *CallRepository) FindByID(id string) (*domain.Call, error) {
+func (r *callRepository) FindByID(id string) (*domain.Call, error) {
 	row := r.db.QueryRow(
 		`SELECT id, chat_id, caller_id, callee_id, status, started_at, ended_at
 		FROM calls WHERE id = ?`, id,
@@ -38,7 +38,7 @@ func (r *CallRepository) FindByID(id string) (*domain.Call, error) {
 	return scanCall(row)
 }
 
-func (r *CallRepository) FindActiveByUser(userID string) (*domain.Call, error) {
+func (r *callRepository) FindActiveByUser(userID string) (*domain.Call, error) {
 	row := r.db.QueryRow(
 		`SELECT id, chat_id, caller_id, callee_id, status, started_at, ended_at
 		FROM calls WHERE (caller_id = ? OR callee_id = ?) AND status IN ('initiated', 'ongoing')
@@ -48,7 +48,7 @@ func (r *CallRepository) FindActiveByUser(userID string) (*domain.Call, error) {
 	return scanCall(row)
 }
 
-func (r *CallRepository) FindByChatAndUser(chatID, userID string) ([]*domain.Call, error) {
+func (r *callRepository) FindByChatAndUser(chatID, userID string) ([]*domain.Call, error) {
 	rows, err := r.db.Query(
 		`SELECT id, chat_id, caller_id, callee_id, status, started_at, ended_at
 		FROM calls WHERE chat_id = ? AND (caller_id = ? OR callee_id = ?)
@@ -71,7 +71,7 @@ func (r *CallRepository) FindByChatAndUser(chatID, userID string) ([]*domain.Cal
 	return calls, nil
 }
 
-func (r *CallRepository) UpdateStatus(id string, status domain.CallStatus) error {
+func (r *callRepository) UpdateStatus(id string, status domain.CallStatus) error {
 	var endedAt *string
 	if status == domain.CallEnded || status == domain.CallMissed || status == domain.CallRejected {
 		s := time.Now().Format(time.RFC3339)
@@ -90,17 +90,17 @@ type callScanner interface {
 
 func scanCall(row callScanner) (*domain.Call, error) {
 	var (
-		c        domain.Call
+		c         domain.Call
 		startedAt string
-		endedAt  sql.NullString
+		endedAt   sql.NullString
 	)
 	err := row.Scan(&c.ID, &c.ChatID, &c.CallerID, &c.CalleeID, &c.Status, &startedAt, &endedAt)
 	if err != nil {
 		return nil, err
 	}
-	c.StartedAt, _ = time.Parse(time.RFC3339, startedAt)
+	c.StartedAt = parseTime(startedAt)
 	if endedAt.Valid {
-		t, _ := time.Parse(time.RFC3339, endedAt.String)
+		t := parseTime(endedAt.String)
 		c.EndedAt = &t
 	}
 	return &c, nil

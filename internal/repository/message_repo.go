@@ -7,15 +7,15 @@ import (
 	"ChatServerGolang/internal/domain"
 )
 
-type MessageRepository struct {
+type messageRepository struct {
 	db *sql.DB
 }
 
-func NewMessageRepository(db *sql.DB) *MessageRepository {
-	return &MessageRepository{db: db}
+func NewMessageRepository(db *sql.DB) MessageRepository {
+	return &messageRepository{db: db}
 }
 
-func (r *MessageRepository) Create(msg *domain.Message) error {
+func (r *messageRepository) Create(msg *domain.Message) error {
 	var replyToID, forwardFrom *string
 	if msg.ReplyToID != nil && *msg.ReplyToID != "" {
 		replyToID = msg.ReplyToID
@@ -34,7 +34,7 @@ func (r *MessageRepository) Create(msg *domain.Message) error {
 	return err
 }
 
-func (r *MessageRepository) FindByID(id string) (*domain.Message, error) {
+func (r *messageRepository) FindByID(id string) (*domain.Message, error) {
 	row := r.db.QueryRow(
 		`SELECT id, chat_id, sender_id, content, type, reply_to_id, forward_from, file_name, file_size, file_path, pinned, created_at, updated_at, deleted_at
 		FROM messages WHERE id = ?`, id,
@@ -42,10 +42,10 @@ func (r *MessageRepository) FindByID(id string) (*domain.Message, error) {
 	return scanMessage(row)
 }
 
-func (r *MessageRepository) FindByChatID(chatID string, limit, offset int) ([]*domain.Message, error) {
+func (r *messageRepository) FindByChatID(chatID string, limit, offset int) ([]*domain.Message, error) {
 	rows, err := r.db.Query(
 		`SELECT id, chat_id, sender_id, content, type, reply_to_id, forward_from, file_name, file_size, file_path, pinned, created_at, updated_at, deleted_at
-		FROM messages WHERE chat_id = ?
+		FROM messages WHERE chat_id = ? AND deleted_at IS NULL
 		ORDER BY created_at DESC LIMIT ? OFFSET ?`,
 		chatID, limit, offset,
 	)
@@ -65,7 +65,7 @@ func (r *MessageRepository) FindByChatID(chatID string, limit, offset int) ([]*d
 	return messages, nil
 }
 
-func (r *MessageRepository) Search(chatID, query string, limit, offset int) ([]*domain.Message, error) {
+func (r *messageRepository) Search(chatID, query string, limit, offset int) ([]*domain.Message, error) {
 	rows, err := r.db.Query(
 		`SELECT id, chat_id, sender_id, content, type, reply_to_id, forward_from, file_name, file_size, file_path, pinned, created_at, updated_at, deleted_at
 		FROM messages WHERE chat_id = ? AND content LIKE ? AND deleted_at IS NULL
@@ -88,7 +88,7 @@ func (r *MessageRepository) Search(chatID, query string, limit, offset int) ([]*
 	return messages, nil
 }
 
-func (r *MessageRepository) Update(msg *domain.Message) error {
+func (r *messageRepository) Update(msg *domain.Message) error {
 	_, err := r.db.Exec(
 		`UPDATE messages SET content=?, updated_at=? WHERE id=? AND deleted_at IS NULL`,
 		msg.Content, time.Now().Format(time.RFC3339), msg.ID,
@@ -96,7 +96,7 @@ func (r *MessageRepository) Update(msg *domain.Message) error {
 	return err
 }
 
-func (r *MessageRepository) SoftDelete(id string) error {
+func (r *messageRepository) SoftDelete(id string) error {
 	now := time.Now()
 	_, err := r.db.Exec(
 		`UPDATE messages SET deleted_at=?, updated_at=? WHERE id=?`,
@@ -105,7 +105,7 @@ func (r *MessageRepository) SoftDelete(id string) error {
 	return err
 }
 
-func (r *MessageRepository) GetLastMessage(chatID string) (*domain.Message, error) {
+func (r *messageRepository) GetLastMessage(chatID string) (*domain.Message, error) {
 	row := r.db.QueryRow(
 		`SELECT id, chat_id, sender_id, content, type, reply_to_id, forward_from, file_name, file_size, file_path, pinned, created_at, updated_at, deleted_at
 		FROM messages WHERE chat_id = ? AND deleted_at IS NULL
@@ -114,7 +114,7 @@ func (r *MessageRepository) GetLastMessage(chatID string) (*domain.Message, erro
 	return scanMessage(row)
 }
 
-func (r *MessageRepository) TogglePin(msgID string, pinned bool) error {
+func (r *messageRepository) TogglePin(msgID string, pinned bool) error {
 	_, err := r.db.Exec(
 		`UPDATE messages SET pinned=?, updated_at=? WHERE id=?`,
 		boolToInt(pinned), time.Now().Format(time.RFC3339), msgID,
@@ -122,7 +122,7 @@ func (r *MessageRepository) TogglePin(msgID string, pinned bool) error {
 	return err
 }
 
-func (r *MessageRepository) GetPinned(chatID string) ([]*domain.Message, error) {
+func (r *messageRepository) GetPinned(chatID string) ([]*domain.Message, error) {
 	rows, err := r.db.Query(
 		`SELECT id, chat_id, sender_id, content, type, reply_to_id, forward_from, file_name, file_size, file_path, pinned, created_at, updated_at, deleted_at
 		FROM messages WHERE chat_id = ? AND pinned = 1 AND deleted_at IS NULL
@@ -144,8 +144,7 @@ func (r *MessageRepository) GetPinned(chatID string) ([]*domain.Message, error) 
 	return messages, nil
 }
 
-// Reactions
-func (r *MessageRepository) AddReaction(msgID, userID, emoji string) error {
+func (r *messageRepository) AddReaction(msgID, userID, emoji string) error {
 	_, err := r.db.Exec(
 		`INSERT OR IGNORE INTO reactions (message_id, user_id, emoji, created_at) VALUES (?, ?, ?, ?)`,
 		msgID, userID, emoji, time.Now().Format(time.RFC3339),
@@ -153,7 +152,7 @@ func (r *MessageRepository) AddReaction(msgID, userID, emoji string) error {
 	return err
 }
 
-func (r *MessageRepository) RemoveReaction(msgID, userID, emoji string) error {
+func (r *messageRepository) RemoveReaction(msgID, userID, emoji string) error {
 	_, err := r.db.Exec(
 		`DELETE FROM reactions WHERE message_id = ? AND user_id = ? AND emoji = ?`,
 		msgID, userID, emoji,
@@ -161,7 +160,7 @@ func (r *MessageRepository) RemoveReaction(msgID, userID, emoji string) error {
 	return err
 }
 
-func (r *MessageRepository) GetReactions(msgID string) ([]*domain.Reaction, error) {
+func (r *messageRepository) GetReactions(msgID string) ([]*domain.Reaction, error) {
 	rows, err := r.db.Query(
 		`SELECT message_id, user_id, emoji, created_at FROM reactions WHERE message_id = ?`,
 		msgID,
@@ -180,14 +179,13 @@ func (r *MessageRepository) GetReactions(msgID string) ([]*domain.Reaction, erro
 		if err := rows.Scan(&reaction.MessageID, &reaction.UserID, &reaction.Emoji, &createdAt); err != nil {
 			return nil, err
 		}
-		reaction.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+		reaction.CreatedAt = parseTime(createdAt)
 		reactions = append(reactions, &reaction)
 	}
 	return reactions, nil
 }
 
-// Read receipts
-func (r *MessageRepository) AddReadReceipt(msgID, userID string) error {
+func (r *messageRepository) AddReadReceipt(msgID, userID string) error {
 	_, err := r.db.Exec(
 		`INSERT OR IGNORE INTO read_receipts (message_id, user_id, read_at) VALUES (?, ?, ?)`,
 		msgID, userID, time.Now().Format(time.RFC3339),
@@ -195,7 +193,7 @@ func (r *MessageRepository) AddReadReceipt(msgID, userID string) error {
 	return err
 }
 
-func (r *MessageRepository) GetReadReceipts(msgID string) ([]*domain.ReadReceipt, error) {
+func (r *messageRepository) GetReadReceipts(msgID string) ([]*domain.ReadReceipt, error) {
 	rows, err := r.db.Query(
 		`SELECT message_id, user_id, read_at FROM read_receipts WHERE message_id = ?`,
 		msgID,
@@ -214,7 +212,7 @@ func (r *MessageRepository) GetReadReceipts(msgID string) ([]*domain.ReadReceipt
 		if err := rows.Scan(&receipt.MessageID, &receipt.UserID, &readAt); err != nil {
 			return nil, err
 		}
-		receipt.ReadAt, _ = time.Parse(time.RFC3339, readAt)
+		receipt.ReadAt = parseTime(readAt)
 		receipts = append(receipts, &receipt)
 	}
 	return receipts, nil
@@ -226,13 +224,13 @@ type messageScanner interface {
 
 func scanMessage(row messageScanner) (*domain.Message, error) {
 	var (
-		msg        domain.Message
-		replyToID  sql.NullString
+		msg         domain.Message
+		replyToID   sql.NullString
 		forwardFrom sql.NullString
-		pinnedInt  int
-		createdAt  string
-		updatedAt  string
-		deletedAt  sql.NullString
+		pinnedInt   int
+		createdAt   string
+		updatedAt   string
+		deletedAt   sql.NullString
 	)
 	err := row.Scan(&msg.ID, &msg.ChatID, &msg.SenderID, &msg.Content, &msg.Type,
 		&replyToID, &forwardFrom, &msg.FileName, &msg.FileSize, &msg.FilePath,
@@ -248,10 +246,10 @@ func scanMessage(row messageScanner) (*domain.Message, error) {
 	}
 	msg.Pinned = pinnedInt == 1
 	if deletedAt.Valid {
-		t, _ := time.Parse(time.RFC3339, deletedAt.String)
+		t := parseTime(deletedAt.String)
 		msg.DeletedAt = &t
 	}
-	msg.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-	msg.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+	msg.CreatedAt = parseTime(createdAt)
+	msg.UpdatedAt = parseTime(updatedAt)
 	return &msg, nil
 }

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,21 +31,23 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.Close()
 
 	// Repositories
 	userRepo := repository.NewUserRepository(db)
 	chatRepo := repository.NewChatRepository(db)
 	messageRepo := repository.NewMessageRepository(db)
 	callRepo := repository.NewCallRepository(db)
+	accRepo := repository.NewAccountSettingRepository(db)
+	contactRepo := repository.NewContactRepository(db)
 
 	// Services
 	authService := service.NewAuthService(userRepo, cfg)
-	userService := service.NewUserService(userRepo, chatRepo)
+	userService := service.NewUserService(userRepo, chatRepo, accRepo)
 	callService := service.NewCallService(callRepo, chatRepo, userRepo, userService)
 	messageService := service.NewMessageService(messageRepo, chatRepo, userRepo, userService)
 	chatService := service.NewChatService(chatRepo, userRepo, messageRepo, userService)
 	pushService := service.NewPushService(userRepo, cfg)
+	contactService := service.NewContactService(contactRepo)
 
 	// WebSocket hub
 	hub := ws.NewHub()
@@ -55,21 +59,22 @@ func main() {
 	chatHandler := handler.NewChatHandler(chatService)
 	messageHandler := handler.NewMessageHandler(messageService)
 	callHandler := handler.NewCallHandler(callService)
+	contactHandler := handler.NewContactHandler(contactService)
 	wsHandler := handler.NewWSHandler(hub, authService, userRepo, chatRepo)
-	wsEvents := handler.NewWebSocketEvents(hub, chatService, messageService, userService, pushService)
+	wsEvents := handler.NewWebSocketEvents(hub, chatService, messageService, userService, pushService, callService)
+
+	// Rate limiter
+	apiLimiter := middleware.NewRateLimiter(100, time.Minute)
 
 	// Gin engine
 	r := gin.Default()
-	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.CORSMiddleware(cfg))
 
-	// Rate limiter for API (100 requests/min per IP)
-	apiLimiter := middleware.NewRateLimiter(100, time.Minute)
-
-	// Serve uploaded files
 	r.Static("/uploads", "./uploads")
 
-	// API routes
+	// API routes with rate limiter applied early
 	api := r.Group("/api")
+	api.Use(apiLimiter)
 	{
 		// Auth (public)
 		auth := api.Group("/auth")
@@ -82,7 +87,7 @@ func main() {
 		authorized := api.Group("")
 		authorized.Use(middleware.AuthMiddleware(authService))
 		{
-			// Auth
+			// Auth (authenticated)
 			authorized.GET("/auth/refresh", authHandler.RefreshToken)
 			authorized.PUT("/auth/change-password", authHandler.ChangePassword)
 
@@ -100,17 +105,31 @@ func main() {
 			authorized.DELETE("/users/block/:userId", userHandler.UnblockUser)
 			authorized.GET("/users/blocked", userHandler.GetBlockedUsers)
 
+			// Account settings
+			authorized.GET("/account/settings", userHandler.GetAccountSetting)
+			authorized.PUT("/account/settings", userHandler.UpdateAccountSetting)
+
+			// Contacts
+			authorized.POST("/contacts/sync", contactHandler.SyncContacts)
+			authorized.GET("/contacts", contactHandler.GetContacts)
+			authorized.GET("/contacts/search", contactHandler.SearchByPhone)
+			authorized.GET("/contacts/registered", contactHandler.FindRegistered)
+
+			// Avatar upload
+			authorized.POST("/users/avatar", userHandler.UploadAvatar)
+
 			// Chats
 			authorized.GET("/chats", chatHandler.ListChats)
 			authorized.POST("/chats", wsEvents.WrapCreateChat(chatHandler.CreateChat))
 			authorized.GET("/chats/:id", chatHandler.GetChat)
+			authorized.PUT("/chats/:id", chatHandler.UpdateGroup)
 			authorized.DELETE("/chats/:id", wsEvents.WrapDeleteChat(chatHandler.DeleteChat))
 			authorized.POST("/chats/:id/participants", chatHandler.AddParticipant)
 			authorized.DELETE("/chats/:id/participants/:userId", chatHandler.RemoveParticipant)
-			authorized.POST("/chats/:id/read", chatHandler.MarkAsRead)
-			authorized.PUT("/chats/:id/participants/:userId/role", chatHandler.PromoteAdmin)
+			authorized.PUT("/chats/:id/participants/:userId/role", chatHandler.SetRole)
 			authorized.POST("/chats/:id/leave", chatHandler.LeaveGroup)
-			authorized.PUT("/chats/:id", chatHandler.UpdateGroup)
+			authorized.POST("/chats/:id/read", chatHandler.MarkAsRead)
+			authorized.POST("/chats/:id/hide", chatHandler.HideChat)
 			authorized.PUT("/chats/:id/notifications", userHandler.SetNotificationMuted)
 			authorized.GET("/chats/:id/notifications", userHandler.IsNotificationMuted)
 
@@ -120,14 +139,15 @@ func main() {
 			authorized.POST("/chats/:id/messages", wsEvents.WrapSendMessage(messageHandler.SendMessage))
 			authorized.POST("/chats/:id/messages/file", messageHandler.UploadFile)
 			authorized.POST("/chats/:id/messages/:msgId/resend", messageHandler.ResendMessage)
+			authorized.GET("/chats/:id/pinned", messageHandler.GetPinned)
+			authorized.GET("/messages/:id", messageHandler.GetMessageByID)
 			authorized.PUT("/messages/:id", wsEvents.WrapEditMessage(messageHandler.EditMessage))
 			authorized.DELETE("/messages/:id", wsEvents.WrapDeleteMessage(messageHandler.DeleteMessage))
-			authorized.GET("/messages/:id", messageHandler.GetMessageByID)
 			authorized.POST("/messages/:id/reactions", messageHandler.AddReaction)
 			authorized.DELETE("/messages/:id/reactions", messageHandler.RemoveReaction)
 			authorized.PUT("/messages/:id/pin", messageHandler.TogglePin)
 			authorized.POST("/messages/:id/read", messageHandler.MarkMessageRead)
-			authorized.GET("/chats/:id/pinned", messageHandler.GetPinned)
+			authorized.GET("/files/:filename", messageHandler.DownloadFile)
 
 			// Calls
 			authorized.POST("/calls/initiate", wsEvents.WrapInitiateCall(callHandler.InitiateCall))
@@ -149,13 +169,10 @@ func main() {
 	// Swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// Apply rate limiter to API routes
-	api.Use(apiLimiter)
-
 	// Startup banner
 	fmt.Println()
 	fmt.Println("╔══════════════════════════════════════════════════════╗")
-	fmt.Println("║         CHAT MESSENGER SERVER STARTED               ║")
+	fmt.Println("║         CHAT MESSENGER SERVER                       ║")
 	fmt.Println("╠══════════════════════════════════════════════════════╣")
 	fmt.Printf("║  Server:  http://localhost:%s                       \n", cfg.ServerPort)
 	fmt.Printf("║  Swagger: http://localhost:%s/swagger/index.html    \n", cfg.ServerPort)
@@ -163,8 +180,14 @@ func main() {
 	fmt.Println("╚══════════════════════════════════════════════════════╝")
 	fmt.Println()
 
+	// Graceful shutdown
+	srv := &http.Server{
+		Addr:    ":" + cfg.ServerPort,
+		Handler: r,
+	}
+
 	go func() {
-		if err := r.Run(":" + cfg.ServerPort); err != nil {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)
 		}
 	}()
@@ -173,4 +196,14 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	db.Close()
+	log.Println("Server exited gracefully")
 }

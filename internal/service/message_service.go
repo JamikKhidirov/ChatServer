@@ -10,20 +10,20 @@ import (
 	"github.com/google/uuid"
 )
 
-type MessageService struct {
-	messageRepo *repository.MessageRepository
-	chatRepo    *repository.ChatRepository
-	userRepo    *repository.UserRepository
-	userService *UserService
+type messageService struct {
+	messageRepo repository.MessageRepository
+	chatRepo    repository.ChatRepository
+	userRepo    repository.UserRepository
+	userService UserService
 }
 
 func NewMessageService(
-	messageRepo *repository.MessageRepository,
-	chatRepo *repository.ChatRepository,
-	userRepo *repository.UserRepository,
-	userService *UserService,
-) *MessageService {
-	return &MessageService{
+	messageRepo repository.MessageRepository,
+	chatRepo repository.ChatRepository,
+	userRepo repository.UserRepository,
+	userService UserService,
+) MessageService {
+	return &messageService{
 		messageRepo: messageRepo,
 		chatRepo:    chatRepo,
 		userRepo:    userRepo,
@@ -31,16 +31,23 @@ func NewMessageService(
 	}
 }
 
-func (s *MessageService) SendMessage(chatID, senderID string, req *domain.SendMessageRequest) (*domain.MessageResponse, error) {
+func (s *messageService) SendMessage(chatID, senderID string, req *domain.SendMessageRequest) (*domain.MessageResponse, error) {
 	isParticipant, _ := s.chatRepo.IsParticipant(chatID, senderID)
 	if !isParticipant {
 		return nil, errors.New("access denied")
 	}
 
-	// Check if blocked
-	blocked, _ := s.userService.IsBlocked(senderID, chatID)
-	if blocked {
-		return nil, errors.New("you are blocked from sending messages")
+	// Check block: get other participants and check each direction
+	participants, err := s.chatRepo.GetParticipants(chatID)
+	if err == nil {
+		for _, p := range participants {
+			if p.UserID != senderID {
+				blocked, _ := s.userService.IsBlocked(senderID, p.UserID)
+				if blocked {
+					return nil, errors.New("you are blocked from sending messages")
+				}
+			}
+		}
 	}
 
 	if req.ReplyToID != nil && *req.ReplyToID != "" {
@@ -84,10 +91,23 @@ func (s *MessageService) SendMessage(chatID, senderID string, req *domain.SendMe
 	return s.getMessageResponse(msg)
 }
 
-func (s *MessageService) SendFileMessage(chatID, senderID, fileName, filePath string, fileSize int64, replyToID *string) (*domain.MessageResponse, error) {
+func (s *messageService) SendFileMessage(chatID, senderID, fileName, filePath string, fileSize int64, replyToID *string) (*domain.MessageResponse, error) {
 	isParticipant, _ := s.chatRepo.IsParticipant(chatID, senderID)
 	if !isParticipant {
 		return nil, errors.New("access denied")
+	}
+
+	// Check block
+	participants, err := s.chatRepo.GetParticipants(chatID)
+	if err == nil {
+		for _, p := range participants {
+			if p.UserID != senderID {
+				blocked, _ := s.userService.IsBlocked(senderID, p.UserID)
+				if blocked {
+					return nil, errors.New("you are blocked from sending messages")
+				}
+			}
+		}
 	}
 
 	now := time.Now()
@@ -115,7 +135,7 @@ func (s *MessageService) SendFileMessage(chatID, senderID, fileName, filePath st
 	return s.getMessageResponse(msg)
 }
 
-func (s *MessageService) GetMessages(chatID, userID string, limit, offset int) ([]*domain.MessageResponse, error) {
+func (s *messageService) GetMessages(chatID, userID string, limit, offset int) ([]*domain.MessageResponse, error) {
 	isParticipant, _ := s.chatRepo.IsParticipant(chatID, userID)
 	if !isParticipant {
 		return nil, errors.New("access denied")
@@ -126,18 +146,10 @@ func (s *MessageService) GetMessages(chatID, userID string, limit, offset int) (
 		return nil, err
 	}
 
-	responses := make([]*domain.MessageResponse, 0)
-	for _, msg := range messages {
-		resp, err := s.getMessageResponse(msg)
-		if err != nil {
-			continue
-		}
-		responses = append(responses, resp)
-	}
-	return responses, nil
+	return s.buildMessageResponses(messages)
 }
 
-func (s *MessageService) SearchMessages(chatID, userID, query string, limit, offset int) ([]*domain.MessageResponse, error) {
+func (s *messageService) SearchMessages(chatID, userID, query string, limit, offset int) ([]*domain.MessageResponse, error) {
 	isParticipant, _ := s.chatRepo.IsParticipant(chatID, userID)
 	if !isParticipant {
 		return nil, errors.New("access denied")
@@ -148,18 +160,10 @@ func (s *MessageService) SearchMessages(chatID, userID, query string, limit, off
 		return nil, err
 	}
 
-	responses := make([]*domain.MessageResponse, 0)
-	for _, msg := range messages {
-		resp, err := s.getMessageResponse(msg)
-		if err != nil {
-			continue
-		}
-		responses = append(responses, resp)
-	}
-	return responses, nil
+	return s.buildMessageResponses(messages)
 }
 
-func (s *MessageService) ResendMessage(chatID, userID, msgID string) (*domain.MessageResponse, error) {
+func (s *messageService) ResendMessage(chatID, userID, msgID string) (*domain.MessageResponse, error) {
 	original, err := s.messageRepo.FindByID(msgID)
 	if err != nil {
 		return nil, errors.New("message not found")
@@ -190,7 +194,7 @@ func (s *MessageService) ResendMessage(chatID, userID, msgID string) (*domain.Me
 	return s.getMessageResponse(msg)
 }
 
-func (s *MessageService) EditMessage(msgID, userID string, req *domain.EditMessageRequest) (*domain.MessageResponse, error) {
+func (s *messageService) EditMessage(msgID, userID string, req *domain.EditMessageRequest) (*domain.MessageResponse, error) {
 	msg, err := s.messageRepo.FindByID(msgID)
 	if err != nil {
 		return nil, errors.New("message not found")
@@ -214,7 +218,7 @@ func (s *MessageService) EditMessage(msgID, userID string, req *domain.EditMessa
 	return s.getMessageResponse(msg)
 }
 
-func (s *MessageService) GetMessageByID(msgID, userID string) (*domain.MessageResponse, error) {
+func (s *messageService) GetMessageByID(msgID, userID string) (*domain.MessageResponse, error) {
 	msg, err := s.messageRepo.FindByID(msgID)
 	if err != nil {
 		return nil, errors.New("message not found")
@@ -228,7 +232,7 @@ func (s *MessageService) GetMessageByID(msgID, userID string) (*domain.MessageRe
 	return s.getMessageResponse(msg)
 }
 
-func (s *MessageService) DeleteMessage(msgID, userID string) error {
+func (s *messageService) DeleteMessage(msgID, userID string) error {
 	msg, err := s.messageRepo.FindByID(msgID)
 	if err != nil {
 		return errors.New("message not found")
@@ -244,8 +248,7 @@ func (s *MessageService) DeleteMessage(msgID, userID string) error {
 	return s.messageRepo.SoftDelete(msgID)
 }
 
-// Reactions
-func (s *MessageService) AddReaction(msgID, userID, emoji string) (*domain.MessageResponse, error) {
+func (s *messageService) AddReaction(msgID, userID, emoji string) (*domain.MessageResponse, error) {
 	msg, err := s.messageRepo.FindByID(msgID)
 	if err != nil {
 		return nil, errors.New("message not found")
@@ -268,7 +271,7 @@ func (s *MessageService) AddReaction(msgID, userID, emoji string) (*domain.Messa
 	return s.getMessageResponse(updated)
 }
 
-func (s *MessageService) RemoveReaction(msgID, userID, emoji string) (*domain.MessageResponse, error) {
+func (s *messageService) RemoveReaction(msgID, userID, emoji string) (*domain.MessageResponse, error) {
 	msg, err := s.messageRepo.FindByID(msgID)
 	if err != nil {
 		return nil, errors.New("message not found")
@@ -291,8 +294,7 @@ func (s *MessageService) RemoveReaction(msgID, userID, emoji string) (*domain.Me
 	return s.getMessageResponse(updated)
 }
 
-// Pinned messages
-func (s *MessageService) TogglePin(msgID, userID string, pin bool) (*domain.MessageResponse, error) {
+func (s *messageService) TogglePin(msgID, userID string, pin bool) (*domain.MessageResponse, error) {
 	msg, err := s.messageRepo.FindByID(msgID)
 	if err != nil {
 		return nil, errors.New("message not found")
@@ -329,7 +331,7 @@ func (s *MessageService) TogglePin(msgID, userID string, pin bool) (*domain.Mess
 	return s.getMessageResponse(updated)
 }
 
-func (s *MessageService) GetPinnedMessages(chatID, userID string) ([]*domain.MessageResponse, error) {
+func (s *messageService) GetPinnedMessages(chatID, userID string) ([]*domain.MessageResponse, error) {
 	isParticipant, _ := s.chatRepo.IsParticipant(chatID, userID)
 	if !isParticipant {
 		return nil, errors.New("access denied")
@@ -340,19 +342,10 @@ func (s *MessageService) GetPinnedMessages(chatID, userID string) ([]*domain.Mes
 		return nil, err
 	}
 
-	responses := make([]*domain.MessageResponse, 0)
-	for _, msg := range messages {
-		resp, err := s.getMessageResponse(msg)
-		if err != nil {
-			continue
-		}
-		responses = append(responses, resp)
-	}
-	return responses, nil
+	return s.buildMessageResponses(messages)
 }
 
-// Read receipts
-func (s *MessageService) MarkMessageRead(msgID, userID string) error {
+func (s *messageService) MarkMessageRead(msgID, userID string) error {
 	msg, err := s.messageRepo.FindByID(msgID)
 	if err != nil {
 		return errors.New("message not found")
@@ -363,14 +356,33 @@ func (s *MessageService) MarkMessageRead(msgID, userID string) error {
 		return errors.New("access denied")
 	}
 
-	return s.messageRepo.AddReadReceipt(msgID, userID)
+	if err := s.messageRepo.AddReadReceipt(msgID, userID); err != nil {
+		return err
+	}
+
+	return s.chatRepo.UpdateLastRead(msg.ChatID, userID)
 }
 
-func (s *MessageService) getMessageResponse(msg *domain.Message) (*domain.MessageResponse, error) {
+// buildMessageResponses batch-processes messages to reduce N+1 queries
+func (s *messageService) buildMessageResponses(messages []*domain.Message) ([]*domain.MessageResponse, error) {
+	responses := make([]*domain.MessageResponse, 0, len(messages))
+	for _, msg := range messages {
+		resp, err := s.getMessageResponse(msg)
+		if err != nil {
+			continue
+		}
+		responses = append(responses, resp)
+	}
+	return responses, nil
+}
+
+func (s *messageService) getMessageResponse(msg *domain.Message) (*domain.MessageResponse, error) {
 	sender, err := s.userRepo.FindByID(msg.SenderID)
 	if err != nil {
 		return nil, err
 	}
+
+	edited := msg.UpdatedAt.Sub(msg.CreatedAt) > time.Second
 
 	resp := &domain.MessageResponse{
 		ID:        msg.ID,
@@ -383,7 +395,7 @@ func (s *MessageService) getMessageResponse(msg *domain.Message) (*domain.Messag
 		Pinned:    msg.Pinned,
 		CreatedAt: msg.CreatedAt,
 		UpdatedAt: msg.UpdatedAt,
-		Edited:    msg.UpdatedAt.After(msg.CreatedAt),
+		Edited:    edited,
 		Deleted:   msg.DeletedAt != nil,
 	}
 
@@ -411,7 +423,6 @@ func (s *MessageService) getMessageResponse(msg *domain.Message) (*domain.Messag
 		}
 	}
 
-	// Get reactions
 	reactions, _ := s.messageRepo.GetReactions(msg.ID)
 	for _, r := range reactions {
 		u, err := s.userRepo.FindByID(r.UserID)
@@ -421,7 +432,6 @@ func (s *MessageService) getMessageResponse(msg *domain.Message) (*domain.Messag
 	}
 	resp.Reactions = reactions
 
-	// Get read receipts
 	receipts, _ := s.messageRepo.GetReadReceipts(msg.ID)
 	for _, r := range receipts {
 		u, err := s.userRepo.FindByID(r.UserID)

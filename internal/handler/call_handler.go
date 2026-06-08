@@ -8,10 +8,10 @@ import (
 )
 
 type CallHandler struct {
-	callService *service.CallService
+	callService service.CallService
 }
 
-func NewCallHandler(callService *service.CallService) *CallHandler {
+func NewCallHandler(callService service.CallService) *CallHandler {
 	return &CallHandler{callService: callService}
 }
 

@@ -117,7 +117,7 @@ func (c *Client) handleMessage(msg WsMessage) {
 		}
 		json.Unmarshal(msg.Payload, &payload)
 		if payload.ChatID != "" {
-			c.Hub.SendToUser(c.UserID, WSOutgoingMessage{
+			c.Hub.BroadcastToChatExcept([]string{c.UserID}, WSOutgoingMessage{
 				Type:    MsgTyping,
 				Payload: map[string]string{"chatId": payload.ChatID, "userId": c.UserID},
 			})
@@ -129,10 +129,44 @@ func (c *Client) handleMessage(msg WsMessage) {
 		}
 		json.Unmarshal(msg.Payload, &payload)
 		if payload.ChatID != "" {
-			c.Hub.SendToUser(c.UserID, WSOutgoingMessage{
+			c.Hub.BroadcastToChatExcept([]string{c.UserID}, WSOutgoingMessage{
 				Type:    MsgStopTyping,
 				Payload: map[string]string{"chatId": payload.ChatID, "userId": c.UserID},
 			})
 		}
+
+	// WebRTC signaling relay
+	case MsgCallOffer, MsgCallAnswer, MsgCallICE:
+		var payload struct {
+			ChatID  string `json:"chatId"`
+			CallID  string `json:"callId"`
+			SDP     string `json:"sdp,omitempty"`
+			Candidate string `json:"candidate,omitempty"`
+		}
+		json.Unmarshal(msg.Payload, &payload)
+		if payload.ChatID != "" {
+			c.Hub.BroadcastToChatExcept([]string{c.UserID}, WSOutgoingMessage{
+				Type:    MsgCallOffer,
+				Payload: msg.Payload,
+			})
+		} else if payload.CallID != "" {
+			c.Hub.BroadcastToChatExcept([]string{c.UserID}, WSOutgoingMessage{
+				Type:    msg.Type,
+				Payload: msg.Payload,
+			})
+		}
+
+	case MsgCallReject:
+		var payload struct {
+			CallID string `json:"callId"`
+			ChatID string `json:"chatId"`
+		}
+		json.Unmarshal(msg.Payload, &payload)
+		c.Hub.BroadcastToChatExcept([]string{c.UserID}, WSOutgoingMessage{
+			Type:    MsgCallReject,
+			Payload: map[string]string{"callId": payload.CallID, "userId": c.UserID},
+		})
 	}
 }
+
+
