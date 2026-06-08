@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"ChatServerGolang/internal/domain"
 	"ChatServerGolang/internal/service"
 	"ChatServerGolang/pkg/response"
 
@@ -15,24 +16,16 @@ func NewCallHandler(callService service.CallService) *CallHandler {
 	return &CallHandler{callService: callService}
 }
 
-type InitiateCallRequest struct {
-	ChatID string `json:"chatId" binding:"required"`
-}
-
-type RespondCallRequest struct {
-	Action string `json:"action" binding:"required,oneof=accept reject"`
-}
-
 func (h *CallHandler) InitiateCall(c *gin.Context) {
 	userID, _ := c.Get("userID")
 
-	var req InitiateCallRequest
+	var req domain.InitiateCallRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
-	call, err := h.callService.InitiateCall(req.ChatID, userID.(string))
+	call, err := h.callService.InitiateCall(req.ChatID, userID.(string), req.Type)
 	if err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -46,7 +39,7 @@ func (h *CallHandler) RespondCall(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	callID := c.Param("id")
 
-	var req RespondCallRequest
+	var req domain.RespondCallRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return

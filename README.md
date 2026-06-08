@@ -10,6 +10,7 @@
 ./ChatServer.exe
 
 # Swagger UI: http://localhost:8080/swagger/index.html
+# Health:     http://localhost:8080/health
 
 # Register
 curl -X POST http://localhost:8080/api/auth/register \
@@ -118,11 +119,11 @@ curl -X POST http://localhost:8080/api/auth/register \
 
 | Method | Endpoint | Описание |
 |--------|----------|----------|
-| `POST` | `/api/calls/initiate` | Начать звонок |
+| `POST` | `/api/calls/initiate` | Начать звонок (audio/video) |
 | `POST` | `/api/calls/{id}/respond` | Ответить (accept/reject) |
 | `POST` | `/api/calls/{id}/end` | Завершить |
-| `GET` | `/api/calls/{id}` | Информация |
-| `GET` | `/api/calls/history/{chatId}` | История |
+| `GET` | `/api/calls/{id}` | Информация о звонке (type, duration) |
+| `GET` | `/api/calls/history/{chatId}` | История звонков |
 
 ### WebSocket
 

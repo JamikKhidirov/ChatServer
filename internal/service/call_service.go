@@ -31,7 +31,7 @@ func NewCallService(
 	}
 }
 
-func (s *callService) InitiateCall(chatID, callerID string) (*domain.Call, error) {
+func (s *callService) InitiateCall(chatID, callerID string, callType domain.CallType) (*domain.Call, error) {
 	_, err := s.chatRepo.FindByID(chatID)
 	if err != nil {
 		return nil, errors.New("chat not found")
@@ -60,12 +60,17 @@ func (s *callService) InitiateCall(chatID, callerID string) (*domain.Call, error
 		return nil, errors.New("callee is already in a call")
 	}
 
+	if callType == "" {
+		callType = domain.CallAudio
+	}
+
 	now := time.Now()
 	call := &domain.Call{
 		ID:        uuid.New().String(),
 		ChatID:    chatID,
 		CallerID:  callerID,
 		CalleeID:  calleeID,
+		Type:      callType,
 		Status:    domain.CallInitiated,
 		StartedAt: now,
 	}
@@ -178,13 +183,20 @@ func (s *callService) toCallResponse(call *domain.Call) (*domain.CallResponse, e
 		return nil, err
 	}
 
+	var duration int
+	if call.EndedAt != nil {
+		duration = int(call.EndedAt.Sub(call.StartedAt).Seconds())
+	}
+
 	return &domain.CallResponse{
 		ID:        call.ID,
 		ChatID:    call.ChatID,
 		Caller:    caller.ToResponse(),
 		Callee:    callee.ToResponse(),
+		Type:      call.Type,
 		Status:    call.Status,
 		StartedAt: call.StartedAt,
 		EndedAt:   call.EndedAt,
+		Duration:  duration,
 	}, nil
 }

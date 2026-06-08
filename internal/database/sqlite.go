@@ -198,6 +198,7 @@ func runMigrations(db *sql.DB) error {
 		`ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT ''`,
 		`ALTER TABLE users ADD COLUMN gender TEXT NOT NULL DEFAULT ''`,
 		`ALTER TABLE users ADD COLUMN date_of_birth TEXT NOT NULL DEFAULT ''`,
+		`ALTER TABLE calls ADD COLUMN call_type TEXT NOT NULL DEFAULT 'audio'`,
 	}
 	for _, m := range legacy {
 		db.Exec(m)

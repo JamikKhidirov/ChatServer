@@ -1,9 +1,19 @@
 package domain
 
+type InitiateCallRequest struct {
+	ChatID string   `json:"chatId" binding:"required"`
+	Type   CallType `json:"type" binding:"required,oneof=audio video"`
+}
+
+type RespondCallRequest struct {
+	Action string `json:"action" binding:"required,oneof=accept reject"`
+}
+
 type CallOfferData struct {
 	CallID string `json:"callId"`
 	ChatID string `json:"chatId"`
 	SDP    string `json:"sdp"`
+	Type   string `json:"type"`
 }
 
 type CallAnswerData struct {
@@ -19,12 +29,4 @@ type CallICEData struct {
 
 type CallEndData struct {
 	CallID string `json:"callId"`
-}
-
-type InitiateCallRequest struct {
-	ChatID string `json:"chatId" binding:"required"`
-}
-
-type RespondCallRequest struct {
-	Action string `json:"action" binding:"required,oneof=accept reject"`
 }

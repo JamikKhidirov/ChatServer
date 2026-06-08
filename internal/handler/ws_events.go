@@ -186,10 +186,10 @@ func (e *WebSocketEvents) WrapInitiateCall(handler gin.HandlerFunc) gin.HandlerF
 								userIDs = append(userIDs, p.ID)
 							}
 						}
-						e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
-							Type:    ws.MsgCallOffer,
-							Payload: map[string]string{"chatId": callResp.ChatID, "callerId": userID.(string)},
-						})
+					e.hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
+						Type:    ws.MsgCallOffer,
+						Payload: map[string]string{"chatId": callResp.ChatID, "callerId": userID.(string), "type": string(callResp.Type)},
+					})
 						e.pushService.SendCallNotification(userID.(string), callResp.ChatID, callResp.ID, "voice")
 					}
 				}

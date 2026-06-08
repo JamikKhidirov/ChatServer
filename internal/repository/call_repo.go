@@ -22,9 +22,9 @@ func (r *callRepository) Create(call *domain.Call) error {
 		endedAt = &s
 	}
 	_, err := r.db.Exec(
-		`INSERT INTO calls (id, chat_id, caller_id, callee_id, status, started_at, ended_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		call.ID, call.ChatID, call.CallerID, call.CalleeID, call.Status,
+		`INSERT INTO calls (id, chat_id, caller_id, callee_id, call_type, status, started_at, ended_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		call.ID, call.ChatID, call.CallerID, call.CalleeID, call.Type, call.Status,
 		call.StartedAt.Format(time.RFC3339), endedAt,
 	)
 	return err
@@ -32,7 +32,7 @@ func (r *callRepository) Create(call *domain.Call) error {
 
 func (r *callRepository) FindByID(id string) (*domain.Call, error) {
 	row := r.db.QueryRow(
-		`SELECT id, chat_id, caller_id, callee_id, status, started_at, ended_at
+		`SELECT id, chat_id, caller_id, callee_id, call_type, status, started_at, ended_at
 		FROM calls WHERE id = ?`, id,
 	)
 	return scanCall(row)
@@ -40,7 +40,7 @@ func (r *callRepository) FindByID(id string) (*domain.Call, error) {
 
 func (r *callRepository) FindActiveByUser(userID string) (*domain.Call, error) {
 	row := r.db.QueryRow(
-		`SELECT id, chat_id, caller_id, callee_id, status, started_at, ended_at
+		`SELECT id, chat_id, caller_id, callee_id, call_type, status, started_at, ended_at
 		FROM calls WHERE (caller_id = ? OR callee_id = ?) AND status IN ('initiated', 'ongoing')
 		ORDER BY started_at DESC LIMIT 1`,
 		userID, userID,
@@ -50,7 +50,7 @@ func (r *callRepository) FindActiveByUser(userID string) (*domain.Call, error) {
 
 func (r *callRepository) FindByChatAndUser(chatID, userID string) ([]*domain.Call, error) {
 	rows, err := r.db.Query(
-		`SELECT id, chat_id, caller_id, callee_id, status, started_at, ended_at
+		`SELECT id, chat_id, caller_id, callee_id, call_type, status, started_at, ended_at
 		FROM calls WHERE chat_id = ? AND (caller_id = ? OR callee_id = ?)
 		ORDER BY started_at DESC LIMIT 50`,
 		chatID, userID, userID,
@@ -93,11 +93,13 @@ func scanCall(row callScanner) (*domain.Call, error) {
 		c         domain.Call
 		startedAt string
 		endedAt   sql.NullString
+		callType  string
 	)
-	err := row.Scan(&c.ID, &c.ChatID, &c.CallerID, &c.CalleeID, &c.Status, &startedAt, &endedAt)
+	err := row.Scan(&c.ID, &c.ChatID, &c.CallerID, &c.CalleeID, &callType, &c.Status, &startedAt, &endedAt)
 	if err != nil {
 		return nil, err
 	}
+	c.Type = domain.CallType(callType)
 	c.StartedAt = parseTime(startedAt)
 	if endedAt.Valid {
 		t := parseTime(endedAt.String)

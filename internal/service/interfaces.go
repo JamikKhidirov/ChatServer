@@ -63,7 +63,7 @@ type MessageService interface {
 }
 
 type CallService interface {
-	InitiateCall(chatID, callerID string) (*domain.Call, error)
+	InitiateCall(chatID, callerID string, callType domain.CallType) (*domain.Call, error)
 	AcceptCall(callID, userID string) error
 	EndCall(callID, userID string) error
 	MissCall(callID string) error
