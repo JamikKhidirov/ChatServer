@@ -1,3 +1,7 @@
 chat-server.exe
 chat.db
 swagger_served.json
+
+chat.db*
+uploads/
+*.exe~
