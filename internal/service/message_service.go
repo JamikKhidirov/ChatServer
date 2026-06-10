@@ -10,6 +10,18 @@ import (
 	"github.com/google/uuid"
 )
 
+func uniqueStrings(slice []string) []string {
+	seen := make(map[string]struct{}, len(slice))
+	res := make([]string, 0, len(slice))
+	for _, s := range slice {
+		if _, ok := seen[s]; !ok {
+			seen[s] = struct{}{}
+			res = append(res, s)
+		}
+	}
+	return res
+}
+
 type messageService struct {
 	messageRepo repository.MessageRepository
 	chatRepo    repository.ChatRepository
@@ -29,6 +41,17 @@ func NewMessageService(
 		userRepo:    userRepo,
 		userService: userService,
 	}
+}
+
+func (s *messageService) getMessageResponse(msg *domain.Message) (*domain.MessageResponse, error) {
+	responses, err := s.buildMessageResponses([]*domain.Message{msg})
+	if err != nil {
+		return nil, err
+	}
+	if len(responses) == 0 {
+		return nil, errors.New("failed to build message response")
+	}
+	return responses[0], nil
 }
 
 func (s *messageService) SendMessage(chatID, senderID string, req *domain.SendMessageRequest) (*domain.MessageResponse, error) {
@@ -363,23 +386,92 @@ func (s *messageService) MarkMessageRead(msgID, userID string) error {
 	return s.chatRepo.UpdateLastRead(msg.ChatID, userID)
 }
 
-// buildMessageResponses batch-processes messages to reduce N+1 queries
 func (s *messageService) buildMessageResponses(messages []*domain.Message) ([]*domain.MessageResponse, error) {
+	if len(messages) == 0 {
+		return []*domain.MessageResponse{}, nil
+	}
+
+	// Collect all needed IDs upfront
+	senderIDs := make([]string, 0, len(messages))
+	replyToIDs := make([]string, 0)
+	forwardFromIDs := make([]string, 0)
+	msgIDs := make([]string, len(messages))
+	for i, msg := range messages {
+		senderIDs = append(senderIDs, msg.SenderID)
+		msgIDs[i] = msg.ID
+		if msg.ReplyToID != nil && *msg.ReplyToID != "" {
+			replyToIDs = append(replyToIDs, *msg.ReplyToID)
+		}
+		if msg.ForwardFrom != nil && *msg.ForwardFrom != "" {
+			forwardFromIDs = append(forwardFromIDs, *msg.ForwardFrom)
+		}
+	}
+
+	// Batch load users for senders, forward-froms
+	allUserIDs := append(senderIDs, forwardFromIDs...)
+	allUserIDs = uniqueStrings(allUserIDs)
+	userMap, _ := s.userRepo.FindByIDs(allUserIDs)
+
+	// Batch load reply-to messages
+	replyMsgIDs := uniqueStrings(replyToIDs)
+	replyMsgs := make(map[string]*domain.Message)
+	var replySenders map[string]*domain.User
+	if len(replyMsgIDs) > 0 {
+		replyMsgs, _ = s.messageRepo.FindByIDs(replyMsgIDs)
+		replySenderIDs := make([]string, 0, len(replyMsgs))
+		for _, m := range replyMsgs {
+			replySenderIDs = append(replySenderIDs, m.SenderID)
+		}
+		replySenderIDs = uniqueStrings(replySenderIDs)
+		replySenders, _ = s.userRepo.FindByIDs(replySenderIDs)
+	}
+
+	// Batch load reactions
+	reactionsMap, _ := s.messageRepo.GetReactionsByMessageIDs(msgIDs)
+	reactionUserIDs := make([]string, 0)
+	for _, reactions := range reactionsMap {
+		for _, r := range reactions {
+			reactionUserIDs = append(reactionUserIDs, r.UserID)
+		}
+	}
+	reactionUserIDs = uniqueStrings(reactionUserIDs)
+	reactionUsers, _ := s.userRepo.FindByIDs(reactionUserIDs)
+
+	// Batch load read receipts
+	receiptsMap, _ := s.messageRepo.GetReadReceiptsByMessageIDs(msgIDs)
+	receiptUserIDs := make([]string, 0)
+	for _, receipts := range receiptsMap {
+		for _, r := range receipts {
+			receiptUserIDs = append(receiptUserIDs, r.UserID)
+		}
+	}
+	receiptUserIDs = uniqueStrings(receiptUserIDs)
+	receiptUsers, _ := s.userRepo.FindByIDs(receiptUserIDs)
+
+	// Build responses
 	responses := make([]*domain.MessageResponse, 0, len(messages))
 	for _, msg := range messages {
-		resp, err := s.getMessageResponse(msg)
-		if err != nil {
-			continue
+		resp := s.buildSingleResponse(msg, userMap, replyMsgs, replySenders, reactionsMap, reactionUsers, receiptsMap, receiptUsers)
+		if resp != nil {
+			responses = append(responses, resp)
 		}
-		responses = append(responses, resp)
 	}
 	return responses, nil
 }
 
-func (s *messageService) getMessageResponse(msg *domain.Message) (*domain.MessageResponse, error) {
-	sender, err := s.userRepo.FindByID(msg.SenderID)
-	if err != nil {
-		return nil, err
+func (s *messageService) buildSingleResponse(
+	msg *domain.Message,
+	userMap map[string]*domain.User,
+	replyMsgs map[string]*domain.Message,
+	replySenders map[string]*domain.User,
+	reactionsMap map[string][]*domain.Reaction,
+	reactionUsers map[string]*domain.User,
+	receiptsMap map[string][]*domain.ReadReceipt,
+	receiptUsers map[string]*domain.User,
+) *domain.MessageResponse {
+	sender, ok := userMap[msg.SenderID]
+	if !ok {
+		return nil
 	}
 
 	edited := msg.UpdatedAt.Sub(msg.CreatedAt) > time.Second
@@ -404,39 +496,38 @@ func (s *messageService) getMessageResponse(msg *domain.Message) (*domain.Messag
 	}
 
 	if msg.ReplyToID != nil && *msg.ReplyToID != "" {
-		replyMsg, err := s.messageRepo.FindByID(*msg.ReplyToID)
-		if err == nil {
-			replySender, _ := s.userRepo.FindByID(replyMsg.SenderID)
-			resp.ReplyTo = &domain.MessageResponse{
-				ID:      replyMsg.ID,
-				Content: replyMsg.Content,
-				Type:    replyMsg.Type,
-				Sender:  replySender.ToResponse(),
+		if replyMsg, ok := replyMsgs[*msg.ReplyToID]; ok {
+			if replySender, ok := replySenders[replyMsg.SenderID]; ok {
+				resp.ReplyTo = &domain.MessageResponse{
+					ID:      replyMsg.ID,
+					Content: replyMsg.Content,
+					Type:    replyMsg.Type,
+					Sender:  replySender.ToResponse(),
+				}
 			}
 		}
 	}
 
 	if msg.ForwardFrom != nil && *msg.ForwardFrom != "" {
-		fwdUser, err := s.userRepo.FindByID(*msg.ForwardFrom)
-		if err == nil {
+		if fwdUser, ok := userMap[*msg.ForwardFrom]; ok {
 			resp.ForwardFrom = fwdUser.ToResponse()
 		}
 	}
 
-	reactions, _ := s.messageRepo.GetReactions(msg.ID)
-	for _, r := range reactions {
-		u, err := s.userRepo.FindByID(r.UserID)
-		if err == nil {
-			r.User = u.ToResponse()
+	if reactions, ok := reactionsMap[msg.ID]; ok {
+		for _, r := range reactions {
+			if u, ok := reactionUsers[r.UserID]; ok {
+				r.User = u.ToResponse()
+			}
 		}
+		resp.Reactions = reactions
 	}
-	resp.Reactions = reactions
 
-	receipts, _ := s.messageRepo.GetReadReceipts(msg.ID)
-	for _, r := range receipts {
-		u, err := s.userRepo.FindByID(r.UserID)
-		if err == nil {
-			resp.ReadBy = append(resp.ReadBy, u.ToResponse())
+	if receipts, ok := receiptsMap[msg.ID]; ok {
+		for _, r := range receipts {
+			if u, ok := receiptUsers[r.UserID]; ok {
+				resp.ReadBy = append(resp.ReadBy, u.ToResponse())
+			}
 		}
 	}
 
@@ -444,5 +535,5 @@ func (s *messageService) getMessageResponse(msg *domain.Message) (*domain.Messag
 		resp.Content = ""
 	}
 
-	return resp, nil
+	return resp
 }

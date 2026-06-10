@@ -48,6 +48,23 @@ func (h *ChatHandler) GetChat(c *gin.Context) {
 	response.JSON(c, 200, chat)
 }
 
+func (h *ChatHandler) SearchChats(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	query := c.Query("q")
+	if query == "" {
+		response.BadRequest(c, "query parameter q is required")
+		return
+	}
+
+	chats, err := h.chatService.SearchChats(userID.(string), query)
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, chats)
+}
+
 func (h *ChatHandler) ListChats(c *gin.Context) {
 	userID, _ := c.Get("userID")
 

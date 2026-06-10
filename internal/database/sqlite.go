@@ -178,6 +178,10 @@ func runMigrations(db *sql.DB) error {
 		`CREATE INDEX IF NOT EXISTS idx_blocked_users_user_id ON blocked_users(user_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_blocked_users_blocked_id ON blocked_users(blocked_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_read_receipts_message_id ON read_receipts(message_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_contacts_user_id ON contacts(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_hidden_chats_user_id ON hidden_chats(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_messages_chat_id_created_at ON messages(chat_id, created_at)`,
+		`CREATE INDEX IF NOT EXISTS idx_notification_settings_user_id ON notification_settings(user_id, chat_id)`,
 	}
 
 	for _, q := range queries {

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
 	"ChatServerGolang/internal/domain"
@@ -103,6 +104,42 @@ func (r *messageRepository) SoftDelete(id string) error {
 		now.Format(time.RFC3339), now.Format(time.RFC3339), id,
 	)
 	return err
+}
+
+func (r *messageRepository) GetLastMessagesByChatIDs(chatIDs []string) (map[string]*domain.Message, error) {
+	if len(chatIDs) == 0 {
+		return make(map[string]*domain.Message), nil
+	}
+	placeholders := make([]string, len(chatIDs))
+	args := make([]interface{}, len(chatIDs))
+	for i, id := range chatIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	rows, err := r.db.Query(
+		`SELECT m.id, m.chat_id, m.sender_id, m.content, m.type, m.reply_to_id, m.forward_from, m.file_name, m.file_size, m.file_path, m.pinned, m.created_at, m.updated_at, m.deleted_at
+		FROM messages m
+		INNER JOIN (
+			SELECT chat_id, MAX(created_at) AS max_created
+			FROM messages
+			WHERE chat_id IN (`+strings.Join(placeholders, ",")+`) AND deleted_at IS NULL
+			GROUP BY chat_id
+		) latest ON latest.chat_id = m.chat_id AND latest.max_created = m.created_at`, args...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]*domain.Message)
+	for rows.Next() {
+		msg, err := scanMessage(rows)
+		if err != nil {
+			return nil, err
+		}
+		result[msg.ChatID] = msg
+	}
+	return result, nil
 }
 
 func (r *messageRepository) GetLastMessage(chatID string) (*domain.Message, error) {
@@ -216,6 +253,102 @@ func (r *messageRepository) GetReadReceipts(msgID string) ([]*domain.ReadReceipt
 		receipts = append(receipts, &receipt)
 	}
 	return receipts, nil
+}
+
+func (r *messageRepository) FindByIDs(ids []string) (map[string]*domain.Message, error) {
+	if len(ids) == 0 {
+		return make(map[string]*domain.Message), nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	rows, err := r.db.Query(
+		`SELECT id, chat_id, sender_id, content, type, reply_to_id, forward_from, file_name, file_size, file_path, pinned, created_at, updated_at, deleted_at
+		FROM messages WHERE id IN (`+strings.Join(placeholders, ",")+`)`, args...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]*domain.Message)
+	for rows.Next() {
+		msg, err := scanMessage(rows)
+		if err != nil {
+			return nil, err
+		}
+		result[msg.ID] = msg
+	}
+	return result, nil
+}
+
+func (r *messageRepository) GetReactionsByMessageIDs(ids []string) (map[string][]*domain.Reaction, error) {
+	if len(ids) == 0 {
+		return make(map[string][]*domain.Reaction), nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	rows, err := r.db.Query(
+		`SELECT message_id, user_id, emoji, created_at FROM reactions WHERE message_id IN (`+strings.Join(placeholders, ",")+`)`, args...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string][]*domain.Reaction)
+	for rows.Next() {
+		var (
+			reaction  domain.Reaction
+			createdAt string
+		)
+		if err := rows.Scan(&reaction.MessageID, &reaction.UserID, &reaction.Emoji, &createdAt); err != nil {
+			return nil, err
+		}
+		reaction.CreatedAt = parseTime(createdAt)
+		result[reaction.MessageID] = append(result[reaction.MessageID], &reaction)
+	}
+	return result, nil
+}
+
+func (r *messageRepository) GetReadReceiptsByMessageIDs(ids []string) (map[string][]*domain.ReadReceipt, error) {
+	if len(ids) == 0 {
+		return make(map[string][]*domain.ReadReceipt), nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	rows, err := r.db.Query(
+		`SELECT message_id, user_id, read_at FROM read_receipts WHERE message_id IN (`+strings.Join(placeholders, ",")+`)`, args...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string][]*domain.ReadReceipt)
+	for rows.Next() {
+		var (
+			receipt domain.ReadReceipt
+			readAt  string
+		)
+		if err := rows.Scan(&receipt.MessageID, &receipt.UserID, &readAt); err != nil {
+			return nil, err
+		}
+		receipt.ReadAt = parseTime(readAt)
+		result[receipt.MessageID] = append(result[receipt.MessageID], &receipt)
+	}
+	return result, nil
 }
 
 type messageScanner interface {

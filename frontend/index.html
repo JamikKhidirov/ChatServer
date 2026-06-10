@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Go Messenger API Tester</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h2>Go Messenger API</h2>
+    <p>HTTP Client Tester v1.0</p>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="tab active" data-tab="auth"><span class="icon">&#x1F512;</span> Auth</button>
+    <button class="tab" data-tab="profile"><span class="icon">&#x1F464;</span> Profile</button>
+    <button class="tab" data-tab="settings"><span class="icon">&#x2699;&#xFE0F;</span> Settings</button>
+    <button class="tab" data-tab="contacts"><span class="icon">&#x1F4F1;</span> Contacts</button>
+    <button class="tab" data-tab="chats"><span class="icon">&#x1F4AC;</span> Chats</button>
+    <button class="tab" data-tab="messages"><span class="icon">&#x2709;&#xFE0F;</span> Messages</button>
+    <button class="tab" data-tab="calls"><span class="icon">&#x1F4DE;</span> Calls</button>
+    <button class="tab" data-tab="block"><span class="icon">&#x26D4;</span> Block</button>
+    <button class="tab" data-tab="search"><span class="icon">&#x1F50D;</span> Search</button>
+  </nav>
+  <div class="sidebar-footer">
+    <span id="statusIndicator" class="status-dot offline"></span>
+    <span id="connectionStatus">Not connected</span>
+  </div>
+</div>
+<div class="main" id="main">
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- AUTH -->
+<div class="tab-content active" id="tab-auth">
+  <h1 class="section-title">Authentication</h1>
+  <p class="section-subtitle">Register, login, and manage your JWT token</p>
+  <div class="card">
+    <div class="card-header"><h4>Register New Account <span class="badge">POST</span></h4></div>
+    <div class="form-row">
+      <input id="regUsername" placeholder="Username *" autocomplete="off">
+      <input id="regEmail" placeholder="Email *" type="email" autocomplete="off">
+    </div>
+    <div class="form-row">
+      <input id="regPassword" type="password" placeholder="Password *" autocomplete="new-password">
+      <input id="regDisplayName" placeholder="Display Name">
+    </div>
+    <button class="btn success" onclick="apiRegister(this)">Register</button>
+    <div class="result-box" id="resultAuth"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Login <span class="badge">POST</span></h4></div>
+    <div class="form-row">
+      <input id="loginEmail" placeholder="Email" type="email" autocomplete="email">
+      <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+    </div>
+    <button class="btn success" onclick="apiLogin(this)">Login</button>
+    <div class="token-section" id="tokenSection">
+      <hr class="divider">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;color:var(--text2);">JWT Token</span>
+        <button class="copy-btn" onclick="copyToken()">Copy</button>
+      </div>
+      <div class="token-display" id="tokenDisplay"></div>
+      <div class="flex-row mt-8">
+        <button class="btn btn-sm info" onclick="apiRefreshToken(this)">Refresh Token</button>
+        <button class="btn btn-sm" onclick="clearToken()">Clear Token</button>
+      </div>
+      <div class="key-value-row mt-8" id="tokenInfo" style="display:none;">
+        <span class="kv-key">Token Info</span>
+        <span class="kv-value text-muted" id="tokenInfoText"></span>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Change Password <span class="badge">PUT</span></h4></div>
+    <div class="form-row">
+      <input id="oldPassword" type="password" placeholder="Current password">
+      <input id="newPassword" type="password" placeholder="New password">
+    </div>
+    <button class="btn warning" onclick="apiChangePassword(this)">Change Password</button>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="tab-content" id="tab-profile">
+  <h1 class="section-title">Profile</h1>
+  <p class="section-subtitle">Manage your user profile, avatar, and status</p>
+  <div class="card">
+    <div class="card-header"><h4>View Profile <span class="badge">GET</span></h4></div>
+    <button class="btn info" onclick="apiGetProfile(this)">Get Profile</button>
+    <div class="result-box" id="resultProfile"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Update Profile <span class="badge">PUT</span></h4></div>
+    <div class="form-row">
+      <input id="updDisplayName" placeholder="Display Name">
+      <input id="updBio" placeholder="Bio">
+      <input id="updPhone" placeholder="Phone">
+    </div>
+    <div class="form-row">
+      <select id="updGender"><option value="">Gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
+      <input id="updDob" type="date" placeholder="Date of Birth">
+    </div>
+    <button class="btn" onclick="apiUpdateProfile(this)">Update Profile</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Upload Avatar <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="avatarFile" type="file" accept="image/*"></div>
+    <button class="btn" onclick="apiUploadAvatar(this)">Upload Avatar</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Update Status <span class="badge">PUT</span></h4></div>
+    <div class="form-row">
+      <input id="statusText" placeholder="Status text">
+      <select id="statusType"><option value="online">Online</option><option value="away">Away</option><option value="busy">Busy</option><option value="offline">Offline</option></select>
+    </div>
+    <button class="btn" onclick="apiUpdateStatus(this)">Update Status</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Lookup Users <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="userIdLookup" placeholder="User ID"><button class="btn btn-sm" onclick="apiGetUserById(this)">Get by ID</button></div>
+    <div class="form-row"><input id="usernameLookup" placeholder="Username"><button class="btn btn-sm" onclick="apiGetUserByUsername(this)">Get by Username</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Push Notifications <span class="badge">POST</span></h4></div>
+    <div class="form-row">
+      <input id="pushToken" placeholder="Push device token">
+      <input id="pushPlatform" placeholder="Platform (ios/android/web)">
+    </div>
+    <div class="flex-row">
+      <button class="btn btn-sm" onclick="apiSavePushToken(this)">Save Push Token</button>
+      <button class="btn btn-sm" onclick="apiTestPush(this)">Test Push</button>
+    </div>
+  </div>
+  <div class="card" style="border-color: var(--danger);">
+    <div class="card-header"><h4 style="color:var(--danger);">Danger Zone</h4></div>
+    <p class="text-muted mb-8">Permanently delete your account. This cannot be undone.</p>
+    <button class="btn danger" onclick="apiDeleteAccount(this)">Delete My Account</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="tab-content" id="tab-settings">
+  <h1 class="section-title">Account Settings</h1>
+  <p class="section-subtitle">Configure language, theme, notifications, and privacy</p>
+  <div class="card">
+    <div class="card-header"><h4>View Settings <span class="badge">GET</span></h4></div>
+    <button class="btn info" onclick="apiGetSettings(this)">Get Settings</button>
+    <div class="result-box" id="resultSettings"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Update Settings <span class="badge">PUT</span></h4></div>
+    <div class="form-row">
+      <input id="setLanguage" placeholder="Language (en, ru, etc.)">
+      <input id="setTheme" placeholder="Theme (light/dark)">
+    </div>
+    <div class="form-row">
+      <label class="fixed-label"><input id="setNotifications" type="checkbox" checked> Notifications</label>
+      <label class="fixed-label"><input id="setSoundEnabled" type="checkbox" checked> Sound</label>
+    </div>
+    <div class="form-row">
+      <select id="setLastSeenMode"><option value="everyone">Everyone</option><option value="contacts">Contacts</option><option value="nobody">Nobody</option></select>
+    </div>
+    <button class="btn" onclick="apiUpdateSettings(this)">Update Settings</button>
+  </div>
+</div>
+
+<!-- CONTACTS -->
+<div class="tab-content" id="tab-contacts">
+  <h1 class="section-title">Contacts</h1>
+  <p class="section-subtitle">Sync, view, and search your contacts</p>
+  <div class="card">
+    <div class="card-header"><h4>Sync Contacts <span class="badge">POST</span></h4></div>
+    <p class="text-muted mb-8">Send a JSON array of device contacts to find registered users.</p>
+    <div class="form-row"><textarea id="contactsSyncData" placeholder='[{"phone":"+1234567890","firstName":"John","lastName":"Doe"}]' rows="4"></textarea></div>
+    <button class="btn" onclick="apiSyncContacts(this)">Sync Contacts</button>
+    <div class="result-box" id="resultSyncContacts"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>View Contacts <span class="badge">GET</span></h4></div>
+    <button class="btn info" onclick="apiGetContacts(this)">Get Contacts</button>
+    <div class="result-box" id="resultContacts"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Search Contacts <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="contactSearchQuery" placeholder="Search query"><button class="btn" onclick="apiSearchContacts(this)">Search</button></div>
+    <div class="result-box" id="resultSearchContacts"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Find Registered <span class="badge">GET</span></h4></div>
+    <button class="btn" onclick="apiFindRegistered(this)">Find Registered</button>
+    <div class="result-box" id="resultRegistered"></div>
+  </div>
+</div>
+
+<!-- CHATS -->
+<div class="tab-content" id="tab-chats">
+  <h1 class="section-title">Chats</h1>
+  <p class="section-subtitle">Manage private and group conversations</p>
+  <div class="card">
+    <div class="card-header"><h4>List Chats <span class="badge">GET</span></h4></div>
+    <button class="btn info" onclick="apiListChats(this)">List Chats</button>
+    <div class="result-box" id="resultListChats"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Create Private Chat <span class="badge">POST</span></h4></div>
+    <div class="form-row">
+      <input id="privateChatUserId" placeholder="Other user ID">
+      <input id="privateChatMsg" placeholder="Optional first message">
+    </div>
+    <button class="btn success" onclick="apiCreatePrivateChat(this)">Create Private Chat</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Create Group Chat <span class="badge">POST</span></h4></div>
+    <div class="form-row">
+      <input id="groupName" placeholder="Group name">
+      <input id="groupParticipants" placeholder='["user_id_1","user_id_2"]'>
+    </div>
+    <button class="btn success" onclick="apiCreateGroupChat(this)">Create Group Chat</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Get Chat by ID <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="chatIdGet" placeholder="Chat ID"><button class="btn info" onclick="apiGetChat(this)">Get Chat</button></div>
+    <div class="result-box" id="resultGetChat"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Search Chats <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="chatSearchQuery" placeholder="Search chat name"><button class="btn" onclick="apiSearchChats(this)">Search</button></div>
+    <div class="result-box" id="resultSearchChats"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Chat Actions</h4></div>
+    <div class="form-row"><input id="chatIdAction" placeholder="Chat ID"></div>
+    <div class="flex-row">
+      <button class="btn btn-sm" onclick="apiHideChat(this)">Hide</button>
+      <button class="btn btn-sm danger" onclick="apiDeleteChat(this)">Delete</button>
+      <button class="btn btn-sm warning" onclick="apiLeaveGroup(this)">Leave Group</button>
+      <button class="btn btn-sm success" onclick="apiMarkChatRead(this)">Mark Read</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Manage Participants</h4></div>
+    <div class="form-row"><input id="partChatId" placeholder="Chat ID"><input id="partUserId" placeholder="User ID"></div>
+    <div class="flex-row">
+      <button class="btn btn-sm success" onclick="apiAddParticipant(this)">Add</button>
+      <button class="btn btn-sm danger" onclick="apiRemoveParticipant(this)">Remove</button>
+    </div>
+    <hr class="divider">
+    <div class="form-row"><input id="roleChatId" placeholder="Chat ID"><input id="roleUserId" placeholder="User ID"><select id="roleType"><option value="admin">Admin</option><option value="member">Member</option></select><button class="btn btn-sm" onclick="apiUpdateRole(this)">Update Role</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Chat Notifications <span class="badge">GET/PUT</span></h4></div>
+    <div class="form-row"><input id="notifChatId" placeholder="Chat ID"><select id="notifMode"><option value="all">All</option><option value="mentions">Mentions</option><option value="none">None</option></select></div>
+    <div class="flex-row">
+      <button class="btn btn-sm info" onclick="apiGetChatNotifications(this)">Get</button>
+      <button class="btn btn-sm" onclick="apiUpdateChatNotifications(this)">Update</button>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGES -->
+<div class="tab-content" id="tab-messages">
+  <h1 class="section-title">Messages</h1>
+  <p class="section-subtitle">Send, edit, react, forward, and manage messages</p>
+  <div class="card">
+    <div class="card-header"><h4>List Messages <span class="badge">GET</span></h4></div>
+    <div class="form-row">
+      <input id="msgChatIdList" placeholder="Chat ID">
+      <input id="msgLimit" placeholder="Limit" type="number" min="1" max="200">
+      <input id="msgOffset" placeholder="Offset" type="number" min="0">
+    </div>
+    <button class="btn info" onclick="apiListMessages(this)">List Messages</button>
+    <div class="result-box" id="resultListMessages"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Send Message <span class="badge">POST</span></h4></div>
+    <div class="form-row">
+      <input id="sendMsgChatId" placeholder="Chat ID">
+      <select id="sendMsgType"><option value="text">Text</option><option value="gif">GIF</option><option value="voice">Voice</option><option value="video">Video</option><option value="image">Image</option><option value="file">File</option></select>
+    </div>
+    <div class="form-row"><textarea id="sendMsgContent" placeholder="Message content" rows="2"></textarea></div>
+    <button class="btn success" onclick="apiSendMessage(this)">Send Message</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Upload File <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="fileMsgChatId" placeholder="Chat ID"><input id="fileMsgFile" type="file"></div>
+    <button class="btn" onclick="apiUploadFile(this)">Upload &amp; Send</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Edit / Delete Message <span class="badge">PUT/DELETE</span></h4></div>
+    <div class="form-row"><input id="msgIdAction" placeholder="Message ID"></div>
+    <div class="form-row" id="editMsgRow" style="display:none;"><textarea id="editMsgContent" placeholder="New content" rows="2"></textarea></div>
+    <div class="flex-row">
+      <button class="btn btn-sm" onclick="toggleEditMsg()">Toggle Edit</button>
+      <button class="btn btn-sm warning" onclick="apiEditMessage(this)">Edit</button>
+      <button class="btn btn-sm danger" onclick="apiDeleteMessage(this)">Delete</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Resend Message <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="resendChatId" placeholder="Chat ID"><input id="resendMsgId" placeholder="Message ID"></div>
+    <button class="btn" onclick="apiResendMessage(this)">Resend</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Search Messages <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="searchMsgChatId" placeholder="Chat ID"><input id="searchMsgQuery" placeholder="Search query"><button class="btn" onclick="apiSearchMessages(this)">Search</button></div>
+    <div class="result-box" id="resultSearchMessages"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Reactions <span class="badge">POST/DELETE</span></h4></div>
+    <div class="form-row"><input id="reactMsgId" placeholder="Message ID"></div>
+    <div class="emoji-grid" id="emojiGrid">
+      <button onclick="setEmoji(this,'\u2764\uFE0F')">&#x2764;&#xFE0F;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDE02')">&#x1F602;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDE0E')">&#x1F60E;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDE44')">&#x1F644;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDE22')">&#x1F622;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDE21')">&#x1F621;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDC4D')">&#x1F44D;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDC4E')">&#x1F44E;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDC4C')">&#x1F44C;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDCAF')">&#x1F4AF;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDE80')">&#x1F680;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDC40')">&#x1F440;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDE0D')">&#x1F60D;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDE2E')">&#x1F62E;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDE2D')">&#x1F62D;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDE10')">&#x1F610;</button>
+      <button onclick="setEmoji(this,'\u2764')">&#x2764;</button>
+      <button onclick="setEmoji(this,'\uD83D\uDC8B')">&#x1F48B;</button>
+    </div>
+    <div class="form-row"><input id="reactEmoji" placeholder="Selected emoji" readonly></div>
+    <div class="flex-row">
+      <button class="btn btn-sm success" onclick="apiAddReaction(this)">Add Reaction</button>
+      <button class="btn btn-sm danger" onclick="apiRemoveReaction(this)">Remove Reaction</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Pin / Unpin / Read / Forward</h4></div>
+    <div class="form-row"><input id="pinMsgId" placeholder="Message ID"></div>
+    <div class="flex-row">
+      <button class="btn btn-sm" onclick="apiPinMessage(this)">Pin</button>
+      <button class="btn btn-sm warning" onclick="apiUnpinMessage(this)">Unpin</button>
+      <button class="btn btn-sm success" onclick="apiMarkMsgRead(this)">Mark Read</button>
+    </div>
+    <hr class="divider">
+    <div class="form-row"><input id="forwardMsgId" placeholder="Message ID"><input id="forwardChatId" placeholder="Target Chat ID"><button class="btn btn-sm" onclick="apiForwardMessage(this)">Forward</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Pinned Messages <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="pinnedChatId" placeholder="Chat ID"><button class="btn info" onclick="apiGetPinnedMessages(this)">Get Pinned</button></div>
+    <div class="result-box" id="resultPinned"></div>
+  </div>
+</div>
+
+<!-- CALLS -->
+<div class="tab-content" id="tab-calls">
+  <h1 class="section-title">Calls</h1>
+  <p class="section-subtitle">Initiate, respond, and manage calls</p>
+  <div class="card">
+    <div class="card-header"><h4>Initiate Call <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="callChatId" placeholder="Chat ID"><select id="callType"><option value="audio">Audio</option><option value="video">Video</option></select></div>
+    <button class="btn success" onclick="apiInitiateCall(this)">Initiate Call</button>
+    <div class="result-box" id="resultInitCall"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Respond to Call <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="callIdRespond" placeholder="Call ID"><select id="callResponse"><option value="accept">Accept</option><option value="reject">Reject</option></select></div>
+    <button class="btn" onclick="apiRespondCall(this)">Respond</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>End Call <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="callIdEnd" placeholder="Call ID"></div>
+    <button class="btn danger" onclick="apiEndCall(this)">End Call</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Get Call <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="callIdGet" placeholder="Call ID"><button class="btn info" onclick="apiGetCall(this)">Get Call</button></div>
+    <div class="result-box" id="resultGetCall"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Call History <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="callHistoryChatId" placeholder="Chat ID"><button class="btn" onclick="apiGetCallHistory(this)">Get History</button></div>
+    <div class="result-box" id="resultCallHistory"></div>
+  </div>
+</div>
+
+<!-- BLOCK -->
+<div class="tab-content" id="tab-block">
+  <h1 class="section-title">Block Management</h1>
+  <p class="section-subtitle">Block, unblock, and manage your block list</p>
+  <div class="card">
+    <div class="card-header"><h4>Block User <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="blockUserId" placeholder="User ID to block"></div>
+    <button class="btn danger" onclick="apiBlockUser(this)">Block User</button>
+    <div class="result-box" id="resultBlock"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Unblock User <span class="badge">DELETE</span></h4></div>
+    <div class="form-row"><input id="unblockUserId" placeholder="User ID to unblock"></div>
+    <button class="btn" onclick="apiUnblockUser(this)">Unblock User</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>List Blocked <span class="badge">GET</span></h4></div>
+    <button class="btn info" onclick="apiListBlocked(this)">List Blocked</button>
+    <div class="result-box" id="resultBlocked"></div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="tab-content" id="tab-search">
+  <h1 class="section-title">Search Users</h1>
+  <p class="section-subtitle">Find users on the platform</p>
+  <div class="card">
+    <div class="card-header"><h4>Search Users <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="searchQuery" placeholder="Search by name, username, or email"><button class="btn" onclick="apiSearchUsers(this)">Search</button></div>
+    <div class="result-box" id="resultSearchUsers"></div>
+  </div>
+</div>
+
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

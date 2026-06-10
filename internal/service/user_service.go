@@ -88,11 +88,14 @@ func (s *userService) GetUserByID(id string) (*domain.User, error) {
 
 func (s *userService) GetUsersByIDs(ids []string) (map[string]*domain.UserResponse, error) {
 	result := make(map[string]*domain.UserResponse)
-	for _, id := range ids {
-		u, err := s.userRepo.FindByID(id)
-		if err != nil {
-			continue
-		}
+	if len(ids) == 0 {
+		return result, nil
+	}
+	users, err := s.userRepo.FindByIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+	for id, u := range users {
 		result[id] = u.ToResponse()
 	}
 	return result, nil

@@ -9,6 +9,7 @@ import (
 type UserRepository interface {
 	Create(user *domain.User) error
 	FindByID(id string) (*domain.User, error)
+	FindByIDs(ids []string) (map[string]*domain.User, error)
 	FindByEmail(email string) (*domain.User, error)
 	FindByUsername(username string) (*domain.User, error)
 	Search(query string, limit, offset int) ([]*domain.User, error)
@@ -34,33 +35,40 @@ type ChatRepository interface {
 	AddParticipant(chatID, userID, role string) error
 	RemoveParticipant(chatID, userID string) error
 	GetParticipants(chatID string) ([]*domain.ChatParticipant, error)
+	GetParticipantsByChatIDs(chatIDs []string) (map[string][]*domain.ChatParticipant, error)
 	IsParticipant(chatID, userID string) (bool, error)
 	GetPrivateChat(user1ID, user2ID string) (*domain.Chat, error)
 	SetRole(chatID, userID, role string) error
 	UpdateLastRead(chatID, userID string) error
 	GetUnreadCount(chatID, userID string) (int, error)
+	GetUnreadCounts(userID string, chatIDs []string) (map[string]int, error)
 	SetNotificationMuted(userID, chatID string, muted bool) error
 	IsNotificationMuted(userID, chatID string) (bool, error)
 	HideChat(userID, chatID string) error
 	IsHidden(userID, chatID string) (bool, error)
 	FindByUserIDExcludeHidden(userID string) ([]*domain.Chat, error)
+	SearchByName(userID, query string) ([]*domain.Chat, error)
 }
 
 type MessageRepository interface {
 	Create(msg *domain.Message) error
 	FindByID(id string) (*domain.Message, error)
+	FindByIDs(ids []string) (map[string]*domain.Message, error)
 	FindByChatID(chatID string, limit, offset int) ([]*domain.Message, error)
 	Search(chatID, query string, limit, offset int) ([]*domain.Message, error)
 	Update(msg *domain.Message) error
 	SoftDelete(id string) error
+	GetLastMessagesByChatIDs(chatIDs []string) (map[string]*domain.Message, error)
 	GetLastMessage(chatID string) (*domain.Message, error)
 	TogglePin(msgID string, pinned bool) error
 	GetPinned(chatID string) ([]*domain.Message, error)
 	AddReaction(msgID, userID, emoji string) error
 	RemoveReaction(msgID, userID, emoji string) error
 	GetReactions(msgID string) ([]*domain.Reaction, error)
+	GetReactionsByMessageIDs(ids []string) (map[string][]*domain.Reaction, error)
 	AddReadReceipt(msgID, userID string) error
 	GetReadReceipts(msgID string) ([]*domain.ReadReceipt, error)
+	GetReadReceiptsByMessageIDs(ids []string) (map[string][]*domain.ReadReceipt, error)
 }
 
 type CallRepository interface {

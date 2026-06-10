@@ -120,6 +120,7 @@ func main() {
 
 			// Chats
 			authorized.GET("/chats", chatHandler.ListChats)
+			authorized.GET("/chats/search", chatHandler.SearchChats)
 			authorized.POST("/chats", wsEvents.WrapCreateChat(chatHandler.CreateChat))
 			authorized.GET("/chats/:id", chatHandler.GetChat)
 			authorized.PUT("/chats/:id", chatHandler.UpdateGroup)

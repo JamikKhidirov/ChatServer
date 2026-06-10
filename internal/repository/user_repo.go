@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
 	"ChatServerGolang/internal/domain"
@@ -198,6 +199,36 @@ func (r *userRepository) IsBlocked(userID, blockedID string) (bool, error) {
 		userID, blockedID,
 	).Scan(&count)
 	return count > 0, err
+}
+
+func (r *userRepository) FindByIDs(ids []string) (map[string]*domain.User, error) {
+	if len(ids) == 0 {
+		return make(map[string]*domain.User), nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	query := `SELECT id, username, email, password_hash, display_name, avatar_url, bio, phone, gender, date_of_birth,
+		user_status, push_token, push_provider, online, deleted, last_seen, created_at, updated_at
+		FROM users WHERE id IN (` + strings.Join(placeholders, ",") + `) AND deleted = 0`
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]*domain.User)
+	for rows.Next() {
+		u, err := scanUser(rows)
+		if err != nil {
+			return nil, err
+		}
+		result[u.ID] = u
+	}
+	return result, nil
 }
 
 func (r *userRepository) FindByIDIncludeDeleted(id string) (*domain.User, error) {

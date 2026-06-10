@@ -130,14 +130,89 @@ func (s *chatService) ListChats(userID string) ([]*domain.ChatResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(chats) == 0 {
+		return []*domain.ChatResponse{}, nil
+	}
+
+	chatIDs := make([]string, len(chats))
+	chatMap := make(map[string]*domain.Chat, len(chats))
+	for i, chat := range chats {
+		chatIDs[i] = chat.ID
+		chatMap[chat.ID] = chat
+	}
+
+	// Batch load all participants
+	participantsMap, _ := s.chatRepo.GetParticipantsByChatIDs(chatIDs)
+
+	// Batch load all users that are participants
+	allUserIDs := make([]string, 0)
+	for _, participants := range participantsMap {
+		for _, p := range participants {
+			allUserIDs = append(allUserIDs, p.UserID)
+		}
+	}
+	allUserIDs = uniqueStrings(allUserIDs)
+	userResponses := make(map[string]*domain.UserResponse)
+	if users, err := s.userRepo.FindByIDs(allUserIDs); err == nil {
+		for id, u := range users {
+			userResponses[id] = u.ToResponse()
+		}
+	}
+
+	// Batch load last messages
+	lastMsgs, _ := s.messageRepo.GetLastMessagesByChatIDs(chatIDs)
+
+	// Build sender map for last messages
+	lastMsgSenderIDs := make([]string, 0, len(lastMsgs))
+	for _, msg := range lastMsgs {
+		lastMsgSenderIDs = append(lastMsgSenderIDs, msg.SenderID)
+	}
+	lastMsgSenderIDs = uniqueStrings(lastMsgSenderIDs)
+	lastMsgSenders, _ := s.userRepo.FindByIDs(lastMsgSenderIDs)
+
+	// Batch load unread counts
+	unreadCounts, _ := s.chatRepo.GetUnreadCounts(userID, chatIDs)
 
 	responses := make([]*domain.ChatResponse, 0, len(chats))
 	for _, chat := range chats {
-		resp, err := s.buildChatResponse(chat, userID)
-		if err != nil {
-			continue
+		participants := participantsMap[chat.ID]
+		partResponses := make([]*domain.UserResponse, 0, len(participants))
+		for _, p := range participants {
+			if ur, ok := userResponses[p.UserID]; ok {
+				partResponses = append(partResponses, ur)
+			}
 		}
-		responses = append(responses, resp)
+
+		var lastMsgResponse *domain.MessageResponse
+		if lastMsg, ok := lastMsgs[chat.ID]; ok {
+			if sender, ok := lastMsgSenders[lastMsg.SenderID]; ok {
+				lastMsgResponse = &domain.MessageResponse{
+					ID:        lastMsg.ID,
+					ChatID:    lastMsg.ChatID,
+					Sender:    sender.ToResponse(),
+					Content:   lastMsg.Content,
+					Type:      lastMsg.Type,
+					CreatedAt: lastMsg.CreatedAt,
+					UpdatedAt: lastMsg.UpdatedAt,
+					Deleted:   lastMsg.DeletedAt != nil,
+				}
+			}
+		}
+
+		unreadCount := unreadCounts[chat.ID]
+
+		responses = append(responses, &domain.ChatResponse{
+			ID:           chat.ID,
+			Name:         chat.Name,
+			Description:  chat.Description,
+			AvatarURL:    chat.AvatarURL,
+			Type:         chat.Type,
+			CreatedBy:    chat.CreatedBy,
+			Participants: partResponses,
+			LastMessage:  lastMsgResponse,
+			UnreadCount:  unreadCount,
+			CreatedAt:    chat.CreatedAt,
+		})
 	}
 
 	sort.Slice(responses, func(i, j int) bool {
@@ -351,6 +426,93 @@ func (s *chatService) UpdateGroup(chatID, userID string, req *domain.UpdateGroup
 
 func (s *chatService) HideChat(chatID, userID string) error {
 	return s.chatRepo.HideChat(userID, chatID)
+}
+
+func (s *chatService) SearchChats(userID, query string) ([]*domain.ChatResponse, error) {
+	if query == "" {
+		return s.ListChats(userID)
+	}
+	chats, err := s.chatRepo.SearchByName(userID, query)
+	if err != nil {
+		return nil, err
+	}
+	if len(chats) == 0 {
+		return []*domain.ChatResponse{}, nil
+	}
+
+	chatIDs := make([]string, len(chats))
+	chatMap := make(map[string]*domain.Chat, len(chats))
+	for i, chat := range chats {
+		chatIDs[i] = chat.ID
+		chatMap[chat.ID] = chat
+	}
+
+	participantsMap, _ := s.chatRepo.GetParticipantsByChatIDs(chatIDs)
+	allUserIDs := make([]string, 0)
+	for _, participants := range participantsMap {
+		for _, p := range participants {
+			allUserIDs = append(allUserIDs, p.UserID)
+		}
+	}
+	allUserIDs = uniqueStrings(allUserIDs)
+	userResponses := make(map[string]*domain.UserResponse)
+	if users, err := s.userRepo.FindByIDs(allUserIDs); err == nil {
+		for id, u := range users {
+			userResponses[id] = u.ToResponse()
+		}
+	}
+
+	lastMsgs, _ := s.messageRepo.GetLastMessagesByChatIDs(chatIDs)
+	lastMsgSenderIDs := make([]string, 0, len(lastMsgs))
+	for _, msg := range lastMsgs {
+		lastMsgSenderIDs = append(lastMsgSenderIDs, msg.SenderID)
+	}
+	lastMsgSenderIDs = uniqueStrings(lastMsgSenderIDs)
+	lastMsgSenders, _ := s.userRepo.FindByIDs(lastMsgSenderIDs)
+
+	unreadCounts, _ := s.chatRepo.GetUnreadCounts(userID, chatIDs)
+
+	responses := make([]*domain.ChatResponse, 0, len(chats))
+	for _, chat := range chats {
+		participants := participantsMap[chat.ID]
+		partResponses := make([]*domain.UserResponse, 0, len(participants))
+		for _, p := range participants {
+			if ur, ok := userResponses[p.UserID]; ok {
+				partResponses = append(partResponses, ur)
+			}
+		}
+
+		var lastMsgResponse *domain.MessageResponse
+		if lastMsg, ok := lastMsgs[chat.ID]; ok {
+			if sender, ok := lastMsgSenders[lastMsg.SenderID]; ok {
+				lastMsgResponse = &domain.MessageResponse{
+					ID:        lastMsg.ID,
+					ChatID:    lastMsg.ChatID,
+					Sender:    sender.ToResponse(),
+					Content:   lastMsg.Content,
+					Type:      lastMsg.Type,
+					CreatedAt: lastMsg.CreatedAt,
+					UpdatedAt: lastMsg.UpdatedAt,
+					Deleted:   lastMsg.DeletedAt != nil,
+				}
+			}
+		}
+
+		responses = append(responses, &domain.ChatResponse{
+			ID:           chat.ID,
+			Name:         chat.Name,
+			Description:  chat.Description,
+			AvatarURL:    chat.AvatarURL,
+			Type:         chat.Type,
+			CreatedBy:    chat.CreatedBy,
+			Participants: partResponses,
+			LastMessage:  lastMsgResponse,
+			UnreadCount:  unreadCounts[chat.ID],
+			CreatedAt:    chat.CreatedAt,
+		})
+	}
+
+	return responses, nil
 }
 
 func (s *chatService) GetParticipants(chatID string) ([]*domain.ChatParticipant, error) {

@@ -34,6 +34,7 @@ type ChatService interface {
 	CreateChat(userID string, req *domain.CreateChatRequest) (*domain.ChatResponse, error)
 	GetChat(chatID, userID string) (*domain.ChatResponse, error)
 	ListChats(userID string) ([]*domain.ChatResponse, error)
+	SearchChats(userID, query string) ([]*domain.ChatResponse, error)
 	DeleteChat(chatID, userID string) error
 	AddParticipant(chatID, userID, requesterID string) error
 	RemoveParticipant(chatID, userID, requesterID string) error

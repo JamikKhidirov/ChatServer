@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
 	"ChatServerGolang/internal/domain"
@@ -122,6 +123,42 @@ func (r *chatRepository) GetParticipants(chatID string) ([]*domain.ChatParticipa
 	return participants, nil
 }
 
+func (r *chatRepository) GetParticipantsByChatIDs(chatIDs []string) (map[string][]*domain.ChatParticipant, error) {
+	if len(chatIDs) == 0 {
+		return make(map[string][]*domain.ChatParticipant), nil
+	}
+	placeholders := make([]string, len(chatIDs))
+	args := make([]interface{}, len(chatIDs))
+	for i, id := range chatIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	rows, err := r.db.Query(
+		`SELECT chat_id, user_id, role, joined_at, last_read_at
+		FROM chat_participants WHERE chat_id IN (`+strings.Join(placeholders, ",")+`)`, args...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string][]*domain.ChatParticipant)
+	for rows.Next() {
+		var (
+			p        domain.ChatParticipant
+			joinedAt string
+			lastRead string
+		)
+		if err := rows.Scan(&p.ChatID, &p.UserID, &p.Role, &joinedAt, &lastRead); err != nil {
+			return nil, err
+		}
+		p.JoinedAt = parseTime(joinedAt)
+		p.LastReadAt = parseTime(lastRead)
+		result[p.ChatID] = append(result[p.ChatID], &p)
+	}
+	return result, nil
+}
+
 func (r *chatRepository) IsParticipant(chatID, userID string) (bool, error) {
 	var count int
 	err := r.db.QueryRow(
@@ -157,6 +194,47 @@ func (r *chatRepository) UpdateLastRead(chatID, userID string) error {
 		time.Now().Format(time.RFC3339), chatID, userID,
 	)
 	return err
+}
+
+func (r *chatRepository) GetUnreadCounts(userID string, chatIDs []string) (map[string]int, error) {
+	if len(chatIDs) == 0 {
+		return make(map[string]int), nil
+	}
+	placeholders := make([]string, len(chatIDs))
+	args := make([]interface{}, 0, len(chatIDs)+2)
+	for i, id := range chatIDs {
+		placeholders[i] = "?"
+		args = append(args, id)
+	}
+	args = append(args, userID)
+	query := `SELECT m.chat_id, COUNT(*) as cnt
+		FROM messages m
+		WHERE m.chat_id IN (` + strings.Join(placeholders, ",") + `)
+		AND m.sender_id != ?
+		AND m.deleted_at IS NULL
+		AND m.created_at > COALESCE((
+			SELECT cp.last_read_at FROM chat_participants cp
+			WHERE cp.chat_id = m.chat_id AND cp.user_id = ?
+		), '1970-01-01')
+		GROUP BY m.chat_id`
+	args = append(args, userID)
+
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]int)
+	for rows.Next() {
+		var chatID string
+		var count int
+		if err := rows.Scan(&chatID, &count); err != nil {
+			return nil, err
+		}
+		result[chatID] = count
+	}
+	return result, nil
 }
 
 func (r *chatRepository) GetUnreadCount(chatID, userID string) (int, error) {
@@ -209,6 +287,31 @@ func (r *chatRepository) IsHidden(userID, chatID string) (bool, error) {
 		userID, chatID,
 	).Scan(&count)
 	return count > 0, err
+}
+
+func (r *chatRepository) SearchByName(userID, query string) ([]*domain.Chat, error) {
+	rows, err := r.db.Query(
+		`SELECT c.id, c.name, COALESCE(c.description,''), c.avatar_url, c.type, c.created_by, c.created_at, c.updated_at
+		FROM chats c
+		INNER JOIN chat_participants cp ON cp.chat_id = c.id
+		LEFT JOIN hidden_chats hc ON hc.chat_id = c.id AND hc.user_id = ?
+		WHERE cp.user_id = ? AND c.name LIKE ? AND hc.chat_id IS NULL
+		ORDER BY c.updated_at DESC`, userID, userID, "%"+query+"%",
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	chats := make([]*domain.Chat, 0)
+	for rows.Next() {
+		c, err := scanChat(rows)
+		if err != nil {
+			return nil, err
+		}
+		chats = append(chats, c)
+	}
+	return chats, nil
 }
 
 func (r *chatRepository) FindByUserIDExcludeHidden(userID string) ([]*domain.Chat, error) {
