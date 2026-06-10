@@ -159,3 +159,16 @@ type ThemeService interface {
 	GetTheme(userID string) (string, error)
 	SetTheme(userID, theme string) error
 }
+
+type VerificationService interface {
+	SendEmailVerification(userID, email string) error
+	VerifyEmail(userID, code string) error
+	SendPhoneVerification(userID, phone string) error
+	VerifyPhone(userID, code string) error
+	IsEmailVerified(userID string) (bool, error)
+	IsPhoneVerified(userID string) (bool, error)
+	LoginSendEmailCode(email string) (string, error)
+	LoginVerifyEmailCode(email, code string) (string, error)
+	LoginSendPhoneCode(phone string) (string, error)
+	LoginVerifyPhoneCode(phone, code string) (string, error)
+}

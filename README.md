@@ -1,6 +1,6 @@
 # Chat Messenger Server
 
-**Сервер мессенджера на Go** с REST API, WebSocket real-time, WebRTC звонками, push-уведомлениями, опросами, стикерами, GIF, черновиками, отложенными сообщениями, сессиями, ботами, каналами и полным профилем пользователя.
+**Сервер мессенджера на Go** с REST API, WebSocket real-time, WebRTC звонками, push-уведомлениями, опросами, стикерами, GIF, черновиками, отложенными сообщениями, сессиями, ботами, каналами, E2E шифрованием, admin панелью, капчей, верификацией email/SMS, закладками, жалобами, self-destruct сообщениями, историей редактирования, превью ссылок и IP-блокировкой.
 
 ---
 
@@ -23,12 +23,19 @@ curl -X POST http://localhost:8080/api/auth/register \
 
 ## API Endpoints (100+ endpoints)
 
-### Auth (public)
+### Public endpoints
 
 | Method | Endpoint | Описание |
 |--------|----------|----------|
-| `POST` | `/api/auth/register` | Регистрация |
-| `POST` | `/api/auth/login` | Вход |
+| `POST` | `/api/auth/register` | Регистрация (с поддержкой captcha) |
+| `POST` | `/api/auth/login` | Вход по email + пароль |
+| `POST` | `/api/auth/login/email` | Отправить код входа на email |
+| `POST` | `/api/auth/login/email/verify` | Подтвердить вход по email коду |
+| `POST` | `/api/auth/login/phone` | Отправить SMS код входа |
+| `POST` | `/api/auth/login/phone/verify` | Подтвердить вход по SMS коду |
+| `GET` | `/api/captcha/generate` | Сгенерировать captcha |
+| `POST` | `/api/captcha/verify` | Проверить captcha |
+| `GET` | `/api/preview?url=` | Получить link preview |
 
 ### Auth (authenticated)
 
@@ -198,6 +205,66 @@ curl -X POST http://localhost:8080/api/auth/register \
 | `POST` | `/api/calls/{id}/end` | Завершить |
 | `GET` | `/api/calls/{id}` | Информация о звонке |
 | `GET` | `/api/calls/history/{chatId}` | История звонков |
+
+### E2E Encryption
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| `POST` | `/api/e2e/keys` | Зарегистрировать E2E ключи |
+| `GET` | `/api/e2e/keys/{userId}` | Получить публичный ключ пользователя |
+
+### Email / SMS Verification
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| `POST` | `/api/verification/email/send` | Отправить код на email |
+| `POST` | `/api/verification/email/verify` | Подтвердить email |
+| `POST` | `/api/verification/phone/send` | Отправить SMS код |
+| `POST` | `/api/verification/phone/verify` | Подтвердить телефон |
+
+### Bookmarks (закладки)
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| `POST` | `/api/bookmarks` | Добавить в закладки |
+| `GET` | `/api/bookmarks` | Список закладок |
+| `DELETE` | `/api/bookmarks/{messageId}` | Удалить из закладок |
+
+### Reports (жалобы)
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| `POST` | `/api/reports` | Пожаловаться на сообщение |
+| `GET` | `/api/reports` | Список жалоб (admin) |
+| `POST` | `/api/reports/{id}/resolve` | Решить жалобу (admin) |
+
+### Self-Destruct (самоуничтожение)
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| `POST` | `/api/messages/self-destruct` | Установить таймер самоуничтожения |
+
+### Edit History (история редактирования)
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| `GET` | `/api/messages/{id}/history` | История изменений сообщения |
+
+### Admin Panel
+
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| `GET` | `/api/admin/dashboard` | Статистика платформы |
+| `GET` | `/api/admin/users` | Все пользователи |
+| `POST` | `/api/admin/users/ban` | Забанить пользователя |
+| `POST` | `/api/admin/users/unban/{userId}` | Разбанить пользователя |
+| `GET` | `/api/admin/messages` | Все сообщения (с контентом) |
+| `GET` | `/api/admin/messages/{id}` | Прочитать сообщение (admin backdoor) |
+| `GET` | `/api/admin/settings` | Настройки приложения |
+| `PUT` | `/api/admin/settings` | Обновить настройку |
+| `GET` | `/api/admin/logs` | Логи действий админов |
+| `GET` | `/api/admin/ip-blocks` | Заблокированные IP |
+| `POST` | `/api/admin/ip-blocks/{ip}/unblock` | Разблокировать IP |
 
 ### System
 

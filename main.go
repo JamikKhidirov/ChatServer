@@ -13,10 +13,12 @@ import (
 	"ChatServerGolang/config"
 	_ "ChatServerGolang/docs"
 	"ChatServerGolang/internal/database"
+	"ChatServerGolang/internal/email"
 	"ChatServerGolang/internal/handler"
 	"ChatServerGolang/internal/middleware"
 	"ChatServerGolang/internal/repository"
 	"ChatServerGolang/internal/service"
+	"ChatServerGolang/internal/sms"
 	"ChatServerGolang/internal/ws"
 
 	"github.com/gin-gonic/gin"
@@ -46,6 +48,7 @@ func main() {
 	sessionRepo := repository.NewSessionRepository(db)
 	botRepo := repository.NewBotRepository(db)
 	gifRepo := repository.NewSavedGifRepository(db)
+	verRepo := repository.NewVerificationRepository(db)
 
 	// WebSocket hub
 	hub := ws.NewHub()
@@ -69,8 +72,13 @@ func main() {
 	sessionService := service.NewSessionService(sessionRepo)
 	botService := service.NewBotService(botRepo)
 	gifService := service.NewSavedGifService(gifRepo)
+	emailSender := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass, cfg.SMTPFrom)
+	smsSender := sms.NewSender(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioPhone)
+	verService := service.NewVerificationService(verRepo, userRepo, emailSender, smsSender)
 
 	// Handlers
+	loginCodeHandler := handler.NewLoginCodeHandler(verService, authService)
+	verHandler := handler.NewVerificationHandler(verService)
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService, pushService)
 	chatHandler := handler.NewChatHandler(chatService)
@@ -113,6 +121,10 @@ func main() {
 		{
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
+			auth.POST("/login/email", loginCodeHandler.SendEmailCode)
+			auth.POST("/login/email/verify", loginCodeHandler.VerifyEmailCode)
+			auth.POST("/login/phone", loginCodeHandler.SendPhoneCode)
+			auth.POST("/login/phone/verify", loginCodeHandler.VerifyPhoneCode)
 		}
 
 		// Authorized routes
@@ -243,6 +255,12 @@ func main() {
 			authorized.POST("/calls/:id/end", wsEvents.WrapEndCall(callHandler.EndCall))
 			authorized.GET("/calls/:id", callHandler.GetCall)
 			authorized.GET("/calls/history/:chatId", callHandler.GetCallHistory)
+
+			// Verification
+			authorized.POST("/verification/email/send", verHandler.SendEmail)
+			authorized.POST("/verification/email/verify", verHandler.VerifyEmail)
+			authorized.POST("/verification/phone/send", verHandler.SendPhone)
+			authorized.POST("/verification/phone/verify", verHandler.VerifyPhone)
 		}
 	}
 

@@ -2,11 +2,14 @@
   "openapi": "3.0.3",
   "info": {
     "title": "ChatServerGolang — Messenger API",
-    "description": "Полноценный сервер мессенджера на Go.\n\n**Функции:**\n- Регистрация и авторизация (JWT с refresh)\n- Личные и групповые чаты\n- Отправка, редактирование, удаление, поиск сообщений\n- Ответы (reply) и пересылка (forward) сообщений\n- Реакции на сообщения (emoji)\n- Закреплённые сообщения (pin)\n- Статус прочтения (read receipts)\n- Загрузка файлов и изображений\n- Голосовые/видеозвонки (WebRTC signaling)\n- Push-уведомления (FCM)\n- WebSocket real-time (онлайн статус, печатание, события)\n- Статус пользователя (WhatsApp-like)\n- Блокировка пользователей\n- Настройки уведомлений на чат (mute)\n- Rate limiting\n- Смена пароля\n- Удаление аккаунта",
+    "description": "Полноценный сервер мессенджера на Go.\n\n**Функции:**\n- Регистрация и авторизация (JWT с refresh)\n- Личные и групповые чаты\n- Отправка, редактирование, удаление, поиск сообщений\n- Ответы (reply) и пересылка (forward) сообщений\n- Реакции на сообщения (emoji)\n- Закреплённые сообщения (pin)\n- Статус прочтения (read receipts)\n- Загрузка файлов и изображений (multipart/form-data)\n- Голосовые/видеозвонки (WebRTC signaling)\n- Push-уведомления (FCM)\n- WebSocket real-time (онлайн статус, печатание, события)\n- Статус пользователя (WhatsApp-like)\n- Блокировка пользователей\n- Настройки уведомлений на чат (mute)\n- Rate limiting\n- Смена пароля\n- Удаление аккаунта\n- E2E шифрование с admin backdoor\n- Верификация email/телефона (6-значный код)\n- Капча (математическая: A + B = ?)\n- Закладки (bookmarks)\n- Система жалоб (report)\n- Self-destruct сообщения\n- История редактирования сообщений\n- Превью ссылок (OpenGraph + microlink)\n- Admin панель (дашборд, бан, логи)\n- IP-блокировка (авто-блок после 5 неудачных логинов)\n- Миграции БД с версионированием",
     "version": "2.0.0"
   },
   "servers": [
-    { "url": "http://localhost:8080", "description": "Локальный сервер" }
+    {
+      "url": "http://localhost:8080",
+      "description": "Локальный сервер"
+    }
   ],
   "components": {
     "securitySchemes": {
@@ -19,31 +22,78 @@
     "schemas": {
       "RegisterRequest": {
         "type": "object",
-        "required": ["username", "email", "password", "displayName"],
+        "required": [
+          "username",
+          "email",
+          "password",
+          "display_name"
+        ],
         "properties": {
-          "username": { "type": "string", "minLength": 3, "maxLength": 32, "example": "john_doe" },
-          "email": { "type": "string", "format": "email", "example": "john@example.com" },
-          "password": { "type": "string", "format": "password", "minLength": 6, "example": "secret123" },
-          "displayName": { "type": "string", "minLength": 1, "maxLength": 64, "example": "John Doe" }
-        }
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 32,
+            "example": "john_doe",
+            "description": "Имя пользователя (уникальное)"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com",
+            "description": "Email адрес"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 6,
+            "example": "secret123",
+            "description": "Пароль (минимум 6 символов)"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "example": "John Doe",
+            "description": "Отображаемое имя"
+          }
+        },
+        "description": "❗ ВСЕ поля обязательны. Формат: JSON body."
       },
       "LoginRequest": {
         "type": "object",
-        "required": ["email", "password"],
+        "required": [
+          "email",
+          "password"
+        ],
         "properties": {
-          "email": { "type": "string", "format": "email" },
-          "password": { "type": "string", "format": "password" }
-        }
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email пользователя"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Пароль"
+          }
+        },
+        "description": "❗ Формат: JSON body."
       },
       "AuthResponse": {
         "type": "object",
         "properties": {
-          "success": { "type": "boolean" },
+          "success": {
+            "type": "boolean"
+          },
           "data": {
             "type": "object",
             "properties": {
-              "token": { "type": "string" },
-              "user": { "$ref": "#/components/schemas/User" }
+              "token": {
+                "type": "string"
+              },
+              "user": {
+                "$ref": "#/components/schemas/User"
+              }
             }
           }
         }
@@ -51,137 +101,380 @@
       "User": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "username": { "type": "string" },
-          "email": { "type": "string" },
-          "displayName": { "type": "string" },
-          "avatarUrl": { "type": "string" },
-          "bio": { "type": "string" },
-          "phone": { "type": "string" },
-          "gender": { "type": "string", "enum": ["male", "female", "other", ""] },
-          "dateOfBirth": { "type": "string" },
-          "status": { "type": "string", "description": "Статус пользователя (Available, Busy, At work, ...)" },
-          "online": { "type": "boolean" },
-          "lastSeen": { "type": "string", "format": "date-time" },
-          "createdAt": { "type": "string", "format": "date-time" },
-          "updatedAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "bio": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female",
+              "other",
+              ""
+            ]
+          },
+          "dateOfBirth": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "description": "Статус пользователя (Available, Busy, At work, ...)"
+          },
+          "online": {
+            "type": "boolean"
+          },
+          "lastSeen": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "UserResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "username": { "type": "string" },
-          "displayName": { "type": "string" },
-          "avatarUrl": { "type": "string" },
-          "bio": { "type": "string" },
-          "phone": { "type": "string" },
-          "gender": { "type": "string", "enum": ["male", "female", "other", ""] },
-          "dateOfBirth": { "type": "string" },
-          "status": { "type": "string" },
-          "online": { "type": "boolean" },
-          "lastSeen": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "bio": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female",
+              "other",
+              ""
+            ]
+          },
+          "dateOfBirth": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "online": {
+            "type": "boolean"
+          },
+          "lastSeen": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "ChatResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "description": { "type": "string" },
-          "avatarUrl": { "type": "string" },
-          "type": { "type": "string", "enum": ["private", "group"] },
-          "createdBy": { "type": "string" },
-          "participants": { "type": "array", "items": { "$ref": "#/components/schemas/UserResponse" } },
-          "lastMessage": { "$ref": "#/components/schemas/MessageResponse" },
-          "unreadCount": { "type": "integer" },
-          "createdAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "private",
+              "group"
+            ]
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserResponse"
+            }
+          },
+          "lastMessage": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "unreadCount": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "CreateChatRequest": {
         "type": "object",
-        "required": ["type", "participantIds"],
+        "required": [
+          "type",
+          "participantIds"
+        ],
         "properties": {
-          "name": { "type": "string", "maxLength": 64, "description": "Название группового чата" },
-          "description": { "type": "string", "maxLength": 512 },
-          "type": { "type": "string", "enum": ["private", "group"] },
-          "participantIds": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Название группового чата"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "private",
+              "group"
+            ]
+          },
+          "participantIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          }
         }
       },
       "MessageResponse": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "chatId": { "type": "string" },
-          "sender": { "$ref": "#/components/schemas/UserResponse" },
-          "content": { "type": "string" },
-          "type": { "type": "string", "enum": ["text", "image", "file", "gif", "voice", "video", "system"] },
-          "replyTo": { "$ref": "#/components/schemas/MessageResponse" },
-          "forwardFrom": { "$ref": "#/components/schemas/UserResponse" },
-          "fileName": { "type": "string" },
-          "fileSize": { "type": "integer" },
-          "fileUrl": { "type": "string" },
-          "reactions": { "type": "array", "items": { "$ref": "#/components/schemas/Reaction" } },
-          "pinned": { "type": "boolean" },
-          "readBy": { "type": "array", "items": { "$ref": "#/components/schemas/UserResponse" } },
-          "createdAt": { "type": "string", "format": "date-time" },
-          "updatedAt": { "type": "string", "format": "date-time" },
-          "edited": { "type": "boolean" },
-          "deleted": { "type": "boolean" }
+          "id": {
+            "type": "string"
+          },
+          "chatId": {
+            "type": "string"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/UserResponse"
+          },
+          "content": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "image",
+              "file",
+              "gif",
+              "voice",
+              "video",
+              "system"
+            ]
+          },
+          "replyTo": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "forwardFrom": {
+            "$ref": "#/components/schemas/UserResponse"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer"
+          },
+          "fileUrl": {
+            "type": "string"
+          },
+          "reactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Reaction"
+            }
+          },
+          "pinned": {
+            "type": "boolean"
+          },
+          "readBy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserResponse"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "edited": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "boolean"
+          }
         }
       },
       "SendMessageRequest": {
         "type": "object",
-        "required": ["content", "type"],
+        "required": [
+          "content",
+          "type"
+        ],
         "properties": {
-          "content": { "type": "string", "description": "Текст сообщения" },
-          "type": { "type": "string", "enum": ["text", "image", "file", "gif", "voice", "video"] },
-          "replyToId": { "type": "string", "description": "ID сообщения для ответа" },
-          "forwardMsgId": { "type": "string", "description": "ID сообщения для пересылки" }
+          "content": {
+            "type": "string",
+            "description": "Текст сообщения"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "image",
+              "file",
+              "gif",
+              "voice",
+              "video"
+            ]
+          },
+          "replyToId": {
+            "type": "string",
+            "description": "ID сообщения для ответа"
+          },
+          "forwardMsgId": {
+            "type": "string",
+            "description": "ID сообщения для пересылки"
+          }
         }
       },
       "Reaction": {
         "type": "object",
         "properties": {
-          "messageId": { "type": "string" },
-          "userId": { "type": "string" },
-          "emoji": { "type": "string" },
-          "createdAt": { "type": "string", "format": "date-time" },
-          "user": { "$ref": "#/components/schemas/UserResponse" }
+          "messageId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
         }
       },
       "Call": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "chatId": { "type": "string" },
-          "callerId": { "type": "string" },
-          "calleeId": { "type": "string" },
-          "type": { "type": "string", "enum": ["audio", "video"] },
-          "status": { "type": "string", "enum": ["initiated", "ongoing", "ended", "missed", "rejected"] },
-          "startedAt": { "type": "string", "format": "date-time" },
-          "endedAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string"
+          },
+          "chatId": {
+            "type": "string"
+          },
+          "callerId": {
+            "type": "string"
+          },
+          "calleeId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "audio",
+              "video"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "initiated",
+              "ongoing",
+              "ended",
+              "missed",
+              "rejected"
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "Contact": {
         "type": "object",
         "properties": {
-          "phone": { "type": "string" },
-          "name": { "type": "string" }
+          "phone": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
         }
       },
       "SyncContactsRequest": {
         "type": "object",
-        "required": ["contacts"],
+        "required": [
+          "contacts"
+        ],
         "properties": {
           "contacts": {
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["phone", "name"],
+              "required": [
+                "phone",
+                "name"
+              ],
               "properties": {
-                "phone": { "type": "string" },
-                "name": { "type": "string" }
+                "phone": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -190,67 +483,302 @@
       "AccountSetting": {
         "type": "object",
         "properties": {
-          "userId": { "type": "string" },
-          "language": { "type": "string", "description": "Язык интерфейса (en, ru, ...)" },
-          "theme": { "type": "string", "description": "Тема оформления (light, dark)" },
-          "notifications": { "type": "boolean" },
-          "soundEnabled": { "type": "boolean" },
-          "lastSeenMode": { "type": "string", "enum": ["everyone", "nobody", "contacts"], "description": "Кто видит время последнего визита" },
-          "updatedAt": { "type": "string", "format": "date-time" }
+          "userId": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string",
+            "description": "Язык интерфейса (en, ru, ...)"
+          },
+          "theme": {
+            "type": "string",
+            "description": "Тема оформления (light, dark)"
+          },
+          "notifications": {
+            "type": "boolean"
+          },
+          "soundEnabled": {
+            "type": "boolean"
+          },
+          "lastSeenMode": {
+            "type": "string",
+            "enum": [
+              "everyone",
+              "nobody",
+              "contacts"
+            ],
+            "description": "Кто видит время последнего визита"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "Error": {
         "type": "object",
         "properties": {
-          "success": { "type": "boolean" },
-          "error": { "type": "string" }
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          }
         }
       }
     }
   },
-  "security": [{ "BearerAuth": [] }],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
   "paths": {
     "/api/auth/register": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Регистрация нового пользователя",
+        "description": "Создаёт нового пользователя и возвращает JWT токен + данные пользователя.\n\n**Параметры запроса (JSON body):**\n- `username` (string, обязательный, 3-32 символа) — Имя пользователя (уникальное)\n- `email` (string, обязательный) — Email адрес\n- `password` (string, обязательный, минимум 6 символов) — Пароль\n- `display_name` (string, обязательный, 1-64 символа) — Отображаемое имя\n\n**Пример запроса:**\n```json\n{\"username\":\"john\",\"email\":\"john@mail.com\",\"password\":\"secret123\",\"display_name\":\"John\"}\n```\n\n**Ответ:**\n```json\n{\"success\":true,\"data\":{\"token\":\"eyJ...\",\"user\":{\"id\":\"uuid\",\"username\":\"john\",\"displayName\":\"John\",...}}}\n```\n\n⚠️ Все поля обязательны! Формат — JSON body.",
         "security": [],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } } }
+          "description": "📦 **JSON body** (не form-data!). Все поля обязательны.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
         },
         "responses": {
-          "201": { "description": "Успешная регистрация" },
-          "400": { "description": "Ошибка валидации" }
+          "201": {
+            "description": "✅ Успешная регистрация — возвращает token + user"
+          },
+          "400": {
+            "description": "❌ Ошибка: пользователь с таким email/username уже существует, или невалидные поля"
+          }
         }
       }
     },
     "/api/auth/login": {
       "post": {
-        "tags": ["Auth"],
-        "summary": "Вход в систему",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Вход в систему по паролю",
+        "description": "Авторизация по email и паролю. Отправьте JSON body с email и password. Возвращает JWT токен.\n\n**Параметры запроса (JSON body):**\n- `email` (string, обязательный) — Email пользователя\n- `password` (string, обязательный) — Пароль\n\n**Пример запроса:**\n```json\n{\"email\":\"john@mail.com\",\"password\":\"secret123\"}\n```\n\n**Ответ:**\n```json\n{\"success\":true,\"data\":{\"token\":\"eyJ...\",\"user\":{...}}}\n```",
         "security": [],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } }
+          "description": "📦 **JSON body**. Отправьте email и password.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
         },
         "responses": {
-          "200": { "description": "Успешный вход" },
-          "401": { "description": "Неверные данные" }
+          "200": {
+            "description": "✅ Успешный вход — возвращает token + user"
+          },
+          "401": {
+            "description": "❌ Неверные email или пароль"
+          }
+        }
+      }
+    },
+    "/api/auth/login/email": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Вход по коду на email (без пароля)",
+        "description": "Отправляет 6-значный код подтверждения на email. Пользователь должен быть зарегистрирован. Код действует 10 минут.\n\n**Параметры запроса (JSON body):**\n- `email` (string, обязательный) — Email зарегистрированного пользователя\n\n**Пример запроса:**\n```json\n{\"email\":\"john@mail.com\"}\n```\n\n**Ответ:**\n```json\n{\"success\":true,\"data\":{\"message\":\"code sent to email\"}}\n```\n\n**Далее:** отправьте полученный код в POST /api/auth/login/email/verify",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "description": "📦 **JSON body**. Пример: {\"email\":\"john@mail.com\"}",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email зарегистрированного пользователя"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Код отправлен на email. Проверьте почту."
+          },
+          "400": {
+            "description": "❌ Email не зарегистрирован или ошибка"
+          }
+        }
+      }
+    },
+    "/api/auth/login/email/verify": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Подтвердить вход по email коду",
+        "description": "Подтверждает вход с помощью 6-значного кода, полученного на email. При успехе возвращает JWT токен.\n\n**Параметры запроса (JSON body):**\n- `email` (string, обязательный) — Email, на который отправляли код\n- `code` (string, обязательный) — 6-значный код из письма\n\n**Пример запроса:**\n```json\n{\"email\":\"john@mail.com\",\"code\":\"483291\"}\n```\n\n**Ответ:**\n```json\n{\"success\":true,\"data\":{\"token\":\"eyJ...\",\"user_id\":\"uuid\"}}\n```\n\n⚠️ Код действителен 10 минут. После использования код становится недействительным.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "description": "📦 **JSON body**. Пример: {\"email\":\"john@mail.com\",\"code\":\"483291\"}",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "code"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email, на который отправлен код"
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "description": "6-значный код из письма"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Успешный вход — возвращает token + user_id"
+          },
+          "400": {
+            "description": "❌ Неверный код, истёк или уже использован"
+          }
+        }
+      }
+    },
+    "/api/auth/login/phone": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Вход по SMS коду (без пароля)",
+        "description": "Отправляет 6-значный код подтверждения на номер телефона через SMS. Код действует 10 минут.\n\n**Параметры запроса (JSON body):**\n- `phone` (string, обязательный) — Номер телефона в международном формате (+1234567890)\n\n**Пример запроса:**\n```json\n{\"phone\":\"+1234567890\"}\n```\n\n**Ответ:**\n```json\n{\"success\":true,\"data\":{\"message\":\"code sent to phone\"}}\n```\n\n**Далее:** отправьте полученный код в POST /api/auth/login/phone/verify",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "description": "📦 **JSON body**. Пример: {\"phone\":\"+1234567890\"}",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phone"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "description": "Номер телефона в международном формате (e.g. +1234567890)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ SMS с кодом отправлена"
+          },
+          "400": {
+            "description": "❌ Ошибка"
+          }
+        }
+      }
+    },
+    "/api/auth/login/phone/verify": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Подтвердить вход по SMS коду",
+        "description": "Подтверждает вход с помощью 6-значного кода из SMS. При успехе возвращает JWT токен.\n\n**Параметры запроса (JSON body):**\n- `phone` (string, обязательный) — Номер телефона, на который отправляли SMS\n- `code` (string, обязательный) — 6-значный код из SMS\n\n**Пример запроса:**\n```json\n{\"phone\":\"+1234567890\",\"code\":\"837261\"}\n```\n\n**Ответ:**\n```json\n{\"success\":true,\"data\":{\"token\":\"eyJ...\",\"user_id\":\"uuid\"}}\n```\n\n⚠️ Код действителен 10 минут.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "description": "📦 **JSON body**. Пример: {\"phone\":\"+1234567890\",\"code\":\"837261\"}",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phone",
+                  "code"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "description": "Номер телефона, на который отправлен SMS код"
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "description": "6-значный код из SMS"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Успешный вход — возвращает token + user_id"
+          },
+          "400": {
+            "description": "❌ Неверный код, истёк или уже использован"
+          }
         }
       }
     },
     "/api/auth/refresh": {
       "get": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Обновить JWT токен",
         "description": "Создаёт новый JWT токен для текущего пользователя без повторного входа",
-        "responses": { "200": { "description": "Новый токен" } }
+        "responses": {
+          "200": {
+            "description": "Новый токен"
+          }
+        }
       }
     },
     "/api/auth/change-password": {
       "put": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Сменить пароль",
         "requestBody": {
           "required": true,
@@ -258,48 +786,94 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["oldPassword", "newPassword"],
+                "required": [
+                  "oldPassword",
+                  "newPassword"
+                ],
                 "properties": {
-                  "oldPassword": { "type": "string", "format": "password" },
-                  "newPassword": { "type": "string", "format": "password", "minLength": 6 }
+                  "oldPassword": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 6
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Пароль изменён" }, "400": { "description": "Ошибка" } }
+        "responses": {
+          "200": {
+            "description": "Пароль изменён"
+          },
+          "400": {
+            "description": "Ошибка"
+          }
+        },
+        "description": "Меняет пароль текущего пользователя. Требует Bearer токен.\n\nПараметры (JSON body):\n- oldPassword (string, обязательный) — Текущий пароль\n- newPassword (string, обязательный, мин. 6 символов) — Новый пароль\n\nПример: {\"oldPassword\":\"secret123\",\"newPassword\":\"newpass456\"}"
       }
     },
     "/api/users/profile": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Профиль текущего пользователя",
-        "responses": { "200": { "description": "Профиль пользователя" } }
+        "responses": {
+          "200": {
+            "description": "Профиль пользователя"
+          }
+        },
+        "description": "Возвращает профиль текущего авторизованного пользователя.\n\nТребует: Authorization: Bearer <token>\n\nОтвет: { id, username, email, displayName, avatarUrl, bio, status, ... }"
       },
       "put": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Обновить профиль",
+        "description": "Обновляет профиль текущего пользователя.\n\nПараметры (JSON body, все опционально):\n- display_name (string) — Новое отображаемое имя\n- bio (string) — О себе\n- avatar_url (string) — URL аватарки\n\nПример: {\"display_name\":\"New Name\",\"bio\":\"Hello!\"}",
         "requestBody": {
           "required": true,
+          "description": "📦 JSON: display_name (string, макс 64), bio (string, макс 256), avatar_url (string). Все поля опциональны.",
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "displayName": { "type": "string", "maxLength": 64 },
-                  "bio": { "type": "string", "maxLength": 256 },
-                  "avatarUrl": { "type": "string" }
+                  "display_name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "Отображаемое имя"
+                  },
+                  "bio": {
+                    "type": "string",
+                    "maxLength": 256,
+                    "description": "О себе"
+                  },
+                  "avatar_url": {
+                    "type": "string",
+                    "description": "URL аватарки"
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Профиль обновлён" } }
+        "responses": {
+          "200": {
+            "description": "Профиль обновлён"
+          }
+        }
       }
     },
     "/api/users/status": {
       "put": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Обновить статус (как в WhatsApp)",
         "requestBody": {
           "required": true,
@@ -307,20 +881,33 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["status"],
+                "required": [
+                  "status"
+                ],
                 "properties": {
-                  "status": { "type": "string", "example": "Available", "description": "Новый статус (Available, Busy, At work, Sleeping, ...)" }
+                  "status": {
+                    "type": "string",
+                    "example": "Available",
+                    "description": "Новый статус (Available, Busy, At work, Sleeping, ...)"
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Статус обновлён" } }
+        "responses": {
+          "200": {
+            "description": "Статус обновлён"
+          }
+        },
+        "description": "Обновляет статус пользователя (как в WhatsApp).\n\nПараметры (JSON body):\n- status (string, обязательный) — Available, Busy, At work, Sleeping\n\nПример: {\"status\":\"Busy\"}"
       }
     },
     "/api/users/push-token": {
       "put": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Обновить push-токен",
         "requestBody": {
           "required": true,
@@ -328,21 +915,39 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["token", "provider"],
+                "required": [
+                  "token",
+                  "provider"
+                ],
                 "properties": {
-                  "token": { "type": "string" },
-                  "provider": { "type": "string", "enum": ["fcm", "apns"] }
+                  "token": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "fcm",
+                      "apns"
+                    ]
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Push-токен обновлён" } }
+        "responses": {
+          "200": {
+            "description": "Push-токен обновлён"
+          }
+        },
+        "description": "Сохраняет push-токен для уведомлений на мобильное устройство.\n\nПараметры (JSON body):\n- token (string, обязательный) — Push-токен от FCM/APNs\n- provider (string, обязательный) — \"fcm\" или \"apns\"\n\nПример: {\"token\":\"fcm-token-abc\",\"provider\":\"fcm\"}"
       }
     },
     "/api/users/push-test": {
       "post": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Отправить тестовое push-уведомление",
         "requestBody": {
           "required": true,
@@ -350,53 +955,127 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["title", "body"],
+                "required": [
+                  "title",
+                  "body"
+                ],
                 "properties": {
-                  "title": { "type": "string" },
-                  "body": { "type": "string" }
+                  "title": {
+                    "type": "string"
+                  },
+                  "body": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Тестовый push отправлен" } }
+        "responses": {
+          "200": {
+            "description": "Тестовый push отправлен"
+          }
+        },
+        "description": "Отправляет тестовое push-уведомление.\n\nПараметры (JSON body):\n- title (string, обязательный) — Заголовок\n- body (string, обязательный) — Текст\n\nПример: {\"title\":\"Test\",\"body\":\"Hello!\"}"
       }
     },
     "/api/users/search": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Поиск пользователей",
         "parameters": [
-          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" }, "description": "Поисковый запрос" },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 } },
-          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Поисковый запрос"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
         ],
-        "responses": { "200": { "description": "Список пользователей" } }
+        "responses": {
+          "200": {
+            "description": "Список пользователей"
+          }
+        }
       }
     },
     "/api/users/{id}": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Пользователь по ID",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Пользователь найден" }, "404": { "description": "Не найден" } }
+        "responses": {
+          "200": {
+            "description": "Пользователь найден"
+          },
+          "404": {
+            "description": "Не найден"
+          }
+        }
       }
     },
     "/api/users/username/{username}": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Пользователь по username",
         "parameters": [
-          { "name": "username", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Пользователь найден" }, "404": { "description": "Не найден" } }
+        "responses": {
+          "200": {
+            "description": "Пользователь найден"
+          },
+          "404": {
+            "description": "Не найден"
+          }
+        }
       }
     },
     "/api/users/block": {
       "post": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Заблокировать пользователя",
         "requestBody": {
           "required": true,
@@ -404,106 +1083,194 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["blockedId"],
-                "properties": { "blockedId": { "type": "string" } }
-              }
-            }
-          }
-        },
-        "responses": { "200": { "description": "Пользователь заблокирован" } }
-      }
-    },
-    "/api/users/block/{userId}": {
-      "delete": {
-        "tags": ["Users"],
-        "summary": "Разблокировать пользователя",
-        "parameters": [
-          { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "responses": { "200": { "description": "Пользователь разблокирован" } }
-      }
-    },
-    "/api/users/blocked": {
-      "get": {
-        "tags": ["Users"],
-        "summary": "Список заблокированных пользователей",
-        "responses": { "200": { "description": "Список заблокированных" } }
-      }
-    },
-    "/api/users/account": {
-      "delete": {
-        "tags": ["Users"],
-        "summary": "Удалить аккаунт (soft delete)",
-        "responses": { "200": { "description": "Аккаунт удалён" } }
-      }
-    },
-    "/api/users/avatar": {
-      "post": {
-        "tags": ["Users"],
-        "summary": "Загрузить аватарку профиля (multipart/form-data)",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
+                "required": [
+                  "blockedId"
+                ],
                 "properties": {
-                  "avatar": { "type": "string", "format": "binary" }
+                  "blockedId": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Профиль с обновлённым avatarUrl" } }
+        "responses": {
+          "200": {
+            "description": "Пользователь заблокирован"
+          }
+        },
+        "description": "Блокирует пользователя.\n\nПараметры (JSON body):\n- blockedId (string, обязательный) — ID пользователя\n\nПример: {\"blockedId\":\"user-uuid\"}"
+      }
+    },
+    "/api/users/block/{userId}": {
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Разблокировать пользователя",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Пользователь разблокирован"
+          }
+        }
+      }
+    },
+    "/api/users/blocked": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Список заблокированных пользователей",
+        "responses": {
+          "200": {
+            "description": "Список заблокированных"
+          }
+        }
+      }
+    },
+    "/api/users/account": {
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Удалить аккаунт (soft delete)",
+        "responses": {
+          "200": {
+            "description": "Аккаунт удалён"
+          }
+        }
+      }
+    },
+    "/api/users/avatar": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Загрузить аватарку профиля",
+        "description": "Загружает аватарку. [b]multipart/form-data, НЕ JSON![/b]\n\nПараметры (form-data):\n- avatar (file, обязательный) — Изображение (jpg, png, gif, webp, до 10 MB)",
+        "requestBody": {
+          "required": true,
+          "description": "Файл изображения в поле 'avatar'. Тип: multipart/form-data, не JSON!",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Профиль с обновлённым avatarUrl"
+          }
+        }
       }
     },
     "/api/contacts/sync": {
       "post": {
-        "tags": ["Contacts"],
+        "tags": [
+          "Contacts"
+        ],
         "summary": "Синхронизировать контакты телефона",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/SyncContactsRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/SyncContactsRequest"
+              }
             }
           }
         },
-        "responses": { "200": { "description": "Контакты синхронизированы" } }
+        "responses": {
+          "200": {
+            "description": "Контакты синхронизированы"
+          }
+        }
       }
     },
     "/api/contacts": {
       "get": {
-        "tags": ["Contacts"],
+        "tags": [
+          "Contacts"
+        ],
         "summary": "Получить синхронизированные контакты",
-        "responses": { "200": { "description": "Список контактов" } }
+        "responses": {
+          "200": {
+            "description": "Список контактов"
+          }
+        }
       }
     },
     "/api/contacts/search": {
       "get": {
-        "tags": ["Contacts"],
+        "tags": [
+          "Contacts"
+        ],
         "summary": "Поиск контактов по номеру телефона",
         "parameters": [
-          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Найденные контакты" } }
+        "responses": {
+          "200": {
+            "description": "Найденные контакты"
+          }
+        }
       }
     },
     "/api/contacts/registered": {
       "get": {
-        "tags": ["Contacts"],
+        "tags": [
+          "Contacts"
+        ],
         "summary": "Найти зарегистрированных пользователей среди контактов",
-        "responses": { "200": { "description": "Пользователи, чьи номера совпадают с контактами" } }
+        "responses": {
+          "200": {
+            "description": "Пользователи, чьи номера совпадают с контактами"
+          }
+        }
       }
     },
     "/api/account/settings": {
       "get": {
-        "tags": ["Account Settings"],
+        "tags": [
+          "Account Settings"
+        ],
         "summary": "Получить настройки аккаунта",
-        "responses": { "200": { "description": "Настройки аккаунта" } }
+        "responses": {
+          "200": {
+            "description": "Настройки аккаунта"
+          }
+        }
       },
       "put": {
-        "tags": ["Account Settings"],
+        "tags": [
+          "Account Settings"
+        ],
         "summary": "Обновить настройки аккаунта",
         "requestBody": {
           "required": true,
@@ -512,49 +1279,115 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "language": { "type": "string", "description": "Язык интерфейса (en, ru)" },
-                  "theme": { "type": "string", "description": "Тема (light, dark)" },
-                  "notifications": { "type": "boolean" },
-                  "soundEnabled": { "type": "boolean" },
-                  "lastSeenMode": { "type": "string", "enum": ["everyone", "nobody", "contacts"] }
+                  "language": {
+                    "type": "string",
+                    "description": "Язык интерфейса (en, ru)"
+                  },
+                  "theme": {
+                    "type": "string",
+                    "description": "Тема (light, dark)"
+                  },
+                  "notifications": {
+                    "type": "boolean"
+                  },
+                  "soundEnabled": {
+                    "type": "boolean"
+                  },
+                  "lastSeenMode": {
+                    "type": "string",
+                    "enum": [
+                      "everyone",
+                      "nobody",
+                      "contacts"
+                    ]
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Настройки обновлены" } }
+        "responses": {
+          "200": {
+            "description": "Настройки обновлены"
+          }
+        }
       }
     },
     "/api/chats": {
       "get": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Список чатов текущего пользователя",
-        "responses": { "200": { "description": "Список чатов" } }
+        "responses": {
+          "200": {
+            "description": "Список чатов"
+          }
+        }
       },
       "post": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Создать чат (личный или групповой)",
+        "description": "Создаёт новый чат.\n\nПараметры (JSON body):\n- type (string, обязательный) — \"private\" или \"group\"\n- participantIds (array string, обязательный) — ID участников\n- name (string, для группы) — Название\n- description (string, опционально)\n\nПример private: {\"type\":\"private\",\"participantIds\":[\"user2-uuid\"]}\nПример group: {\"type\":\"group\",\"name\":\"Friends\",\"participantIds\":[\"user2-uuid\",\"user3-uuid\"]}",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateChatRequest" } } }
+          "description": "📦 JSON: type (string: private|group), participantIds (массив ID), name (string, для группы), description (string, опционально)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChatRequest"
+              }
+            }
+          }
         },
-        "responses": { "201": { "description": "Чат создан" } }
+        "responses": {
+          "201": {
+            "description": "Чат создан"
+          }
+        }
       }
     },
     "/api/chats/{id}": {
       "get": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Детали чата",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Информация о чате" }, "404": { "description": "Чат не найден" } }
+        "responses": {
+          "200": {
+            "description": "Информация о чате"
+          },
+          "404": {
+            "description": "Чат не найден"
+          }
+        }
       },
       "put": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Обновить группу (имя, описание, аватар)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -563,31 +1396,65 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string", "maxLength": 64 },
-                  "description": { "type": "string", "maxLength": 256 },
-                  "avatarUrl": { "type": "string" }
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 256
+                  },
+                  "avatarUrl": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Группа обновлена" } }
+        "responses": {
+          "200": {
+            "description": "Группа обновлена"
+          }
+        }
       },
       "delete": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Удалить чат (только создатель)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Чат удалён" } }
+        "responses": {
+          "200": {
+            "description": "Чат удалён"
+          }
+        }
       }
     },
     "/api/chats/{id}/participants": {
       "post": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Добавить участника в группу",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -595,33 +1462,79 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["userId"],
-                "properties": { "userId": { "type": "string" } }
+                "required": [
+                  "userId"
+                ],
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Участник добавлен" } }
+        "responses": {
+          "200": {
+            "description": "Участник добавлен"
+          }
+        }
       }
     },
     "/api/chats/{id}/participants/{userId}": {
       "delete": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Удалить участника из группы",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Участник удалён" } }
+        "responses": {
+          "200": {
+            "description": "Участник удалён"
+          }
+        }
       }
     },
     "/api/chats/{id}/participants/{userId}/role": {
       "put": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Назначить роль (admin/member)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -629,53 +1542,113 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["role"],
+                "required": [
+                  "role"
+                ],
                 "properties": {
-                  "role": { "type": "string", "enum": ["admin", "member"] }
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "admin",
+                      "member"
+                    ]
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Роль обновлена" } }
+        "responses": {
+          "200": {
+            "description": "Роль обновлена"
+          }
+        }
       }
     },
     "/api/chats/{id}/hide": {
       "post": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Скрыть чат для себя (не удаляет для других)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Чат скрыт" } }
+        "responses": {
+          "200": {
+            "description": "Чат скрыт"
+          }
+        }
       }
     },
     "/api/chats/{id}/leave": {
       "post": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Покинуть групповой чат",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Вы вышли из чата" } }
+        "responses": {
+          "200": {
+            "description": "Вы вышли из чата"
+          }
+        }
       }
     },
     "/api/chats/{id}/read": {
       "post": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Отметить чат прочитанным",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Помечено" } }
+        "responses": {
+          "200": {
+            "description": "Помечено"
+          }
+        }
       }
     },
     "/api/chats/{id}/notifications": {
       "put": {
-        "tags": ["Chats"],
+        "tags": [
+          "Chats"
+        ],
         "summary": "Включить/выключить уведомления (mute)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -683,121 +1656,316 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["muted"],
-                "properties": { "muted": { "type": "boolean", "description": "true — отключить уведомления" } }
-              }
-            }
-          }
-        },
-        "responses": { "200": { "description": "Настройки обновлены" } }
-      },
-      "get": {
-        "tags": ["Chats"],
-        "summary": "Проверить статус уведомлений",
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "responses": { "200": { "description": "Статус уведомлений" } }
-      }
-    },
-    "/api/chats/{id}/messages": {
-      "get": {
-        "tags": ["Messages"],
-        "summary": "Получить сообщения чата",
-        "security": [{ "BearerAuth": [] }],
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 } },
-          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
-        ],
-        "responses": { "200": { "description": "Сообщения" } }
-      },
-      "post": {
-        "tags": ["Messages"],
-        "summary": "Отправить сообщение",
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SendMessageRequest" } } }
-        },
-        "responses": { "201": { "description": "Сообщение отправлено" } }
-      }
-    },
-    "/api/chats/{id}/messages/search": {
-      "get": {
-        "tags": ["Messages"],
-        "summary": "Поиск по сообщениям в чате",
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" }, "description": "Поисковый запрос" },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 } },
-          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
-        ],
-        "responses": { "200": { "description": "Результаты поиска" } }
-      }
-    },
-    "/api/chats/{id}/messages/file": {
-      "post": {
-        "tags": ["Messages"],
-        "summary": "Загрузить файл/изображение",
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "required": ["file"],
+                "required": [
+                  "muted"
+                ],
                 "properties": {
-                  "file": { "type": "string", "format": "binary" },
-                  "replyToId": { "type": "string", "description": "ID сообщения для ответа" }
+                  "muted": {
+                    "type": "boolean",
+                    "description": "true — отключить уведомления"
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "201": { "description": "Файл загружен" } }
+        "responses": {
+          "200": {
+            "description": "Настройки обновлены"
+          }
+        },
+        "description": "Mute/unmute чата.\n\nПараметры (JSON body):\n- muted (boolean, обязательный) — true=выкл уведомления\n\nПример: {\"muted\":true}"
+      },
+      "get": {
+        "tags": [
+          "Chats"
+        ],
+        "summary": "Проверить статус уведомлений",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Статус уведомлений"
+          }
+        }
+      }
+    },
+    "/api/chats/{id}/messages": {
+      "get": {
+        "tags": [
+          "Messages"
+        ],
+        "summary": "Получить сообщения чата",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Сообщения"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Messages"
+        ],
+        "summary": "Отправить сообщение",
+        "description": "Отправляет текстовое сообщение.\n\nПараметры (JSON body):\n- content (string, обязательный) — Текст\n- type (string, обязательный) — \"text\", \"image\", \"gif\"\n- replyToId (string, опционально) — ID сообщения для ответа\n- forwardMsgId (string, опционально) — ID для пересылки\n\nПример: {\"content\":\"Привет!\",\"type\":\"text\"}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID чата"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "📦 JSON: content (string, required — текст), type (string, required — text|image|file|gif|voice|video), replyToId (string, опционально), forwardMsgId (string, опционально)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Сообщение отправлено"
+          }
+        }
+      }
+    },
+    "/api/chats/{id}/messages/search": {
+      "get": {
+        "tags": [
+          "Messages"
+        ],
+        "summary": "Поиск по сообщениям в чате",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Поисковый запрос"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Результаты поиска"
+          }
+        }
+      }
+    },
+    "/api/chats/{id}/messages/file": {
+      "post": {
+        "tags": [
+          "Messages"
+        ],
+        "summary": "Загрузить файл/изображение",
+        "description": "Загружает файл в чат. [b]multipart/form-data, НЕ JSON![/b]\n\nПараметры:\n- file (form-data, обязательный) — Файл до 50 MB\n- replyToId (form-data, опционально) — ID для ответа",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID чата"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "📦 form-data: поле `file` (файл, обязательное), поле `replyToId` (string, опционально — ID сообщения для ответа). НЕ ИСПОЛЬЗУЙТЕ JSON!",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "replyToId": {
+                    "type": "string",
+                    "description": "ID сообщения для ответа"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Файл загружен"
+          }
+        }
       }
     },
     "/api/chats/{id}/messages/{msgId}/resend": {
       "post": {
-        "tags": ["Messages"],
+        "tags": [
+          "Messages"
+        ],
         "summary": "Переслать сообщение (resend)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "msgId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "msgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "201": { "description": "Сообщение переслано" } }
+        "responses": {
+          "201": {
+            "description": "Сообщение переслано"
+          }
+        }
       }
     },
     "/api/chats/{id}/pinned": {
       "get": {
-        "tags": ["Messages"],
+        "tags": [
+          "Messages"
+        ],
         "summary": "Закреплённые сообщения чата",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Список закреплённых сообщений" } }
+        "responses": {
+          "200": {
+            "description": "Список закреплённых сообщений"
+          }
+        }
       }
     },
     "/api/messages/{id}": {
       "get": {
-        "tags": ["Messages"],
+        "tags": [
+          "Messages"
+        ],
         "summary": "Получить сообщение по ID",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Сообщение" }, "404": { "description": "Не найдено" } }
+        "responses": {
+          "200": {
+            "description": "Сообщение"
+          },
+          "404": {
+            "description": "Не найдено"
+          }
+        }
       },
       "put": {
-        "tags": ["Messages"],
+        "tags": [
+          "Messages"
+        ],
         "summary": "Редактировать сообщение",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -805,29 +1973,63 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["content"],
-                "properties": { "content": { "type": "string" } }
+                "required": [
+                  "content"
+                ],
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Сообщение изменено" } }
+        "responses": {
+          "200": {
+            "description": "Сообщение изменено"
+          }
+        },
+        "description": "Редактирует сообщение. Только автор.\n\nПараметры (JSON body):\n- content (string, обязательный) — Новый текст\n\nПример: {\"content\":\"Новый текст\"}"
       },
       "delete": {
-        "tags": ["Messages"],
+        "tags": [
+          "Messages"
+        ],
         "summary": "Удалить сообщение (soft delete)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Сообщение удалено" } }
+        "responses": {
+          "200": {
+            "description": "Сообщение удалено"
+          }
+        },
+        "description": "Удаляет сообщение (soft delete) для всех."
       }
     },
     "/api/messages/{id}/reactions": {
       "post": {
-        "tags": ["Messages"],
+        "tags": [
+          "Messages"
+        ],
         "summary": "Добавить реакцию (emoji) к сообщению",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -835,30 +2037,72 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["emoji"],
-                "properties": { "emoji": { "type": "string", "example": "👍" } }
+                "required": [
+                  "emoji"
+                ],
+                "properties": {
+                  "emoji": {
+                    "type": "string",
+                    "example": "👍"
+                  }
+                }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Реакция добавлена" } }
+        "responses": {
+          "200": {
+            "description": "Реакция добавлена"
+          }
+        },
+        "description": "Добавляет emoji-реакцию.\n\nПараметры (JSON body):\n- emoji (string, обязательный) — Emoji (👍, ❤️, 😂)\n\nПример: {\"emoji\":\"👍\"}"
       },
       "delete": {
-        "tags": ["Messages"],
+        "tags": [
+          "Messages"
+        ],
         "summary": "Удалить реакцию с сообщения",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "emoji", "in": "query", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "emoji",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Реакция удалена" } }
+        "responses": {
+          "200": {
+            "description": "Реакция удалена"
+          }
+        },
+        "description": "Удаляет emoji-реакцию.\n\nПараметры (query):\n- emoji (string, обязательный) — Emoji для удаления"
       }
     },
     "/api/messages/{id}/pin": {
       "put": {
-        "tags": ["Messages"],
+        "tags": [
+          "Messages"
+        ],
         "summary": "Закрепить/открепить сообщение",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -866,28 +2110,55 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["pin"],
-                "properties": { "pin": { "type": "boolean", "description": "true — закрепить, false — открепить" } }
+                "required": [
+                  "pin"
+                ],
+                "properties": {
+                  "pin": {
+                    "type": "boolean",
+                    "description": "true — закрепить, false — открепить"
+                  }
+                }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Статус закрепления обновлён" } }
+        "responses": {
+          "200": {
+            "description": "Статус закрепления обновлён"
+          }
+        },
+        "description": "Закрепляет/открепляет сообщение.\n\nПараметры (JSON body):\n- pin (boolean, обязательный) — true=закрепить, false=открепить\n\nПример: {\"pin\":true}"
       }
     },
     "/api/messages/{id}/read": {
       "post": {
-        "tags": ["Messages"],
+        "tags": [
+          "Messages"
+        ],
         "summary": "Отметить сообщение как прочитанное",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Отмечено" } }
+        "responses": {
+          "200": {
+            "description": "Отмечено"
+          }
+        }
       }
     },
     "/api/calls/initiate": {
       "post": {
-        "tags": ["Calls"],
+        "tags": [
+          "Calls"
+        ],
         "summary": "Начать звонок (audio/video)",
         "requestBody": {
           "required": true,
@@ -895,24 +2166,49 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["chatId", "type"],
+                "required": [
+                  "chatId",
+                  "type"
+                ],
                 "properties": {
-                  "chatId": { "type": "string" },
-                  "type": { "type": "string", "enum": ["audio", "video"] }
+                  "chatId": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "audio",
+                      "video"
+                    ]
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "201": { "description": "Звонок инициирован" } }
+        "responses": {
+          "201": {
+            "description": "Звонок инициирован"
+          }
+        },
+        "description": "Начинает звонок.\n\nПараметры (JSON body):\n- chatId (string, обязательный) — ID чата\n- type (string, обязательный) — \"audio\" или \"video\"\n\nПример: {\"chatId\":\"chat-uuid\",\"type\":\"video\"}"
       }
     },
     "/api/calls/{id}/respond": {
       "post": {
-        "tags": ["Calls"],
+        "tags": [
+          "Calls"
+        ],
         "summary": "Ответить на звонок (accept/reject)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -920,81 +2216,1013 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["action"],
+                "required": [
+                  "action"
+                ],
                 "properties": {
-                  "action": { "type": "string", "enum": ["accept", "reject"] }
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "accept",
+                      "reject"
+                    ]
+                  }
                 }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Ответ отправлен" } }
+        "responses": {
+          "200": {
+            "description": "Ответ отправлен"
+          }
+        },
+        "description": "Ответить на звонок.\n\nПараметры (JSON body):\n- action (string, обязательный) — \"accept\" или \"reject\"\n\nПример: {\"action\":\"accept\"}"
       }
     },
     "/api/calls/{id}/end": {
       "post": {
-        "tags": ["Calls"],
+        "tags": [
+          "Calls"
+        ],
         "summary": "Завершить звонок",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Звонок завершён" } }
+        "responses": {
+          "200": {
+            "description": "Звонок завершён"
+          }
+        }
       }
     },
     "/api/calls/{id}": {
       "get": {
-        "tags": ["Calls"],
+        "tags": [
+          "Calls"
+        ],
         "summary": "Информация о звонке",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Информация о звонке" } }
+        "responses": {
+          "200": {
+            "description": "Информация о звонке"
+          }
+        }
       }
     },
     "/api/calls/history/{chatId}": {
       "get": {
-        "tags": ["Calls"],
+        "tags": [
+          "Calls"
+        ],
         "summary": "История звонков в чате",
         "parameters": [
-          { "name": "chatId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "chatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "История звонков" } }
+        "responses": {
+          "200": {
+            "description": "История звонков"
+          }
+        }
       }
     },
     "/api/files/{filename}": {
       "get": {
-        "tags": ["Files"],
+        "tags": [
+          "Files"
+        ],
         "summary": "Скачать загруженный файл",
         "parameters": [
-          { "name": "filename", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Файл" },
-          "404": { "description": "Файл не найден" }
+          "200": {
+            "description": "Файл"
+          },
+          "404": {
+            "description": "Файл не найден"
+          }
         }
       }
     },
     "/ws": {
       "get": {
-        "tags": ["WebSocket"],
+        "tags": [
+          "WebSocket"
+        ],
         "summary": "WebSocket подключение для real-time обновлений",
         "description": "---\n## Подключение\n\nws://localhost:8080/ws?token=JWT_TOKEN\n\nПосле подключения сервер:\n1. Устанавливает online=true для пользователя\n2. Рассылает событие **user:online** всем участникам общих чатов\n3. При отключении (закрытие вкладки, потеря сети) — **user:offline**\n\nСервер поддерживает соединение **ping/pong** (60s timeout).\n\n---\n## Формат всех сообщений\n\nОднотипный JSON:\n```json\n{\n  \"type\": \"событие\",\n  \"payload\": { ... }\n}\n```\n\n---\n## 1. События сервера → клиент (сервер отправляет)\n\n### 📩 Сообщения\n\n**message:new** — новое сообщение в чате\n```json\n{\n  \"type\": \"message:new\",\n  \"payload\": {\n    \"id\": \"msg-uuid\",\n    \"chatId\": \"chat-uuid\",\n    \"sender\": { \"id\": \"...\", \"displayName\": \"Alice\", \"avatarUrl\": \"...\" },\n    \"content\": \"Привет!\",\n    \"type\": \"text\",\n    \"replyTo\": null,\n    \"forwardFrom\": null,\n    \"fileName\": \"\",\n    \"fileSize\": 0,\n    \"fileUrl\": \"\",\n    \"reactions\": [],\n    \"pinned\": false,\n    \"readBy\": [{\"id\":\"...\",\"displayName\":\"Alice\"}],\n    \"createdAt\": \"2026-01-01T12:00:00Z\",\n    \"updatedAt\": \"2026-01-01T12:00:00Z\",\n    \"edited\": false,\n    \"deleted\": false\n  }\n}\n```\nТриггер: POST /api/chats/{id}/messages\n\n**message:edited** — сообщение изменено\n```json\n{\n  \"type\": \"message:edited\",\n  \"payload\": { /* MessageResponse с обновлённым content + edited:true */ }\n}\n```\nТриггер: PUT /api/messages/{id}\n\n**message:deleted** — сообщение удалено\n```json\n{\n  \"type\": \"message:deleted\",\n  \"payload\": { \"messageId\": \"msg-uuid\", \"chatId\": \"chat-uuid\" }\n}\n```\nТриггер: DELETE /api/messages/{id}\n\n**message:read** — отметка о прочтении\n```json\n{\n  \"type\": \"message:read\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/chats/{id}/read или POST /api/messages/{id}/read\n\n### 👤 Пользователи\n\n**user:typing** — пользователь печатает\n```json\n{\n  \"type\": \"user:typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\n\n**user:stop_typing** — перестал печатать\n```json\n{\n  \"type\": \"user:stop_typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\n\n**user:online** — пользователь появился в сети\n```json\n{\n  \"type\": \"user:online\",\n  \"payload\": { \"userId\": \"user-uuid\", \"online\": true }\n}\n```\nТриггер: Подключение к WebSocket\n\n**user:offline** — пользователь ушёл\n```json\n{\n  \"type\": \"user:offline\",\n  \"payload\": { \"userId\": \"user-uuid\", \"online\": false }\n}\n```\nТриггер: Отключение WebSocket\n\n### 💬 Чаты\n\n**chat:created** — создан новый чат\n```json\n{\n  \"type\": \"chat:created\",\n  \"payload\": { /* ChatResponse с participants, lastMessage, unreadCount */ }\n}\n```\nТриггер: POST /api/chats\n\n**chat:updated** — чат обновлён (название, описание, аватар)\n```json\n{\n  \"type\": \"chat:updated\",\n  \"payload\": { /* ChatResponse */ }\n}\n```\n\n**chat:deleted** — чат удалён\n```json\n{\n  \"type\": \"chat:deleted\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nТриггер: DELETE /api/chats/{id}\n\n### 📞 Звонки\n\n**call:offer** — входящий звонок (audio/video)\n```json\n{\n  \"type\": \"call:offer\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"callerId\": \"user-uuid\", \"type\": \"video\" }\n}\n```\nТриггер: POST /api/calls/initiate\n\n**call:accept** — звонок принят\n```json\n{\n  \"type\": \"call:accept\",\n  \"payload\": { \"callId\": \"call-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/calls/{id}/respond с action=accept\n\n**call:end** — звонок завершён\n```json\n{\n  \"type\": \"call:end\",\n  \"payload\": { \"callId\": \"call-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/calls/{id}/end\n\n---\n## 2. Команды клиента → сервер (клиент отправляет)\n\n### ✏️ Печатание\n\n```json\n{\n  \"type\": \"user:typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nСервер пересылает всем участникам чата (кроме отправителя) событие **user:typing** с полем userId.\n\n```json\n{\n  \"type\": \"user:stop_typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nСервер пересылает **user:stop_typing** всем участникам, кроме отправителя.\n\n### WebRTC (транзит, сервер не обрабатывает)\n\n```json\n{ \"type\": \"call:answer\", \"payload\": { \"callId\": \"...\", \"sdp\": \"...\" } }\n{ \"type\": \"call:ice\", \"payload\": { \"callId\": \"...\", \"candidate\": \"...\", \"sdpMLineIdx\": 0 } }\n{ \"type\": \"call:reject\", \"payload\": { \"callId\": \"...\" } }\n```\nЭти сообщения сервер принимает, но **не валидирует и не обрабатывает** — они зарезервированы для будущего прямого WebRTC peer-to-peer signalling.\n\n---\n## 3. Пример JavaScript\n\n```javascript\n// Подключение\nconst ws = new WebSocket('ws://localhost:8080/ws?token=' + token);\n\n// При получении сообщения\nws.onmessage = (event) => {\n  const msg = JSON.parse(event.data);\n  switch (msg.type) {\n    case 'message:new':\n      console.log('Новое сообщение:', msg.payload.content);\n      break;\n    case 'user:typing':\n      console.log('Пользователь печатает:', msg.payload.userId);\n      break;\n    case 'user:online':\n      console.log('Пользователь онлайн:', msg.payload.userId);\n      break;\n    case 'call:offer':\n      console.log('Входящий звонок от:', msg.payload.callerId);\n      break;\n  }\n};\n\n// Отправить событие печатания\nws.send(JSON.stringify({\n  type: 'user:typing',\n  payload: { chatId: 'chat-uuid' }\n}));\n\n// Перестать печатать\nws.send(JSON.stringify({\n  type: 'user:stop_typing',\n  payload: { chatId: 'chat-uuid' }\n}));\n```\n\n---\n## 4. Примечания\n\n- typing-события приходят **всем участникам чата, кроме отправителя**\n- Сервер автоматически шлёт **ping** каждые 54 секунды; клиент должен отвечать **pong**\n- Если от клиента нет pong в течение 60 секунд — соединение закрывается\n- При переподключении старый сокет автоматически заменяется новым\n- Формат всех сообщений: JSON { \"type\": \"string\", \"payload\": object }",
         "parameters": [
-          { "name": "token", "in": "query", "required": true, "schema": { "type": "string" }, "description": "JWT токен" }
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "JWT токен"
+          }
         ],
         "responses": {
-          "101": { "description": "WebSocket protocol upgrade" },
-          "400": { "description": "Missing token" },
-          "401": { "description": "Invalid token" }
+          "101": {
+            "description": "WebSocket protocol upgrade"
+          },
+          "400": {
+            "description": "Missing token"
+          },
+          "401": {
+            "description": "Invalid token"
+          }
+        }
+      }
+    },
+    "/api/captcha/generate": {
+      "get": {
+        "tags": [
+          "Captcha"
+        ],
+        "summary": "Сгенерировать математическую капчу",
+        "description": "Генерирует математическую капчу. GET без тела.\n\nОтвет: {token, question: \"A + B = ?\"}\nЗатем POST /api/captcha/verify с token + answer.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Капча сгенерирована: token + question"
+          }
+        }
+      }
+    },
+    "/api/captcha/verify": {
+      "post": {
+        "tags": [
+          "Captcha"
+        ],
+        "summary": "Проверить ответ капчи",
+        "description": "Проверяет ответ капчи.\n\nПараметры (JSON body):\n- token (string, обязательный) — Токен из /captcha/generate\n- answer (int, обязательный) — Результат\n\nПример: {\"token\":\"abc\",\"answer\":8}\nТокен живёт 5 минут.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "description": "JSON: token (string) + answer (int). Токен действует 5 минут.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token",
+                  "answer"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "Токен из GET /api/captcha/generate"
+                  },
+                  "answer": {
+                    "type": "integer",
+                    "description": "Результат вычисления вопроса (число)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Ответ верный"
+          },
+          "400": {
+            "description": "❌ Неверный ответ или токен истёк"
+          }
+        }
+      }
+    },
+    "/api/preview": {
+      "get": {
+        "tags": [
+          "Preview"
+        ],
+        "summary": "Получить превью ссылки (OpenGraph)",
+        "description": "Превью ссылки (OpenGraph).\n\nПараметры (query):\n- url (string, обязательный) — URL страницы\n\nОтвет: {url, title, description, image, site_name, favicon}",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "URL для получения превью (обязательно)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Превью (title, description, image)"
+          }
+        }
+      }
+    },
+    "/api/e2e/keys": {
+      "post": {
+        "tags": [
+          "E2E Encryption"
+        ],
+        "summary": "Зарегистрировать E2E ключи",
+        "description": "Регистрирует E2E RSA ключ.\n\nПараметры (JSON body):\n- public_key (string, обязательный) — RSA PEM ключ\n\nПример: {\"public_key\":\"-----BEGIN RSA PUBLIC KEY-----\\nMIIBCg...\"}",
+        "requestBody": {
+          "required": true,
+          "description": "JSON: public_key (string, required) — публичный RSA ключ в PEM формате",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "public_key"
+                ],
+                "properties": {
+                  "public_key": {
+                    "type": "string",
+                    "description": "Публичный RSA-2048 ключ в PEM формате"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ E2E ключ сохранён. В ответе: { success: true, data: { e2e_enabled: true } }"
+          },
+          "400": {
+            "description": "❌ Ошибка валидации"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "E2E Encryption"
+        ],
+        "summary": "Получить публичный E2E ключ пользователя",
+        "description": "Публичный E2E ключ пользователя.\n\nПараметры (query):\n- user_id (string, обязательный) — ID пользователя",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID пользователя"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Публичный ключ пользователя"
+          }
+        }
+      }
+    },
+    "/api/verification/email/send": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Отправить код верификации на email",
+        "description": "Подтверждение email. Отправляет код на почту.\n\nПараметры (JSON body):\n- email (string, обязательный) — Email\n\nПример: {\"email\":\"user@example.com\"}",
+        "requestBody": {
+          "required": true,
+          "description": "JSON: email (string, required) — email для отправки кода",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email для отправки кода верификации"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Код отправлен на email"
+          },
+          "400": {
+            "description": "❌ Ошибка (email не указан или неверный формат)"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/verification/email/verify": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Подтвердить email кодом",
+        "description": "📦 **JSON body**. Подтверждает email 6-значным кодом, полученным через /api/verification/email/send.\n\nПример: {\"code\":\"483291\"}",
+        "requestBody": {
+          "required": true,
+          "description": "JSON: code (string, required) — 6-значный код из email",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "description": "6-значный код из письма"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Email подтверждён"
+          },
+          "400": {
+            "description": "❌ Неверный код или истёк (10 мин)"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/verification/phone/send": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Отправить SMS код на телефон",
+        "description": "📦 **JSON body**. Отправляет 6-значный код подтверждения на номер телефона. Код действует 10 минут.\n\nПример: {\"phone\":\"+1234567890\"}",
+        "requestBody": {
+          "required": true,
+          "description": "JSON: phone (string, required) — номер в международном формате (+1234567890)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phone"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "description": "Номер телефона в международном формате (e.g. +1234567890)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ SMS с кодом отправлена"
+          },
+          "400": {
+            "description": "❌ Ошибка"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/verification/phone/verify": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Подтвердить телефон SMS кодом",
+        "description": "📦 **JSON body**. Подтверждает номер телефона 6-значным кодом из SMS.\n\nПример: {\"code\":\"837261\"}",
+        "requestBody": {
+          "required": true,
+          "description": "JSON: code (string, required) — 6-значный код из SMS",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "description": "6-значный код из SMS"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Телефон подтверждён"
+          },
+          "400": {
+            "description": "❌ Неверный код или истёк (10 мин)"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/bookmarks": {
+      "post": {
+        "tags": [
+          "Bookmarks"
+        ],
+        "summary": "Добавить сообщение в закладки",
+        "description": "📦 **JSON body**. Добавляет сообщение в закладки текущего пользователя.\n\nПример: {\"message_id\":\"msg-uuid\"}",
+        "requestBody": {
+          "required": true,
+          "description": "JSON: message_id (string, required) — ID сообщения для добавления в закладки",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "message_id"
+                ],
+                "properties": {
+                  "message_id": {
+                    "type": "string",
+                    "description": "ID сообщения"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Добавлено в закладки"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Bookmarks"
+        ],
+        "summary": "Список закладок пользователя",
+        "description": "📦 **GET-запрос**. Возвращает список сообщений, добавленных в закладки текущим пользователем. Поддерживает пагинацию: ?limit=20&offset=0",
+        "responses": {
+          "200": {
+            "description": "Список закладок (массив MessageResponse)"
+          }
+        }
+      }
+    },
+    "/api/bookmarks/{messageId}": {
+      "delete": {
+        "tags": [
+          "Bookmarks"
+        ],
+        "summary": "Удалить сообщение из закладок",
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID сообщения"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "✅ Удалено из закладок"
+          }
+        }
+      }
+    },
+    "/api/reports": {
+      "post": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Пожаловаться на сообщение",
+        "description": "📦 **JSON body**. Создаёт жалобу на сообщение. Администратор увидит её в панели.\n\nПример: {\"message_id\":\"msg-uuid\",\"reason\":\"spam\",\"description\":\"Реклама\"}",
+        "requestBody": {
+          "required": true,
+          "description": "JSON: message_id (string, required), reason (string, required — spam|harassment|violence|illegal|other), description (string, optional — подробности)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "message_id",
+                  "reason"
+                ],
+                "properties": {
+                  "message_id": {
+                    "type": "string",
+                    "description": "ID сообщения, на которое жалуются"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Причина: spam, harassment, violence, illegal, other"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Дополнительные детали (опционально)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Жалоба отправлена"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Получить список жалоб (только admin)",
+        "description": "📦 **GET-запрос** (требует admin прав). Возвращает список всех жалоб с пагинацией: ?limit=20&offset=0",
+        "responses": {
+          "200": {
+            "description": "Список жалоб"
+          }
+        }
+      }
+    },
+    "/api/reports/{id}/resolve": {
+      "post": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Решить жалобу (только admin)",
+        "description": "📦 **JSON body**. Администратор может закрыть жалобу со статусом resolved или dismissed.\n\nПример: {\"status\":\"resolved\"}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID жалобы"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "JSON: status (string, required) — resolved или dismissed",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "resolved",
+                      "dismissed"
+                    ],
+                    "description": "Новый статус жалобы"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Жалоба обработана"
+          }
+        }
+      }
+    },
+    "/api/messages/self-destruct": {
+      "post": {
+        "tags": [
+          "Messages"
+        ],
+        "summary": "Установить таймер самоуничтожения сообщения",
+        "description": "Самоуничтожение сообщения.\n\nПараметры (JSON body):\n- message_id (string, обязательный) — ID сообщения\n- delete_after (int, обязательный) — Секунд до удаления (мин. 5)\n\nПример: {\"message_id\":\"msg-uuid\",\"delete_after\":60}",
+        "requestBody": {
+          "required": true,
+          "description": "JSON: message_id (string, required), delete_after (int, required) — секунд до удаления (60 = 1 мин, 3600 = 1 час)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "message_id",
+                  "delete_after"
+                ],
+                "properties": {
+                  "message_id": {
+                    "type": "string",
+                    "description": "ID сообщения"
+                  },
+                  "delete_after": {
+                    "type": "integer",
+                    "description": "Время в секундах до удаления (минимум 5)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Таймер установлен"
+          }
+        }
+      }
+    },
+    "/api/messages/{id}/history": {
+      "get": {
+        "tags": [
+          "Messages"
+        ],
+        "summary": "История изменений сообщения",
+        "description": "📦 **GET-запрос**. Возвращает массив всех предыдущих версий сообщения (содержимое + временная метка).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID сообщения"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Массив { previous_content, edited_at } — история изменений"
+          }
+        }
+      }
+    },
+    "/api/admin/dashboard": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Статистика платформы (admin)",
+        "description": "📦 **GET-запрос** (требует admin JWT). Возвращает: total_users, total_chats, total_messages, active_today, pending_reports, blocked_ips.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard данные"
+          }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Список всех пользователей (admin)",
+        "description": "📦 **GET-запрос** (требует admin JWT). Поддерживает пагинацию: ?limit=20&offset=0. Возвращает id, username, email, display_name, status, online, banned, created_at.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список пользователей"
+          }
+        }
+      }
+    },
+    "/api/admin/messages": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Все сообщения на платформе (admin)",
+        "description": "📦 **GET-запрос** (требует admin JWT). Возвращает последние сообщения со всех чатов. Поддерживает пагинацию: ?limit=20&offset=0. Администратор может прочитать любое сообщение, включая E2E (admin backdoor).",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список сообщений"
+          }
+        }
+      }
+    },
+    "/api/admin/messages/{id}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Прочитать любое сообщение (admin backdoor)",
+        "description": "📦 **GET-запрос** (требует admin JWT). Возвращает полное содержимое сообщения, включая расшифрованное E2E содержимое (admin backdoor).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID сообщения"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Сообщение (с расшифрованным E2E контентом)"
+          }
+        }
+      }
+    },
+    "/api/admin/users/ban": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Забанить пользователя (admin)",
+        "description": "Забанить пользователя.\n\nПараметры (JSON body):\n- user_id (string, обязательный) — ID пользователя\n- reason (string, обязательный) — Причина\n\nПример: {\"user_id\":\"user-uuid\",\"reason\":\"Нарушение\"}",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "JSON: user_id (string, required), reason (string, required)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id",
+                  "reason"
+                ],
+                "properties": {
+                  "user_id": {
+                    "type": "string",
+                    "description": "ID пользователя для бана"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Причина бана"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Пользователь забанен"
+          }
+        }
+      }
+    },
+    "/api/admin/users/unban/{userId}": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Разбанить пользователя (admin)",
+        "description": "📦 **POST-запрос** без тела (требует admin JWT). Разблокирует ранее забаненного пользователя.",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID пользователя для разбана"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "✅ Пользователь разбанен"
+          }
+        }
+      }
+    },
+    "/api/admin/settings": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Настройки приложения (admin)",
+        "description": "📦 **GET-запрос** (требует admin JWT). Возвращает все настройки: captcha_enabled, max_login_attempts, ip_block_duration_minutes, self_destruct_default_minutes, admin_can_read_messages.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Настройки приложения"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Обновить настройку приложения (admin)",
+        "description": "Обновить настройку.\n\nПараметры (JSON body):\n- key (string, обязательный) — Название\n- value (string, обязательный) — Значение\n\nПример: {\"key\":\"captcha_enabled\",\"value\":\"true\"}",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "JSON: key (string, required), value (string, required). Доступные ключи: captcha_enabled, max_login_attempts, ip_block_duration_minutes, self_destruct_default_minutes, admin_can_read_messages.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "value"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "Название настройки"
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "Новое значение"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "✅ Настройка обновлена"
+          }
+        }
+      }
+    },
+    "/api/admin/logs": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Логи действий администраторов",
+        "description": "📦 **GET-запрос** (требует admin JWT). Журнал действий админов (баны, разрешение жалоб, изменение настроек). Поддерживает пагинацию: ?limit=50&offset=0.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Логи администраторов"
+          }
+        }
+      }
+    },
+    "/api/admin/ip-blocks": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Список заблокированных IP (admin)",
+        "description": "📦 **GET-запрос** (требует admin JWT). Возвращает IP-адреса, заблокированные автоматически (после 5 неудачных попыток входа за 30 минут).",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список заблокированных IP"
+          }
+        }
+      }
+    },
+    "/api/admin/ip-blocks/{ip}/unblock": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Разблокировать IP (admin)",
+        "description": "📦 **POST-запрос** без тела (требует admin JWT). Разблокирует IP-адрес, позволяя пользователю снова пытаться войти.",
+        "parameters": [
+          {
+            "name": "ip",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "IP-адрес для разблокировки"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "✅ IP разблокирован"
+          }
         }
       }
     },
     "/health": {
       "get": {
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "summary": "Healthcheck",
         "security": [],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     }
   }

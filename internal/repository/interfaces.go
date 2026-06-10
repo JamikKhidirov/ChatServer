@@ -24,6 +24,7 @@ type UserRepository interface {
 	GetBlockedUsers(userID string) ([]*domain.User, error)
 	IsBlocked(userID, blockedID string) (bool, error)
 	FindByIDIncludeDeleted(id string) (*domain.User, error)
+	FindByPhone(phone string) (*domain.User, error)
 }
 
 type ChatRepository interface {
@@ -171,6 +172,21 @@ type ContactRepository interface {
 	GetContacts(userID string) ([]*domain.ContactResponse, error)
 	SearchByPhone(userID, phoneQuery string) ([]*domain.ContactResponse, error)
 	FindRegisteredByPhone(phones []string) ([]*domain.UserResponse, error)
+}
+
+type VerificationRepository interface {
+	CreateEmail(ver *domain.EmailVerification) error
+	FindEmailByUserID(userID string) (*domain.EmailVerification, error)
+	VerifyEmail(id string) error
+	CreatePhone(ver *domain.PhoneVerification) error
+	FindPhoneByUserID(userID string) (*domain.PhoneVerification, error)
+	VerifyPhone(id string) error
+	CreateEmailLoginCode(code *domain.EmailLoginCode) error
+	FindEmailLoginCode(email string) (*domain.EmailLoginCode, error)
+	VerifyEmailLoginCode(id string) error
+	CreatePhoneLoginCode(code *domain.PhoneLoginCode) error
+	FindPhoneLoginCode(phone string) (*domain.PhoneLoginCode, error)
+	VerifyPhoneLoginCode(id string) error
 }
 
 func boolToInt(b bool) int {

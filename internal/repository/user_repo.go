@@ -270,3 +270,8 @@ func scanUser(row scanner) (*domain.User, error) {
 	u.UpdatedAt = parseTime(updatedAt)
 	return &u, nil
 }
+
+func (r *userRepository) FindByPhone(phone string) (*domain.User, error) {
+	row := r.db.QueryRow(`SELECT id, username, email, password_hash, display_name, avatar_url, bio, phone, gender, date_of_birth, user_status, push_token, push_provider, online, deleted, last_seen, created_at, updated_at FROM users WHERE phone = ?`, phone)
+	return scanUser(row)
+}

@@ -28,6 +28,11 @@
     <button class="tab" data-tab="gifs"><span class="icon">&#x1F47B;</span> GIFs</button>
     <button class="tab" data-tab="calls"><span class="icon">&#x1F4DE;</span> Calls</button>
     <button class="tab" data-tab="block"><span class="icon">&#x26D4;</span> Block</button>
+    <button class="tab" data-tab="security"><span class="icon">&#x1F6E1;</span> Security</button>
+    <button class="tab" data-tab="bookmarks"><span class="icon">&#x1F516;</span> Bookmarks</button>
+    <button class="tab" data-tab="reports"><span class="icon">&#x26A0;</span> Reports</button>
+    <button class="tab" data-tab="admin"><span class="icon">&#x1F6E0;</span> Admin</button>
+    <button class="tab" data-tab="preview"><span class="icon">&#x1F517;</span> Preview</button>
     <button class="tab" data-tab="search"><span class="icon">&#x1F50D;</span> Search</button>
   </nav>
   <div class="sidebar-footer">
@@ -78,6 +83,28 @@
         <span class="kv-value text-muted" id="tokenInfoText"></span>
       </div>
     </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Login by Email Code <span class="badge">POST</span></h4></div>
+    <div>
+      <input id="loginEmailCodeAddr" placeholder="Email" type="email">
+    </div>
+    <button class="btn info" onclick="apiSendEmailLoginCode(this)">Send Code</button>
+    <div class="form-row mt-8">
+      <input id="loginEmailCodeVerify" placeholder="6-digit code" maxlength="6">
+    </div>
+    <button class="btn success" onclick="apiVerifyEmailLoginCode(this)">Verify & Login</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Login by Phone Code <span class="badge">POST</span></h4></div>
+    <div>
+      <input id="loginPhoneCodeNum" placeholder="Phone (+1234567890)">
+    </div>
+    <button class="btn info" onclick="apiSendPhoneLoginCode(this)">Send Code</button>
+    <div class="form-row mt-8">
+      <input id="loginPhoneCodeVerify" placeholder="6-digit code" maxlength="6">
+    </div>
+    <button class="btn success" onclick="apiVerifyPhoneLoginCode(this)">Verify & Login</button>
   </div>
   <div class="card">
     <div class="card-header"><h4>Change Password <span class="badge">PUT</span></h4></div>
@@ -356,6 +383,15 @@
     <div class="card-header"><h4>Pinned Messages <span class="badge">GET</span></h4></div>
     <div class="form-row"><input id="pinnedChatId" placeholder="Chat ID"><button class="btn info" onclick="apiGetPinnedMessages(this)">Get Pinned</button></div>
     <div class="result-box" id="resultPinned"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Self-Destruct <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="sdMsgId" placeholder="Message ID"><input id="sdSeconds" placeholder="Delete after (seconds)" type="number"></div>
+    <button class="btn danger" onclick="apiSetSelfDestruct(this)">Set Self-Destruct</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Edit History <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="editHistMsgId" placeholder="Message ID"><button class="btn" onclick="apiGetEditHistory(this)">Get Edit History</button></div>
   </div>
   <div class="card">
     <div class="card-header"><h4>Star Message <span class="badge">POST/DELETE/GET</span></h4></div>
@@ -642,6 +678,133 @@
     <div class="card-header"><h4>Search Users <span class="badge">GET</span></h4></div>
     <div class="form-row"><input id="searchQuery" placeholder="Search by name, username, or email"><button class="btn" onclick="apiSearchUsers(this)">Search</button></div>
     <div class="result-box" id="resultSearchUsers"></div>
+  </div>
+</div>
+
+<!-- SECURITY (Captcha, E2E, Verification) -->
+<div class="tab-content" id="tab-security">
+  <h1 class="section-title">Security &amp; Verification</h1>
+  <p class="section-subtitle">Captcha, E2E encryption keys, email &amp; SMS verification</p>
+  <div class="card">
+    <div class="card-header"><h4>Captcha <span class="badge">GET/POST</span></h4></div>
+    <button class="btn" onclick="apiGenerateCaptcha(this)">Generate Captcha</button>
+    <div class="form-row mt-8"><input id="captchaToken" placeholder="Captcha token"><input id="captchaSolution" placeholder="Your answer"></div>
+    <button class="btn btn-sm" onclick="apiVerifyCaptcha(this)">Verify Captcha</button>
+    <div class="result-box" id="resultSecurity"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>E2E Encryption Keys <span class="badge">POST/GET</span></h4></div>
+    <p class="text-muted mb-8">Register your RSA public/private keys for end-to-end encryption.</p>
+    <div class="form-row"><textarea id="e2ePubKey" placeholder="Public key (base64 PEM)" rows="2"></textarea></div>
+    <div class="form-row"><textarea id="e2ePrivKey" placeholder="Private key encrypted (base64 PEM)" rows="2"></textarea></div>
+    <button class="btn" onclick="apiRegisterE2EKey(this)">Register Key</button>
+    <hr class="divider">
+    <div class="form-row"><input id="e2eUserId" placeholder="User ID to get public key"><button class="btn btn-sm" onclick="apiGetE2EPublicKey(this)">Get Public Key</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Email Verification <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="verEmail" placeholder="Email address"><button class="btn" onclick="apiSendEmailVerification(this)">Send Code</button></div>
+    <div class="form-row mt-8"><input id="verEmailCode" placeholder="6-digit code"><button class="btn btn-sm" onclick="apiVerifyEmail(this)">Verify</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>SMS Verification <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="verPhone" placeholder="Phone number (+1234567890)"><button class="btn" onclick="apiSendPhoneVerification(this)">Send SMS</button></div>
+    <div class="form-row mt-8"><input id="verPhoneCode" placeholder="6-digit code"><button class="btn btn-sm" onclick="apiVerifyPhone(this)">Verify</button></div>
+  </div>
+</div>
+
+<!-- BOOKMARKS -->
+<div class="tab-content" id="tab-bookmarks">
+  <h1 class="section-title">Bookmarks</h1>
+  <p class="section-subtitle">Save and manage bookmarked messages</p>
+  <div class="card">
+    <div class="card-header"><h4>Bookmark Message <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="bmMsgId" placeholder="Message ID"><input id="bmChatId" placeholder="Chat ID"></div>
+    <button class="btn" onclick="apiBookmarkMessage(this)">Bookmark</button>
+    <div class="result-box" id="resultBookmarks"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Get Bookmarks <span class="badge">GET</span></h4></div>
+    <button class="btn info" onclick="apiGetBookmarks(this)">Get All Bookmarks</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Remove Bookmark <span class="badge">DELETE</span></h4></div>
+    <div class="form-row"><input id="bmDelMsgId" placeholder="Message ID"><button class="btn danger" onclick="apiRemoveBookmark(this)">Remove</button></div>
+  </div>
+</div>
+
+<!-- REPORTS -->
+<div class="tab-content" id="tab-reports">
+  <h1 class="section-title">Message Reports</h1>
+  <p class="section-subtitle">Report messages to admins for review</p>
+  <div class="card">
+    <div class="card-header"><h4>Report Message <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="repMsgId" placeholder="Message ID"><input id="repReason" placeholder="Reason (spam, harassment, etc)"></div>
+    <div class="form-row"><textarea id="repDesc" placeholder="Description (optional)" rows="2"></textarea></div>
+    <button class="btn danger" onclick="apiCreateReport(this)">Report</button>
+    <div class="result-box" id="resultReports"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>List Reports (Admin) <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="repStatusFilter" placeholder="Status filter (pending/resolved/dismissed)"><button class="btn" onclick="apiListReports(this)">List Reports</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Resolve Report (Admin) <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="repId" placeholder="Report ID"><select id="repResolveStatus"><option value="resolved">Resolved</option><option value="dismissed">Dismissed</option></select></div>
+    <button class="btn" onclick="apiResolveReport(this)">Resolve</button>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="tab-content" id="tab-admin">
+  <h1 class="section-title">Admin Panel</h1>
+  <p class="section-subtitle">Platform management, user bans, message audit, settings</p>
+  <div class="card">
+    <div class="card-header"><h4>Dashboard <span class="badge">GET</span></h4></div>
+    <button class="btn info" onclick="apiAdminDashboard(this)">Dashboard Stats</button>
+    <div class="result-box" id="resultAdmin"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Users <span class="badge">GET</span></h4></div>
+    <button class="btn" onclick="apiAdminUsers(this)">List All Users</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Messages <span class="badge">GET</span></h4></div>
+    <button class="btn" onclick="apiAdminMessages(this)">View All Messages</button>
+    <div class="form-row mt-8"><input id="adminMsgId" placeholder="Message ID"><button class="btn btn-sm" onclick="apiAdminReadMessage(this)">Read Message (Decrypt)</button></div>
+  </div>
+  <div class="card" style="border-color:var(--danger);">
+    <div class="card-header"><h4 style="color:var(--danger);">Ban / Unban User</h4></div>
+    <div class="form-row"><input id="adminBanUserId" placeholder="User ID to ban"><input id="adminBanReason" placeholder="Ban reason"></div>
+    <button class="btn danger" onclick="apiAdminBanUser(this)">Ban User</button>
+    <hr class="divider">
+    <div class="form-row"><input id="adminUnbanUserId" placeholder="User ID to unban"><button class="btn" onclick="apiAdminUnbanUser(this)">Unban User</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Settings <span class="badge">GET/PUT</span></h4></div>
+    <button class="btn" onclick="apiAdminSettings(this)">Get Settings</button>
+    <div class="form-row mt-8"><input id="adminSetKey" placeholder="Setting key"><input id="adminSetVal" placeholder="Setting value"></div>
+    <button class="btn btn-sm" onclick="apiAdminUpdateSetting(this)">Update Setting</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Logs <span class="badge">GET</span></h4></div>
+    <button class="btn" onclick="apiAdminLogs(this)">Admin Logs</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>IP Blocks <span class="badge">GET/POST</span></h4></div>
+    <button class="btn" onclick="apiAdminIPBlocks(this)">List Blocked IPs</button>
+    <div class="form-row mt-8"><input id="adminUnblockIP" placeholder="IP address to unblock"><button class="btn btn-sm" onclick="apiAdminUnblockIP(this)">Unblock IP</button></div>
+  </div>
+</div>
+
+<!-- LINK PREVIEW -->
+<div class="tab-content" id="tab-preview">
+  <h1 class="section-title">Link Preview</h1>
+  <p class="section-subtitle">Fetch OpenGraph metadata from any URL</p>
+  <div class="card">
+    <div class="card-header"><h4>Get Preview <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="previewUrl" placeholder="https://example.com"><button class="btn" onclick="apiGetLinkPreview(this)">Get Preview</button></div>
+    <div class="result-box" id="resultPreview"></div>
   </div>
 </div>
 

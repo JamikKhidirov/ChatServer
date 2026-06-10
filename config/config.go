@@ -6,13 +6,21 @@ import (
 )
 
 type Config struct {
-	ServerPort  string
-	DatabasePath string
-	JWTSecret   string
-	JWTTTL      int
-	AllowOrigins string
-	PushEnabled bool
+	ServerPort   string
+	DatabasePath  string
+	JWTSecret    string
+	JWTTTL       int
+	AllowOrigins  string
+	PushEnabled  bool
 	FirebaseCredentials string
+	SMTPHost     string
+	SMTPPort     string
+	SMTPUser     string
+	SMTPPass     string
+	SMTPFrom     string
+	TwilioAccountSID string
+	TwilioAuthToken  string
+	TwilioPhone      string
 }
 
 func Load() *Config {
@@ -24,6 +32,14 @@ func Load() *Config {
 		AllowOrigins: getEnv("ALLOW_ORIGINS", "*"),
 		PushEnabled: getEnvBool("PUSH_ENABLED", false),
 		FirebaseCredentials: getEnv("FIREBASE_CREDENTIALS", ""),
+		SMTPHost:    getEnv("SMTP_HOST", "smtp.gmail.com"),
+		SMTPPort:    getEnv("SMTP_PORT", "587"),
+		SMTPUser:    getEnv("SMTP_USER", ""),
+		SMTPPass:    getEnv("SMTP_PASS", ""),
+		SMTPFrom:    getEnv("SMTP_FROM", "noreply@chatmessenger.local"),
+		TwilioAccountSID: getEnv("TWILIO_ACCOUNT_SID", ""),
+		TwilioAuthToken:  getEnv("TWILIO_AUTH_TOKEN", ""),
+		TwilioPhone:      getEnv("TWILIO_PHONE", ""),
 	}
 }
 

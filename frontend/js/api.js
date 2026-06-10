@@ -57,9 +57,11 @@
   // Auth
   global.apiRegister = async function(btn) {
     setLoading(btn, true);
-    var body = { username: idVal('regUsername'), email: idVal('regEmail'), password: idVal('regPassword'), displayName: idVal('regDisplayName') };
+    var u = idVal('regUsername'), e = idVal('regEmail'), p = idVal('regPassword'), dn = idVal('regDisplayName');
+    if (!u || !e || !p) { toast('Fill all required fields', 'error'); setLoading(btn, false); return; }
+    var body = { username: u, email: e, password: p, display_name: dn };
     var r = await apiCall('POST', '/api/auth/register', body);
-    if (!r.error && r.data && r.data.token) { authToken = r.data.token; updateTokenDisplay(); updateConnectionStatus(); }
+    if (!r.error && r.data && r.data.token) { _api.setToken(r.data.token); updateTokenDisplay(); updateConnectionStatus(); }
     showRes('resultAuth', btn, r);
   };
 
@@ -68,6 +70,42 @@
     var body = { email: idVal('loginEmail'), password: idVal('loginPassword') };
     var r = await apiCall('POST', '/api/auth/login', body);
     if (!r.error && r.data && r.data.token) { authToken = r.data.token; updateTokenDisplay(); updateConnectionStatus(); toast('Login successful', 'success'); }
+    showRes('resultAuth', btn, r);
+  };
+
+  global.apiSendEmailLoginCode = async function(btn) {
+    setLoading(btn, true);
+    var email = idVal('loginEmailCodeAddr');
+    if (!email) { toast('Enter email', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/auth/login/email', { email: email });
+    showRes('resultAuth', btn, r);
+  };
+
+  global.apiVerifyEmailLoginCode = async function(btn) {
+    setLoading(btn, true);
+    var email = idVal('loginEmailCodeAddr');
+    var code = idVal('loginEmailCodeVerify');
+    if (!email || !code) { toast('Enter email and code', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/auth/login/email/verify', { email: email, code: code });
+    if (!r.error && r.data && r.data.token) { authToken = r.data.token; updateTokenDisplay(); updateConnectionStatus(); toast('Email login successful', 'success'); }
+    showRes('resultAuth', btn, r);
+  };
+
+  global.apiSendPhoneLoginCode = async function(btn) {
+    setLoading(btn, true);
+    var phone = idVal('loginPhoneCodeNum');
+    if (!phone) { toast('Enter phone number', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/auth/login/phone', { phone: phone });
+    showRes('resultAuth', btn, r);
+  };
+
+  global.apiVerifyPhoneLoginCode = async function(btn) {
+    setLoading(btn, true);
+    var phone = idVal('loginPhoneCodeNum');
+    var code = idVal('loginPhoneCodeVerify');
+    if (!phone || !code) { toast('Enter phone and code', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/auth/login/phone/verify', { phone: phone, code: code });
+    if (!r.error && r.data && r.data.token) { authToken = r.data.token; updateTokenDisplay(); updateConnectionStatus(); toast('Phone login successful', 'success'); }
     showRes('resultAuth', btn, r);
   };
 
@@ -145,14 +183,16 @@
 
   global.apiSavePushToken = async function(btn) {
     setLoading(btn, true);
-    var body = { token: idVal('pushToken'), platform: idVal('pushPlatform') };
-    var r = await apiCall('POST', '/api/users/push-token', body);
+    var token = idVal('pushToken'), provider = idVal('pushPlatform');
+    if (!token || !provider) { toast('Fill token and platform', 'error'); setLoading(btn, false); return; }
+    var body = { token: token, provider: provider };
+    var r = await apiCall('PUT', '/api/users/push-token', body);
     showRes('resultProfile', btn, r);
   };
 
   global.apiTestPush = async function(btn) {
     setLoading(btn, true);
-    var r = await apiCall('POST', '/api/users/push-test');
+    var r = await apiCall('POST', '/api/users/push-test', { title: 'Test Notification', body: 'This is a test push from API tester' });
     showRes('resultProfile', btn, r);
   };
 
@@ -318,9 +358,9 @@
 
   global.apiUpdateChatNotifications = async function(btn) {
     setLoading(btn, true);
-    var id = idVal('notifChatId'), mode = idVal('notifMode');
+    var id = idVal('notifChatId'), muted = idVal('notifMode') === 'none';
     if (!id) { toast('Enter chat ID', 'error'); setLoading(btn, false); return; }
-    var r = await apiCall('PUT', '/api/chats/' + encodeURIComponent(id) + '/notifications', { mode: mode });
+    var r = await apiCall('PUT', '/api/chats/' + encodeURIComponent(id) + '/notifications', { muted: muted });
     showRes('resultGetChat', btn, r);
   };
 
@@ -829,6 +869,216 @@
     if (!url) { toast('Enter GIF URL', 'error'); setLoading(btn, false); return; }
     var r = await apiCall('DELETE', '/api/gifs', { url: url });
     showRes('resultGifs', btn, r);
+  };
+
+  // === New Feature API Functions ===
+
+  // Captcha
+  global.apiGenerateCaptcha = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/captcha/generate');
+    showRes('resultSecurity', btn, r);
+  };
+  global.apiVerifyCaptcha = async function(btn) {
+    setLoading(btn, true);
+    var token = idVal('captchaToken');
+    var sol = idVal('captchaSolution');
+    if (!token || !sol) { toast('Fill token and solution', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/captcha/verify', { token: token, solution: sol });
+    showRes('resultSecurity', btn, r);
+  };
+
+  // E2E Encryption
+  global.apiRegisterE2EKey = async function(btn) {
+    setLoading(btn, true);
+    var pubKey = idVal('e2ePubKey');
+    var privKey = idVal('e2ePrivKey');
+    if (!pubKey || !privKey) { toast('Fill public and private key', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/e2e/keys', { public_key: pubKey, private_key_encrypted: privKey });
+    showRes('resultSecurity', btn, r);
+  };
+  global.apiGetE2EPublicKey = async function(btn) {
+    setLoading(btn, true);
+    var userId = idVal('e2eUserId');
+    if (!userId) { toast('Enter user ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('GET', '/api/e2e/keys/' + encodeURIComponent(userId));
+    showRes('resultSecurity', btn, r);
+  };
+
+  // Email Verification
+  global.apiSendEmailVerification = async function(btn) {
+    setLoading(btn, true);
+    var email = idVal('verEmail');
+    if (!email) { toast('Enter email', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/verification/email/send', { email: email });
+    showRes('resultSecurity', btn, r);
+  };
+  global.apiVerifyEmail = async function(btn) {
+    setLoading(btn, true);
+    var code = idVal('verEmailCode');
+    if (!code) { toast('Enter code', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/verification/email/verify', { code: code });
+    showRes('resultSecurity', btn, r);
+  };
+
+  // Phone Verification
+  global.apiSendPhoneVerification = async function(btn) {
+    setLoading(btn, true);
+    var phone = idVal('verPhone');
+    if (!phone) { toast('Enter phone', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/verification/phone/send', { phone: phone });
+    showRes('resultSecurity', btn, r);
+  };
+  global.apiVerifyPhone = async function(btn) {
+    setLoading(btn, true);
+    var code = idVal('verPhoneCode');
+    if (!code) { toast('Enter code', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/verification/phone/verify', { code: code });
+    showRes('resultSecurity', btn, r);
+  };
+
+  // Bookmarks
+  global.apiBookmarkMessage = async function(btn) {
+    setLoading(btn, true);
+    var msgId = idVal('bmMsgId');
+    var chatId = idVal('bmChatId');
+    if (!msgId || !chatId) { toast('Fill message and chat ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/bookmarks', { message_id: msgId, chat_id: chatId });
+    showRes('resultBookmarks', btn, r);
+  };
+  global.apiGetBookmarks = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/bookmarks');
+    showRes('resultBookmarks', btn, r);
+  };
+  global.apiRemoveBookmark = async function(btn) {
+    setLoading(btn, true);
+    var msgId = idVal('bmDelMsgId');
+    if (!msgId) { toast('Enter message ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('DELETE', '/api/bookmarks/' + encodeURIComponent(msgId));
+    showRes('resultBookmarks', btn, r);
+  };
+
+  // Reports
+  global.apiCreateReport = async function(btn) {
+    setLoading(btn, true);
+    var msgId = idVal('repMsgId');
+    var reason = idVal('repReason');
+    var desc = idVal('repDesc');
+    if (!msgId || !reason) { toast('Fill message ID and reason', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/reports', { message_id: msgId, reason: reason, description: desc });
+    showRes('resultReports', btn, r);
+  };
+  global.apiListReports = async function(btn) {
+    setLoading(btn, true);
+    var status = idVal('repStatusFilter');
+    var r = await apiCall('GET', '/api/reports?status=' + encodeURIComponent(status));
+    showRes('resultReports', btn, r);
+  };
+  global.apiResolveReport = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('repId');
+    var status = idVal('repResolveStatus');
+    if (!id || !status) { toast('Fill report ID and status', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/reports/' + encodeURIComponent(id) + '/resolve', { status: status });
+    showRes('resultReports', btn, r);
+  };
+
+  // Self-Destruct
+  global.apiSetSelfDestruct = async function(btn) {
+    setLoading(btn, true);
+    var msgId = idVal('sdMsgId');
+    var seconds = idVal('sdSeconds');
+    if (!msgId || !seconds) { toast('Fill message ID and seconds', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/messages/self-destruct', { message_id: msgId, delete_after: parseInt(seconds) });
+    showRes('resultMessages', btn, r);
+  };
+
+  // Edit History
+  global.apiGetEditHistory = async function(btn) {
+    setLoading(btn, true);
+    var msgId = idVal('editHistMsgId');
+    if (!msgId) { toast('Enter message ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('GET', '/api/messages/' + encodeURIComponent(msgId) + '/history');
+    showRes('resultMessages', btn, r);
+  };
+
+  // Link Preview
+  global.apiGetLinkPreview = async function(btn) {
+    setLoading(btn, true);
+    var url = idVal('previewUrl');
+    if (!url) { toast('Enter URL', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('GET', '/api/preview?url=' + encodeURIComponent(url));
+    showRes('resultPreview', btn, r);
+  };
+
+  // Admin
+  global.apiAdminDashboard = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/admin/dashboard');
+    showRes('resultAdmin', btn, r);
+  };
+  global.apiAdminUsers = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/admin/users');
+    showRes('resultAdmin', btn, r);
+  };
+  global.apiAdminMessages = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/admin/messages');
+    showRes('resultAdmin', btn, r);
+  };
+  global.apiAdminReadMessage = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('adminMsgId');
+    if (!id) { toast('Enter message ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('GET', '/api/admin/messages/' + encodeURIComponent(id));
+    showRes('resultAdmin', btn, r);
+  };
+  global.apiAdminBanUser = async function(btn) {
+    setLoading(btn, true);
+    var uid = idVal('adminBanUserId');
+    var reason = idVal('adminBanReason');
+    if (!uid || !reason) { toast('Fill user ID and reason', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/admin/users/ban', { user_id: uid, reason: reason });
+    showRes('resultAdmin', btn, r);
+  };
+  global.apiAdminUnbanUser = async function(btn) {
+    setLoading(btn, true);
+    var uid = idVal('adminUnbanUserId');
+    if (!uid) { toast('Enter user ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/admin/users/unban/' + encodeURIComponent(uid));
+    showRes('resultAdmin', btn, r);
+  };
+  global.apiAdminSettings = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/admin/settings');
+    showRes('resultAdmin', btn, r);
+  };
+  global.apiAdminUpdateSetting = async function(btn) {
+    setLoading(btn, true);
+    var key = idVal('adminSetKey');
+    var val = idVal('adminSetVal');
+    if (!key || !val) { toast('Fill key and value', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('PUT', '/api/admin/settings', { key: key, value: val });
+    showRes('resultAdmin', btn, r);
+  };
+  global.apiAdminLogs = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/admin/logs');
+    showRes('resultAdmin', btn, r);
+  };
+  global.apiAdminIPBlocks = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/admin/ip-blocks');
+    showRes('resultAdmin', btn, r);
+  };
+  global.apiAdminUnblockIP = async function(btn) {
+    setLoading(btn, true);
+    var ip = idVal('adminUnblockIP');
+    if (!ip) { toast('Enter IP address', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/admin/ip-blocks/' + encodeURIComponent(ip) + '/unblock');
+    showRes('resultAdmin', btn, r);
   };
 
   // Expose internals for app.js
