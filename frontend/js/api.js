@@ -525,6 +525,312 @@
     showRes('resultSearchUsers', btn, r);
   };
 
+  // ====== NEW FEATURES ======
+
+  // Pinned chats
+  global.apiPinChat = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('pinChatId');
+    if (!id) { toast('Enter chat ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/chats/' + encodeURIComponent(id) + '/pin');
+    showRes('resultChatActions', btn, r);
+  };
+  global.apiUnpinChat = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('pinChatId');
+    if (!id) { toast('Enter chat ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('DELETE', '/api/chats/' + encodeURIComponent(id) + '/pin');
+    showRes('resultChatActions', btn, r);
+  };
+
+  // Archive
+  global.apiArchiveChat = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('archiveChatId');
+    if (!id) { toast('Enter chat ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/chats/' + encodeURIComponent(id) + '/archive');
+    showRes('resultChatActions', btn, r);
+  };
+  global.apiUnarchiveChat = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('archiveChatId');
+    if (!id) { toast('Enter chat ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/chats/' + encodeURIComponent(id) + '/unarchive');
+    showRes('resultChatActions', btn, r);
+  };
+  global.apiListArchived = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/chats/archived');
+    showRes('resultChatActions', btn, r);
+  };
+
+  // Transfer ownership
+  global.apiTransferOwnership = async function(btn) {
+    setLoading(btn, true);
+    var chatId = idVal('transferChatId'), userId = idVal('transferUserId');
+    if (!chatId || !userId) { toast('Enter chat ID and user ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/chats/' + encodeURIComponent(chatId) + '/transfer-ownership', { userId: userId });
+    showRes('resultChatActions', btn, r);
+  };
+
+  // Star messages
+  global.apiStarMessage = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('starMsgId');
+    if (!id) { toast('Enter message ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/messages/' + encodeURIComponent(id) + '/star');
+    showRes('resultStarred', btn, r);
+  };
+  global.apiUnstarMessage = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('starMsgId');
+    if (!id) { toast('Enter message ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('DELETE', '/api/messages/' + encodeURIComponent(id) + '/star');
+    showRes('resultStarred', btn, r);
+  };
+  global.apiGetStarred = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/messages/starred');
+    showRes('resultStarred', btn, r);
+  };
+
+  // Delete for me
+  global.apiDeleteForMe = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('deleteForMeMsgId');
+    if (!id) { toast('Enter message ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('DELETE', '/api/messages/' + encodeURIComponent(id) + '/for-me');
+    showRes('resultListMessages', btn, r);
+  };
+
+  // Search all messages
+  global.apiSearchAllMessages = async function(btn) {
+    setLoading(btn, true);
+    var q = idVal('searchAllQ');
+    if (!q) { toast('Enter query', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('GET', '/api/messages/search?q=' + encodeURIComponent(q));
+    showRes('resultListMessages', btn, r);
+  };
+
+  // Export chat
+  global.apiExportChat = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('exportChatId');
+    if (!id) { toast('Enter chat ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('GET', '/api/chats/' + encodeURIComponent(id) + '/export');
+    showRes('resultExportChat', btn, r);
+  };
+
+  // Chat media
+  global.apiGetChatMedia = async function(btn) {
+    setLoading(btn, true);
+    var chatId = idVal('mediaChatId'), type = idVal('mediaType');
+    if (!chatId) { toast('Enter chat ID', 'error'); setLoading(btn, false); return; }
+    var path = '/api/chats/' + encodeURIComponent(chatId) + '/media';
+    if (type) path += '?type=' + encodeURIComponent(type);
+    var r = await apiCall('GET', path);
+    showRes('resultMedia', btn, r);
+  };
+
+  // Polls
+  global.apiCreatePoll = async function(btn) {
+    setLoading(btn, true);
+    var chatId = idVal('pollChatId');
+    if (!chatId) { toast('Enter chat ID', 'error'); setLoading(btn, false); return; }
+    var raw = idVal('pollOptions');
+    if (!raw) { toast('Enter options JSON array', 'error'); setLoading(btn, false); return; }
+    var opts;
+    try { opts = JSON.parse(raw); } catch(e) { toast('Invalid JSON', 'error'); setLoading(btn, false); return; }
+    var body = { chatId: chatId, question: idVal('pollQuestion'), options: opts, isAnonymous: idChk('pollAnonymous'), multipleChoice: idChk('pollMultiple') };
+    var r = await apiCall('POST', '/api/chats/' + encodeURIComponent(chatId) + '/polls', body);
+    showRes('resultPolls', btn, r);
+  };
+  global.apiGetPolls = async function(btn) {
+    setLoading(btn, true);
+    var chatId = idVal('pollChatIdGet');
+    if (!chatId) { toast('Enter chat ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('GET', '/api/chats/' + encodeURIComponent(chatId) + '/polls');
+    showRes('resultPolls', btn, r);
+  };
+  global.apiVotePoll = async function(btn) {
+    setLoading(btn, true);
+    var pollId = idVal('votePollId'), idx = idVal('voteOptionIdx');
+    if (!pollId || idx === '') { toast('Enter poll ID and option index', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/polls/' + encodeURIComponent(pollId) + '/vote', { optionIndex: parseInt(idx) });
+    showRes('resultPolls', btn, r);
+  };
+  global.apiClosePoll = async function(btn) {
+    setLoading(btn, true);
+    var pollId = idVal('closePollId');
+    if (!pollId) { toast('Enter poll ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/polls/' + encodeURIComponent(pollId) + '/close');
+    showRes('resultPolls', btn, r);
+  };
+
+  // Stickers
+  global.apiCreateStickerPack = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('POST', '/api/stickers/packs', { name: idVal('stickPackName'), animated: idChk('stickPackAnimated') });
+    showRes('resultStickers', btn, r);
+  };
+  global.apiListStickerPacks = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/stickers/packs');
+    showRes('resultStickers', btn, r);
+  };
+  global.apiGetMyStickerPacks = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/stickers/packs/my');
+    showRes('resultStickers', btn, r);
+  };
+  global.apiGetStickerPack = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('stickPackIdGet');
+    if (!id) { toast('Enter pack ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('GET', '/api/stickers/packs/' + encodeURIComponent(id));
+    showRes('resultStickers', btn, r);
+  };
+  global.apiAddSticker = async function(btn) {
+    setLoading(btn, true);
+    var packId = idVal('stickPackIdAdd');
+    if (!packId) { toast('Enter pack ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/stickers/packs/' + encodeURIComponent(packId) + '/stickers', { emoji: idVal('stickEmoji'), imageUrl: idVal('stickImageUrl') });
+    showRes('resultStickers', btn, r);
+  };
+  global.apiDeleteStickerPack = async function(btn) {
+    if (!confirm('Delete pack?')) return;
+    setLoading(btn, true);
+    var id = idVal('stickPackIdDel');
+    if (!id) { toast('Enter pack ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('DELETE', '/api/stickers/packs/' + encodeURIComponent(id));
+    showRes('resultStickers', btn, r);
+  };
+  global.apiGetStickerLibrary = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/stickers/library');
+    showRes('resultStickers', btn, r);
+  };
+  global.apiAddStickerToLibrary = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('stickLibAddId');
+    if (!id) { toast('Enter sticker ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/stickers/library', { stickerId: id });
+    showRes('resultStickers', btn, r);
+  };
+
+  // Drafts
+  global.apiSaveDraft = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('POST', '/api/drafts', { chatId: idVal('draftChatId'), content: idVal('draftContent') });
+    showRes('resultDrafts', btn, r);
+  };
+  global.apiGetDraft = async function(btn) {
+    setLoading(btn, true);
+    var chatId = idVal('draftGetChatId');
+    if (!chatId) { toast('Enter chat ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('GET', '/api/drafts?chatId=' + encodeURIComponent(chatId));
+    showRes('resultDrafts', btn, r);
+  };
+
+  // Scheduled messages
+  global.apiScheduleMessage = async function(btn) {
+    setLoading(btn, true);
+    var body = { chatId: idVal('schedChatId'), content: idVal('schedContent'), type: idVal('schedType'), scheduledAt: idVal('schedAt') };
+    if (!body.chatId || !body.content || !body.scheduledAt) { toast('Fill required fields', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/messages/schedule', body);
+    showRes('resultScheduled', btn, r);
+  };
+  global.apiGetScheduled = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/messages/scheduled');
+    showRes('resultScheduled', btn, r);
+  };
+  global.apiCancelScheduled = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('cancelSchedId');
+    if (!id) { toast('Enter scheduled message ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('DELETE', '/api/messages/scheduled/' + encodeURIComponent(id));
+    showRes('resultScheduled', btn, r);
+  };
+
+  // Sessions
+  global.apiGetSessions = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/sessions');
+    showRes('resultSessions', btn, r);
+  };
+  global.apiDeleteSession = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('delSessionId');
+    if (!id) { toast('Enter session ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('DELETE', '/api/sessions/' + encodeURIComponent(id));
+    showRes('resultSessions', btn, r);
+  };
+  global.apiDeleteAllSessions = async function(btn) {
+    if (!confirm('Delete all sessions?')) return;
+    setLoading(btn, true);
+    var r = await apiCall('DELETE', '/api/sessions');
+    showRes('resultSessions', btn, r);
+  };
+
+  // Bots
+  global.apiCreateBot = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('POST', '/api/bots', { name: idVal('botName'), webhookUrl: idVal('botWebhook') });
+    showRes('resultBots', btn, r);
+  };
+  global.apiGetMyBots = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/bots');
+    showRes('resultBots', btn, r);
+  };
+  global.apiUpdateBot = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('botIdUpdate');
+    if (!id) { toast('Enter bot ID', 'error'); setLoading(btn, false); return; }
+    var body = {};
+    var n = idVal('botNameUpdate'); if (n) body.name = n;
+    var w = idVal('botWebhookUpdate'); if (w) body.webhookUrl = w;
+    var r = await apiCall('PUT', '/api/bots/' + encodeURIComponent(id), body);
+    showRes('resultBots', btn, r);
+  };
+  global.apiDeleteBot = async function(btn) {
+    if (!confirm('Delete bot?')) return;
+    setLoading(btn, true);
+    var id = idVal('botIdDel');
+    if (!id) { toast('Enter bot ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('DELETE', '/api/bots/' + encodeURIComponent(id));
+    showRes('resultBots', btn, r);
+  };
+  global.apiRegenerateBotToken = async function(btn) {
+    setLoading(btn, true);
+    var id = idVal('botIdRegen');
+    if (!id) { toast('Enter bot ID', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/bots/' + encodeURIComponent(id) + '/regenerate-token');
+    showRes('resultBots', btn, r);
+  };
+
+  // Saved GIFs
+  global.apiSaveGif = async function(btn) {
+    setLoading(btn, true);
+    var url = idVal('gifUrl');
+    if (!url) { toast('Enter GIF URL', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('POST', '/api/gifs', { url: url });
+    showRes('resultGifs', btn, r);
+  };
+  global.apiGetSavedGifs = async function(btn) {
+    setLoading(btn, true);
+    var r = await apiCall('GET', '/api/gifs');
+    showRes('resultGifs', btn, r);
+  };
+  global.apiDeleteGif = async function(btn) {
+    setLoading(btn, true);
+    var url = idVal('gifDelUrl');
+    if (!url) { toast('Enter GIF URL', 'error'); setLoading(btn, false); return; }
+    var r = await apiCall('DELETE', '/api/gifs', { url: url });
+    showRes('resultGifs', btn, r);
+  };
+
   // Expose internals for app.js
   global._api = { getToken: function() { return authToken; }, setToken: function(t) { authToken = t; localStorage.setItem('messenger_token', t); }, clearToken: function() { authToken = ''; localStorage.removeItem('messenger_token'); } };
 

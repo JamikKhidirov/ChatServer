@@ -339,6 +339,92 @@ func (r *chatRepository) FindByUserIDExcludeHidden(userID string) ([]*domain.Cha
 	return chats, nil
 }
 
+func (r *chatRepository) PinChat(userID, chatID string) error {
+	_, err := r.db.Exec(
+		`INSERT OR REPLACE INTO pinned_chats (user_id, chat_id, created_at) VALUES (?, ?, ?)`,
+		userID, chatID, time.Now().Format(time.RFC3339),
+	)
+	return err
+}
+
+func (r *chatRepository) UnpinChat(userID, chatID string) error {
+	_, err := r.db.Exec(
+		`DELETE FROM pinned_chats WHERE user_id = ? AND chat_id = ?`,
+		userID, chatID,
+	)
+	return err
+}
+
+func (r *chatRepository) GetPinnedChatIDs(userID string) ([]string, error) {
+	rows, err := r.db.Query(
+		`SELECT chat_id FROM pinned_chats WHERE user_id = ? ORDER BY created_at DESC`, userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	ids := make([]string, 0)
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+func (r *chatRepository) ArchiveChat(userID, chatID string) error {
+	_, err := r.db.Exec(
+		`INSERT OR REPLACE INTO archived_chats (user_id, chat_id, archived_at) VALUES (?, ?, ?)`,
+		userID, chatID, time.Now().Format(time.RFC3339),
+	)
+	return err
+}
+
+func (r *chatRepository) UnarchiveChat(userID, chatID string) error {
+	_, err := r.db.Exec(
+		`DELETE FROM archived_chats WHERE user_id = ? AND chat_id = ?`,
+		userID, chatID,
+	)
+	return err
+}
+
+func (r *chatRepository) IsArchived(userID, chatID string) (bool, error) {
+	var count int
+	err := r.db.QueryRow(
+		`SELECT COUNT(*) FROM archived_chats WHERE user_id = ? AND chat_id = ?`,
+		userID, chatID,
+	).Scan(&count)
+	return count > 0, err
+}
+
+func (r *chatRepository) FindByUserIDArchived(userID string) ([]*domain.Chat, error) {
+	rows, err := r.db.Query(
+		`SELECT c.id, c.name, COALESCE(c.description,''), c.avatar_url, c.type, c.created_by, c.created_at, c.updated_at
+		FROM chats c
+		INNER JOIN archived_chats ac ON ac.chat_id = c.id AND ac.user_id = ?
+		LEFT JOIN hidden_chats hc ON hc.chat_id = c.id AND hc.user_id = ?
+		WHERE hc.chat_id IS NULL
+		ORDER BY ac.archived_at DESC`, userID, userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	chats := make([]*domain.Chat, 0)
+	for rows.Next() {
+		c, err := scanChat(rows)
+		if err != nil {
+			return nil, err
+		}
+		chats = append(chats, c)
+	}
+	return chats, nil
+}
+
 func scanChat(row scanner) (*domain.Chat, error) {
 	var (
 		c         domain.Chat

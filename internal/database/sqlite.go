@@ -182,6 +182,178 @@ func runMigrations(db *sql.DB) error {
 		`CREATE INDEX IF NOT EXISTS idx_hidden_chats_user_id ON hidden_chats(user_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_messages_chat_id_created_at ON messages(chat_id, created_at)`,
 		`CREATE INDEX IF NOT EXISTS idx_notification_settings_user_id ON notification_settings(user_id, chat_id)`,
+		`CREATE TABLE IF NOT EXISTS pinned_chats (
+			user_id TEXT NOT NULL,
+			chat_id TEXT NOT NULL,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (user_id, chat_id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			FOREIGN KEY (chat_id) REFERENCES chats(id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS archived_chats (
+			user_id TEXT NOT NULL,
+			chat_id TEXT NOT NULL,
+			archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (user_id, chat_id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			FOREIGN KEY (chat_id) REFERENCES chats(id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS starred_messages (
+			user_id TEXT NOT NULL,
+			message_id TEXT NOT NULL,
+			chat_id TEXT NOT NULL,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (user_id, message_id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			FOREIGN KEY (message_id) REFERENCES messages(id),
+			FOREIGN KEY (chat_id) REFERENCES chats(id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS deleted_messages (
+			user_id TEXT NOT NULL,
+			message_id TEXT NOT NULL,
+			deleted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (user_id, message_id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			FOREIGN KEY (message_id) REFERENCES messages(id)
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_pinned_chats_user_id ON pinned_chats(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_archived_chats_user_id ON archived_chats(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_starred_messages_user_id ON starred_messages(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_deleted_messages_user_id ON deleted_messages(user_id)`,
+
+		// Polls
+		`CREATE TABLE IF NOT EXISTS polls (
+			id TEXT PRIMARY KEY,
+			chat_id TEXT NOT NULL,
+			creator_id TEXT NOT NULL,
+			question TEXT NOT NULL,
+			options TEXT NOT NULL,
+			is_anonymous INTEGER NOT NULL DEFAULT 0,
+			multiple_choice INTEGER NOT NULL DEFAULT 0,
+			expires_at TEXT,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			closed INTEGER NOT NULL DEFAULT 0,
+			FOREIGN KEY (chat_id) REFERENCES chats(id),
+			FOREIGN KEY (creator_id) REFERENCES users(id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS poll_votes (
+			poll_id TEXT NOT NULL,
+			user_id TEXT NOT NULL,
+			option_index INTEGER NOT NULL,
+			voted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (poll_id, user_id),
+			FOREIGN KEY (poll_id) REFERENCES polls(id),
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		)`,
+
+		// Sticker packs
+		`CREATE TABLE IF NOT EXISTS sticker_packs (
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			creator_id TEXT NOT NULL,
+			animated INTEGER NOT NULL DEFAULT 0,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (creator_id) REFERENCES users(id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS stickers (
+			id TEXT PRIMARY KEY,
+			pack_id TEXT NOT NULL,
+			emoji TEXT NOT NULL DEFAULT '',
+			image_url TEXT NOT NULL DEFAULT '',
+			file_path TEXT NOT NULL DEFAULT '',
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (pack_id) REFERENCES sticker_packs(id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS user_stickers (
+			user_id TEXT NOT NULL,
+			sticker_id TEXT NOT NULL,
+			PRIMARY KEY (user_id, sticker_id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			FOREIGN KEY (sticker_id) REFERENCES stickers(id)
+		)`,
+
+		// Drafts
+		`CREATE TABLE IF NOT EXISTS drafts (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			chat_id TEXT NOT NULL,
+			content TEXT NOT NULL DEFAULT '',
+			reply_to_id TEXT,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			FOREIGN KEY (chat_id) REFERENCES chats(id)
+		)`,
+
+		// Scheduled messages
+		`CREATE TABLE IF NOT EXISTS scheduled_messages (
+			id TEXT PRIMARY KEY,
+			chat_id TEXT NOT NULL,
+			sender_id TEXT NOT NULL,
+			content TEXT NOT NULL,
+			type TEXT NOT NULL DEFAULT 'text',
+			reply_to_id TEXT,
+			scheduled_at TEXT NOT NULL,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			sent INTEGER NOT NULL DEFAULT 0,
+			FOREIGN KEY (chat_id) REFERENCES chats(id),
+			FOREIGN KEY (sender_id) REFERENCES users(id)
+		)`,
+
+		// Sessions
+		`CREATE TABLE IF NOT EXISTS sessions (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			device_name TEXT NOT NULL DEFAULT '',
+			ip_address TEXT NOT NULL DEFAULT '',
+			last_active TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		)`,
+
+		// Bots
+		`CREATE TABLE IF NOT EXISTS bots (
+			id TEXT PRIMARY KEY,
+			token TEXT NOT NULL,
+			owner_id TEXT NOT NULL,
+			name TEXT NOT NULL,
+			avatar_url TEXT NOT NULL DEFAULT '',
+			webhook_url TEXT NOT NULL DEFAULT '',
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			active INTEGER NOT NULL DEFAULT 1,
+			FOREIGN KEY (owner_id) REFERENCES users(id)
+		)`,
+
+		// Mentions
+		`CREATE TABLE IF NOT EXISTS mentions (
+			message_id TEXT NOT NULL,
+			user_id TEXT NOT NULL,
+			username TEXT NOT NULL,
+			PRIMARY KEY (message_id, user_id),
+			FOREIGN KEY (message_id) REFERENCES messages(id),
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		)`,
+
+		// Saved GIFs
+		`CREATE TABLE IF NOT EXISTS saved_gifs (
+			user_id TEXT NOT NULL,
+			gif_url TEXT NOT NULL,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (user_id, gif_url),
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		)`,
+
+		// Indexes for new tables
+		`CREATE INDEX IF NOT EXISTS idx_polls_chat_id ON polls(chat_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_poll_votes_poll_id ON poll_votes(poll_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_sticker_packs_creator ON sticker_packs(creator_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_stickers_pack_id ON stickers(pack_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_drafts_user_chat ON drafts(user_id, chat_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_scheduled_messages_sent ON scheduled_messages(sent, scheduled_at)`,
+		`CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_bots_owner_id ON bots(owner_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_mentions_message_id ON mentions(message_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_mentions_user_id ON mentions(user_id)`,
 	}
 
 	for _, q := range queries {

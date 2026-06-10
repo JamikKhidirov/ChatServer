@@ -86,9 +86,6 @@ func (s *messageService) SendMessage(chatID, senderID string, req *domain.SendMe
 		if err != nil {
 			return nil, errors.New("invalid forwarded message")
 		}
-		if forwardMsg.ChatID != chatID {
-			return nil, errors.New("forwarded message is not in this chat")
-		}
 		forwardFrom = &forwardMsg.SenderID
 	}
 
@@ -384,6 +381,186 @@ func (s *messageService) MarkMessageRead(msgID, userID string) error {
 	}
 
 	return s.chatRepo.UpdateLastRead(msg.ChatID, userID)
+}
+
+func (s *messageService) SearchAllMessages(userID, query string, limit, offset int) ([]*domain.MessageResponse, error) {
+	messages, err := s.messageRepo.SearchByUser(userID, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	return s.buildMessageResponses(messages)
+}
+
+func (s *messageService) ForwardMessage(msgID, fromChatID, toChatID, userID string) (*domain.MessageResponse, error) {
+	original, err := s.messageRepo.FindByID(msgID)
+	if err != nil {
+		return nil, errors.New("message not found")
+	}
+
+	isParticipant, _ := s.chatRepo.IsParticipant(fromChatID, userID)
+	if !isParticipant {
+		return nil, errors.New("access denied to source chat")
+	}
+
+	isParticipant, _ = s.chatRepo.IsParticipant(toChatID, userID)
+	if !isParticipant {
+		return nil, errors.New("access denied to target chat")
+	}
+
+	now := time.Now()
+	msg := &domain.Message{
+		ID:          uuid.New().String(),
+		ChatID:      toChatID,
+		SenderID:    userID,
+		Content:     original.Content,
+		Type:        original.Type,
+		FileName:    original.FileName,
+		FileSize:    original.FileSize,
+		FilePath:    original.FilePath,
+		ForwardFrom: &original.SenderID,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	if err := s.messageRepo.Create(msg); err != nil {
+		return nil, err
+	}
+
+	s.chatRepo.Update(&domain.Chat{ID: toChatID, UpdatedAt: now})
+
+	return s.getMessageResponse(msg)
+}
+
+func (s *messageService) DeleteMessageForMe(msgID, userID string) error {
+	msg, err := s.messageRepo.FindByID(msgID)
+	if err != nil {
+		return errors.New("message not found")
+	}
+
+	isParticipant, _ := s.chatRepo.IsParticipant(msg.ChatID, userID)
+	if !isParticipant {
+		return errors.New("access denied")
+	}
+
+	return s.messageRepo.DeleteMessageForMe(userID, msgID)
+}
+
+func (s *messageService) StarMessage(msgID, userID string) (*domain.MessageResponse, error) {
+	msg, err := s.messageRepo.FindByID(msgID)
+	if err != nil {
+		return nil, errors.New("message not found")
+	}
+
+	isParticipant, _ := s.chatRepo.IsParticipant(msg.ChatID, userID)
+	if !isParticipant {
+		return nil, errors.New("access denied")
+	}
+
+	if err := s.messageRepo.StarMessage(userID, msgID, msg.ChatID); err != nil {
+		return nil, err
+	}
+
+	return s.getMessageResponse(msg)
+}
+
+func (s *messageService) UnstarMessage(msgID, userID string) error {
+	return s.messageRepo.UnstarMessage(userID, msgID)
+}
+
+func (s *messageService) GetStarredMessages(userID string) ([]*domain.StarredMessageResponse, error) {
+	starred, err := s.messageRepo.GetStarredMessages(userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(starred) == 0 {
+		return []*domain.StarredMessageResponse{}, nil
+	}
+
+	msgIDs := make([]string, len(starred))
+	chatIDs := make([]string, 0, len(starred))
+	for _, sm := range starred {
+		msgIDs = append(msgIDs, sm.MessageID)
+		chatIDs = append(chatIDs, sm.ChatID)
+	}
+	chatIDs = uniqueStrings(chatIDs)
+
+	msgMap, _ := s.messageRepo.FindByIDs(msgIDs)
+	chatMap := make(map[string]*domain.Chat, len(chatIDs))
+	for _, cid := range chatIDs {
+		if chat, err := s.chatRepo.FindByID(cid); err == nil {
+			chatMap[cid] = chat
+		}
+	}
+
+	allUserIDs := make([]string, 0)
+	for _, m := range msgMap {
+		allUserIDs = append(allUserIDs, m.SenderID)
+	}
+	allUserIDs = uniqueStrings(allUserIDs)
+	userMap, _ := s.userRepo.FindByIDs(allUserIDs)
+
+	responses := make([]*domain.StarredMessageResponse, 0, len(starred))
+	for _, sm := range starred {
+		msg, ok := msgMap[sm.MessageID]
+		if !ok {
+			continue
+		}
+
+		msgResp, _ := s.getMessageResponse(msg)
+
+		var chatResp *domain.ChatResponse
+		if chat, ok := chatMap[sm.ChatID]; ok {
+			participants, _ := s.chatRepo.GetParticipants(chat.ID)
+			userResponses := make([]*domain.UserResponse, 0, len(participants))
+			for _, p := range participants {
+				if u, ok := userMap[p.UserID]; ok {
+					userResponses = append(userResponses, u.ToResponse())
+				}
+			}
+			chatResp = &domain.ChatResponse{
+				ID:           chat.ID,
+				Name:         chat.Name,
+				Type:         chat.Type,
+				Participants: userResponses,
+			}
+		}
+
+		responses = append(responses, &domain.StarredMessageResponse{
+			Message:   msgResp,
+			Chat:      chatResp,
+			CreatedAt: sm.CreatedAt,
+		})
+	}
+
+	return responses, nil
+}
+
+func (s *messageService) GetChatMedia(chatID, userID, mediaType string, limit, offset int) ([]*domain.MessageResponse, error) {
+	isParticipant, _ := s.chatRepo.IsParticipant(chatID, userID)
+	if !isParticipant {
+		return nil, errors.New("access denied")
+	}
+
+	messages, err := s.messageRepo.FindMediaByChatID(chatID, mediaType, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.buildMessageResponses(messages)
+}
+
+func (s *messageService) ExportChat(chatID, userID string) ([]*domain.MessageResponse, error) {
+	isParticipant, _ := s.chatRepo.IsParticipant(chatID, userID)
+	if !isParticipant {
+		return nil, errors.New("access denied")
+	}
+
+	messages, err := s.messageRepo.FindByChatID(chatID, 10000, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.buildMessageResponses(messages)
 }
 
 func (s *messageService) buildMessageResponses(messages []*domain.Message) ([]*domain.MessageResponse, error) {

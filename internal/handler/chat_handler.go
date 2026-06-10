@@ -194,3 +194,83 @@ func (h *ChatHandler) UpdateGroup(c *gin.Context) {
 
 	response.JSON(c, 200, gin.H{"message": "group updated"})
 }
+
+func (h *ChatHandler) PinChat(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	chatID := c.Param("id")
+
+	if err := h.chatService.PinChat(chatID, userID.(string)); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "chat pinned"})
+}
+
+func (h *ChatHandler) UnpinChat(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	chatID := c.Param("id")
+
+	if err := h.chatService.UnpinChat(chatID, userID.(string)); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "chat unpinned"})
+}
+
+func (h *ChatHandler) ArchiveChat(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	chatID := c.Param("id")
+
+	if err := h.chatService.ArchiveChat(chatID, userID.(string)); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "chat archived"})
+}
+
+func (h *ChatHandler) UnarchiveChat(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	chatID := c.Param("id")
+
+	if err := h.chatService.UnarchiveChat(chatID, userID.(string)); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "chat unarchived"})
+}
+
+func (h *ChatHandler) ListArchivedChats(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
+	chats, err := h.chatService.ListArchivedChats(userID.(string))
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, chats)
+}
+
+func (h *ChatHandler) TransferOwnership(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	chatID := c.Param("id")
+
+	var req struct {
+		UserID string `json:"userId" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.chatService.TransferOwnership(chatID, userID.(string), req.UserID); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "ownership transferred"})
+}

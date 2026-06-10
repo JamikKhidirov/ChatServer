@@ -48,6 +48,13 @@ type ChatRepository interface {
 	IsHidden(userID, chatID string) (bool, error)
 	FindByUserIDExcludeHidden(userID string) ([]*domain.Chat, error)
 	SearchByName(userID, query string) ([]*domain.Chat, error)
+	PinChat(userID, chatID string) error
+	UnpinChat(userID, chatID string) error
+	GetPinnedChatIDs(userID string) ([]string, error)
+	ArchiveChat(userID, chatID string) error
+	UnarchiveChat(userID, chatID string) error
+	IsArchived(userID, chatID string) (bool, error)
+	FindByUserIDArchived(userID string) ([]*domain.Chat, error)
 }
 
 type MessageRepository interface {
@@ -56,6 +63,7 @@ type MessageRepository interface {
 	FindByIDs(ids []string) (map[string]*domain.Message, error)
 	FindByChatID(chatID string, limit, offset int) ([]*domain.Message, error)
 	Search(chatID, query string, limit, offset int) ([]*domain.Message, error)
+	SearchByUser(userID, query string, limit, offset int) ([]*domain.Message, error)
 	Update(msg *domain.Message) error
 	SoftDelete(id string) error
 	GetLastMessagesByChatIDs(chatIDs []string) (map[string]*domain.Message, error)
@@ -69,6 +77,80 @@ type MessageRepository interface {
 	AddReadReceipt(msgID, userID string) error
 	GetReadReceipts(msgID string) ([]*domain.ReadReceipt, error)
 	GetReadReceiptsByMessageIDs(ids []string) (map[string][]*domain.ReadReceipt, error)
+	StarMessage(userID, messageID, chatID string) error
+	UnstarMessage(userID, messageID string) error
+	GetStarredMessages(userID string) ([]*domain.StarredMessage, error)
+	DeleteMessageForMe(userID, messageID string) error
+	FindDeletedForMe(userID string, messageIDs []string) (map[string]bool, error)
+	SaveMention(messageID, userID, username string) error
+	GetMentionsByMessageID(messageID string) ([]*domain.Mention, error)
+	FindMediaByChatID(chatID string, mediaType string, limit, offset int) ([]*domain.Message, error)
+}
+
+type PollRepository interface {
+	Create(poll *domain.Poll) error
+	FindByID(id string) (*domain.Poll, error)
+	FindByChatID(chatID string) ([]*domain.Poll, error)
+	Update(poll *domain.Poll) error
+	AddVote(vote *domain.PollVote) error
+	HasVoted(pollID, userID string) (bool, error)
+	GetVoteCount(pollID string, optionIndex int) (int, error)
+	GetUserVote(pollID, userID string) (*domain.PollVote, error)
+	GetTotalVotes(pollID string) (int, error)
+	GetAllVotes(pollID string) ([]*domain.PollVote, error)
+}
+
+type StickerRepository interface {
+	CreatePack(pack *domain.StickerPack) error
+	GetPackByID(id string) (*domain.StickerPack, error)
+	GetPacksByUserID(userID string) ([]*domain.StickerPack, error)
+	ListPacks() ([]*domain.StickerPack, error)
+	AddSticker(sticker *domain.Sticker) error
+	GetStickersByPackID(packID string) ([]*domain.Sticker, error)
+	DeletePack(id string) error
+	DeleteSticker(id string) error
+	AddToUserLibrary(userID, stickerID string) error
+	GetUserLibrary(userID string) ([]*domain.Sticker, error)
+}
+
+type DraftRepository interface {
+	Save(draft *domain.Draft) error
+	FindByUserAndChat(userID, chatID string) (*domain.Draft, error)
+	Delete(id string) error
+	DeleteByUserAndChat(userID, chatID string) error
+}
+
+type ScheduledMessageRepository interface {
+	Create(msg *domain.ScheduledMessage) error
+	FindPending() ([]*domain.ScheduledMessage, error)
+	FindByUserID(userID string) ([]*domain.ScheduledMessage, error)
+	MarkAsSent(id string) error
+	Delete(id string) error
+}
+
+type SessionRepository interface {
+	Create(session *domain.Session) error
+	FindByID(id string) (*domain.Session, error)
+	FindByUserID(userID string) ([]*domain.Session, error)
+	UpdateLastActive(id string) error
+	Delete(id string) error
+	DeleteByUserID(userID string) error
+}
+
+type BotRepository interface {
+	Create(bot *domain.Bot) error
+	FindByID(id string) (*domain.Bot, error)
+	FindByOwnerID(ownerID string) ([]*domain.Bot, error)
+	Update(bot *domain.Bot) error
+	RegenerateToken(id, token string) error
+	Delete(id string) error
+	FindByToken(token string) (*domain.Bot, error)
+}
+
+type SavedGifRepository interface {
+	Save(userID, gifURL string) error
+	FindByUserID(userID string) ([]string, error)
+	Delete(userID, gifURL string) error
 }
 
 type CallRepository interface {

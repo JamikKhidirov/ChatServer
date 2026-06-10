@@ -318,6 +318,111 @@ func (r *messageRepository) GetReactionsByMessageIDs(ids []string) (map[string][
 	return result, nil
 }
 
+func (r *messageRepository) SearchByUser(userID, query string, limit, offset int) ([]*domain.Message, error) {
+	rows, err := r.db.Query(
+		`SELECT m.id, m.chat_id, m.sender_id, m.content, m.type, m.reply_to_id, m.forward_from, m.file_name, m.file_size, m.file_path, m.pinned, m.created_at, m.updated_at, m.deleted_at
+		FROM messages m
+		INNER JOIN chat_participants cp ON cp.chat_id = m.chat_id AND cp.user_id = ?
+		WHERE m.content LIKE ? AND m.deleted_at IS NULL
+		AND m.id NOT IN (SELECT dfm.message_id FROM deleted_messages dfm WHERE dfm.user_id = ?)
+		ORDER BY m.created_at DESC LIMIT ? OFFSET ?`,
+		userID, "%"+query+"%", userID, limit, offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	messages := make([]*domain.Message, 0)
+	for rows.Next() {
+		msg, err := scanMessage(rows)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, msg)
+	}
+	return messages, nil
+}
+
+func (r *messageRepository) StarMessage(userID, messageID, chatID string) error {
+	_, err := r.db.Exec(
+		`INSERT OR IGNORE INTO starred_messages (user_id, message_id, chat_id, created_at) VALUES (?, ?, ?, ?)`,
+		userID, messageID, chatID, time.Now().Format(time.RFC3339),
+	)
+	return err
+}
+
+func (r *messageRepository) UnstarMessage(userID, messageID string) error {
+	_, err := r.db.Exec(
+		`DELETE FROM starred_messages WHERE user_id = ? AND message_id = ?`,
+		userID, messageID,
+	)
+	return err
+}
+
+func (r *messageRepository) GetStarredMessages(userID string) ([]*domain.StarredMessage, error) {
+	rows, err := r.db.Query(
+		`SELECT user_id, message_id, chat_id, created_at FROM starred_messages WHERE user_id = ? ORDER BY created_at DESC`,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	messages := make([]*domain.StarredMessage, 0)
+	for rows.Next() {
+		var (
+			sm        domain.StarredMessage
+			createdAt string
+		)
+		if err := rows.Scan(&sm.UserID, &sm.MessageID, &sm.ChatID, &createdAt); err != nil {
+			return nil, err
+		}
+		sm.CreatedAt = parseTime(createdAt)
+		messages = append(messages, &sm)
+	}
+	return messages, nil
+}
+
+func (r *messageRepository) DeleteMessageForMe(userID, messageID string) error {
+	_, err := r.db.Exec(
+		`INSERT OR IGNORE INTO deleted_messages (user_id, message_id, deleted_at) VALUES (?, ?, ?)`,
+		userID, messageID, time.Now().Format(time.RFC3339),
+	)
+	return err
+}
+
+func (r *messageRepository) FindDeletedForMe(userID string, messageIDs []string) (map[string]bool, error) {
+	if len(messageIDs) == 0 {
+		return make(map[string]bool), nil
+	}
+	placeholders := make([]string, len(messageIDs))
+	args := make([]interface{}, len(messageIDs)+1)
+	args[0] = userID
+	for i, id := range messageIDs {
+		placeholders[i] = "?"
+		args[i+1] = id
+	}
+	rows, err := r.db.Query(
+		`SELECT message_id FROM deleted_messages WHERE user_id = ? AND message_id IN (`+strings.Join(placeholders, ",")+`)`, args...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]bool)
+	for rows.Next() {
+		var mid string
+		if err := rows.Scan(&mid); err != nil {
+			return nil, err
+		}
+		result[mid] = true
+	}
+	return result, nil
+}
+
 func (r *messageRepository) GetReadReceiptsByMessageIDs(ids []string) (map[string][]*domain.ReadReceipt, error) {
 	if len(ids) == 0 {
 		return make(map[string][]*domain.ReadReceipt), nil
@@ -349,6 +454,70 @@ func (r *messageRepository) GetReadReceiptsByMessageIDs(ids []string) (map[strin
 		result[receipt.MessageID] = append(result[receipt.MessageID], &receipt)
 	}
 	return result, nil
+}
+
+func (r *messageRepository) SaveMention(messageID, userID, username string) error {
+	_, err := r.db.Exec(
+		`INSERT OR IGNORE INTO mentions (message_id, user_id, username) VALUES (?, ?, ?)`,
+		messageID, userID, username,
+	)
+	return err
+}
+
+func (r *messageRepository) GetMentionsByMessageID(messageID string) ([]*domain.Mention, error) {
+	rows, err := r.db.Query(
+		`SELECT message_id, user_id, username FROM mentions WHERE message_id = ?`, messageID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	mentions := make([]*domain.Mention, 0)
+	for rows.Next() {
+		var m domain.Mention
+		if err := rows.Scan(&m.MessageID, &m.UserID, &m.Username); err != nil {
+			return nil, err
+		}
+		mentions = append(mentions, &m)
+	}
+	return mentions, nil
+}
+
+func (r *messageRepository) FindMediaByChatID(chatID string, mediaType string, limit, offset int) ([]*domain.Message, error) {
+	var rows *sql.Rows
+	var err error
+	if mediaType != "" {
+		rows, err = r.db.Query(
+			`SELECT m.id, m.chat_id, m.sender_id, m.content, m.type, m.reply_to_id, m.forward_from, m.file_name, m.file_size, m.file_path, m.pinned, m.created_at, m.updated_at, m.deleted_at
+			FROM messages m
+			WHERE m.chat_id = ? AND m.type = ? AND m.deleted_at IS NULL
+			ORDER BY m.created_at DESC LIMIT ? OFFSET ?`,
+			chatID, mediaType, limit, offset,
+		)
+	} else {
+		rows, err = r.db.Query(
+			`SELECT m.id, m.chat_id, m.sender_id, m.content, m.type, m.reply_to_id, m.forward_from, m.file_name, m.file_size, m.file_path, m.pinned, m.created_at, m.updated_at, m.deleted_at
+			FROM messages m
+			WHERE m.chat_id = ? AND m.type IN ('image','file','video','audio','gif') AND m.deleted_at IS NULL
+			ORDER BY m.created_at DESC LIMIT ? OFFSET ?`,
+			chatID, limit, offset,
+		)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	messages := make([]*domain.Message, 0)
+	for rows.Next() {
+		msg, err := scanMessage(rows)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, msg)
+	}
+	return messages, nil
 }
 
 type messageScanner interface {

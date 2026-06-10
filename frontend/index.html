@@ -19,6 +19,13 @@
     <button class="tab" data-tab="contacts"><span class="icon">&#x1F4F1;</span> Contacts</button>
     <button class="tab" data-tab="chats"><span class="icon">&#x1F4AC;</span> Chats</button>
     <button class="tab" data-tab="messages"><span class="icon">&#x2709;&#xFE0F;</span> Messages</button>
+    <button class="tab" data-tab="polls"><span class="icon">&#x1F4CA;</span> Polls</button>
+    <button class="tab" data-tab="stickers"><span class="icon">&#x1F4F7;</span> Stickers</button>
+    <button class="tab" data-tab="drafts"><span class="icon">&#x1F4DD;</span> Drafts</button>
+    <button class="tab" data-tab="scheduled"><span class="icon">&#x23F0;</span> Scheduled</button>
+    <button class="tab" data-tab="sessions"><span class="icon">&#x1F5B5;</span> Sessions</button>
+    <button class="tab" data-tab="bots"><span class="icon">&#x1F916;</span> Bots</button>
+    <button class="tab" data-tab="gifs"><span class="icon">&#x1F47B;</span> GIFs</button>
     <button class="tab" data-tab="calls"><span class="icon">&#x1F4DE;</span> Calls</button>
     <button class="tab" data-tab="block"><span class="icon">&#x26D4;</span> Block</button>
     <button class="tab" data-tab="search"><span class="icon">&#x1F50D;</span> Search</button>
@@ -344,13 +351,232 @@
       <button class="btn btn-sm warning" onclick="apiUnpinMessage(this)">Unpin</button>
       <button class="btn btn-sm success" onclick="apiMarkMsgRead(this)">Mark Read</button>
     </div>
-    <hr class="divider">
-    <div class="form-row"><input id="forwardMsgId" placeholder="Message ID"><input id="forwardChatId" placeholder="Target Chat ID"><button class="btn btn-sm" onclick="apiForwardMessage(this)">Forward</button></div>
   </div>
   <div class="card">
     <div class="card-header"><h4>Pinned Messages <span class="badge">GET</span></h4></div>
     <div class="form-row"><input id="pinnedChatId" placeholder="Chat ID"><button class="btn info" onclick="apiGetPinnedMessages(this)">Get Pinned</button></div>
     <div class="result-box" id="resultPinned"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Star Message <span class="badge">POST/DELETE/GET</span></h4></div>
+    <div class="form-row"><input id="starMsgId" placeholder="Message ID"></div>
+    <div class="flex-row">
+      <button class="btn btn-sm success" onclick="apiStarMessage(this)">Star</button>
+      <button class="btn btn-sm warning" onclick="apiUnstarMessage(this)">Unstar</button>
+      <button class="btn btn-sm info" onclick="apiGetStarred(this)">List Starred</button>
+    </div>
+    <div class="result-box" id="resultStarred"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Delete For Me / Search All / Export / Media</h4></div>
+    <div class="form-row"><input id="deleteForMeMsgId" placeholder="Message ID"><button class="btn btn-sm danger" onclick="apiDeleteForMe(this)">Delete for Me</button></div>
+    <hr class="divider">
+    <div class="form-row"><input id="searchAllQ" placeholder="Search all chats"><button class="btn btn-sm" onclick="apiSearchAllMessages(this)">Search All</button></div>
+    <hr class="divider">
+    <div class="form-row"><input id="exportChatId" placeholder="Chat ID"><button class="btn btn-sm" onclick="apiExportChat(this)">Export Chat</button></div>
+    <div class="result-box" id="resultExportChat"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Forward Message <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="forwardMsgId" placeholder="Message ID"><input id="forwardFromChatId" placeholder="From Chat ID"><input id="forwardToChatId" placeholder="To Chat ID"></div>
+    <button class="btn" onclick="apiForwardMessage(this)">Forward</button>
+    <div class="result-box" id="resultForward"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Chat Media <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="mediaChatId" placeholder="Chat ID"><select id="mediaType"><option value="">All Media</option><option value="image">Images</option><option value="video">Video</option><option value="audio">Audio</option><option value="gif">GIF</option><option value="file">Files</option></select></div>
+    <button class="btn info" onclick="apiGetChatMedia(this)">Get Media</button>
+    <div class="result-box" id="resultMedia"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Chat Actions (Pin/Archive/Transfer)</h4></div>
+    <div class="form-row"><input id="pinChatId" placeholder="Chat ID (pin/unpin)"></div>
+    <div class="flex-row">
+      <button class="btn btn-sm" onclick="apiPinChat(this)">Pin Chat</button>
+      <button class="btn btn-sm warning" onclick="apiUnpinChat(this)">Unpin Chat</button>
+    </div>
+    <hr class="divider">
+    <div class="form-row"><input id="archiveChatId" placeholder="Chat ID (archive/unarchive)"></div>
+    <div class="flex-row">
+      <button class="btn btn-sm" onclick="apiArchiveChat(this)">Archive</button>
+      <button class="btn btn-sm warning" onclick="apiUnarchiveChat(this)">Unarchive</button>
+      <button class="btn btn-sm info" onclick="apiListArchived(this)">List Archived</button>
+    </div>
+    <hr class="divider">
+    <div class="form-row"><input id="transferChatId" placeholder="Chat ID"><input id="transferUserId" placeholder="New Owner ID"></div>
+    <button class="btn btn-sm warning" onclick="apiTransferOwnership(this)">Transfer Ownership</button>
+    <div class="result-box" id="resultChatActions"></div>
+  </div>
+</div>
+
+<!-- POLLS -->
+<div class="tab-content" id="tab-polls">
+  <h1 class="section-title">Polls</h1>
+  <p class="section-subtitle">Create, vote, and close polls in your chats</p>
+  <div class="card">
+    <div class="card-header"><h4>Create Poll <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="pollChatId" placeholder="Chat ID"><input id="pollQuestion" placeholder="Question"></div>
+    <div class="form-row"><input id="pollOptions" placeholder='["option1","option2","option3"]'></div>
+    <div class="form-row">
+      <label><input id="pollAnonymous" type="checkbox"> Anonymous</label>
+      <label><input id="pollMultiple" type="checkbox"> Multiple Choice</label>
+    </div>
+    <button class="btn success" onclick="apiCreatePoll(this)">Create Poll</button>
+    <div class="result-box" id="resultPolls"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Get Polls <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="pollChatIdGet" placeholder="Chat ID"><button class="btn info" onclick="apiGetPolls(this)">Get Polls</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Vote <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="votePollId" placeholder="Poll ID"><input id="voteOptionIdx" placeholder="Option index (0,1,2...)" type="number"></div>
+    <button class="btn" onclick="apiVotePoll(this)">Vote</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Close Poll <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="closePollId" placeholder="Poll ID"><button class="btn danger" onclick="apiClosePoll(this)">Close Poll</button></div>
+  </div>
+</div>
+
+<!-- STICKERS -->
+<div class="tab-content" id="tab-stickers">
+  <h1 class="section-title">Stickers</h1>
+  <p class="section-subtitle">Create sticker packs and manage your sticker library</p>
+  <div class="card">
+    <div class="card-header"><h4>Create Pack <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="stickPackName" placeholder="Pack name"></div>
+    <div class="form-row"><label><input id="stickPackAnimated" type="checkbox"> Animated</label></div>
+    <button class="btn success" onclick="apiCreateStickerPack(this)">Create Pack</button>
+    <div class="result-box" id="resultStickers"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>List / Get Packs <span class="badge">GET</span></h4></div>
+    <div class="flex-row">
+      <button class="btn btn-sm info" onclick="apiListStickerPacks(this)">All Packs</button>
+      <button class="btn btn-sm" onclick="apiGetMyStickerPacks(this)">My Packs</button>
+    </div>
+    <div class="form-row"><input id="stickPackIdGet" placeholder="Pack ID"><button class="btn btn-sm" onclick="apiGetStickerPack(this)">Get Pack</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Add Sticker to Pack <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="stickPackIdAdd" placeholder="Pack ID"><input id="stickEmoji" placeholder="Emoji"></div>
+    <div class="form-row"><input id="stickImageUrl" placeholder="Image URL (optional)"></div>
+    <button class="btn" onclick="apiAddSticker(this)">Add Sticker</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Delete Pack <span class="badge">DELETE</span></h4></div>
+    <div class="form-row"><input id="stickPackIdDel" placeholder="Pack ID"><button class="btn danger" onclick="apiDeleteStickerPack(this)">Delete Pack</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Sticker Library</h4></div>
+    <button class="btn info" onclick="apiGetStickerLibrary(this)">My Library</button>
+    <div class="form-row"><input id="stickLibAddId" placeholder="Sticker ID"><button class="btn" onclick="apiAddStickerToLibrary(this)">Add to Library</button></div>
+  </div>
+</div>
+
+<!-- DRAFTS -->
+<div class="tab-content" id="tab-drafts">
+  <h1 class="section-title">Drafts</h1>
+  <p class="section-subtitle">Auto-save and retrieve message drafts per chat</p>
+  <div class="card">
+    <div class="card-header"><h4>Save Draft <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="draftChatId" placeholder="Chat ID"><textarea id="draftContent" placeholder="Draft content" rows="3"></textarea></div>
+    <button class="btn" onclick="apiSaveDraft(this)">Save Draft</button>
+    <div class="result-box" id="resultDrafts"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Get Draft <span class="badge">GET</span></h4></div>
+    <div class="form-row"><input id="draftGetChatId" placeholder="Chat ID"><button class="btn info" onclick="apiGetDraft(this)">Get Draft</button></div>
+  </div>
+</div>
+
+<!-- SCHEDULED -->
+<div class="tab-content" id="tab-scheduled">
+  <h1 class="section-title">Scheduled Messages</h1>
+  <p class="section-subtitle">Schedule messages to be sent at a later time</p>
+  <div class="card">
+    <div class="card-header"><h4>Schedule Message <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="schedChatId" placeholder="Chat ID"><input id="schedContent" placeholder="Content"></div>
+    <div class="form-row"><input id="schedType" placeholder="Type (text/image/file)" value="text"><input id="schedAt" placeholder="Scheduled At (RFC3339) e.g. 2026-06-11T12:00:00Z"></div>
+    <button class="btn success" onclick="apiScheduleMessage(this)">Schedule</button>
+    <div class="result-box" id="resultScheduled"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>My Scheduled <span class="badge">GET</span></h4></div>
+    <button class="btn info" onclick="apiGetScheduled(this)">Get Scheduled</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Cancel Scheduled <span class="badge">DELETE</span></h4></div>
+    <div class="form-row"><input id="cancelSchedId" placeholder="Scheduled message ID"><button class="btn danger" onclick="apiCancelScheduled(this)">Cancel</button></div>
+  </div>
+</div>
+
+<!-- SESSIONS -->
+<div class="tab-content" id="tab-sessions">
+  <h1 class="section-title">Sessions</h1>
+  <p class="section-subtitle">Manage your active sessions and devices</p>
+  <div class="card">
+    <div class="card-header"><h4>My Sessions <span class="badge">GET</span></h4></div>
+    <button class="btn info" onclick="apiGetSessions(this)">Get Sessions</button>
+    <div class="result-box" id="resultSessions"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Delete Session <span class="badge">DELETE</span></h4></div>
+    <div class="form-row"><input id="delSessionId" placeholder="Session ID"><button class="btn danger" onclick="apiDeleteSession(this)">Delete Session</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Delete All Sessions <span class="badge">DELETE</span></h4></div>
+    <button class="btn danger" onclick="apiDeleteAllSessions(this)">Delete All Sessions</button>
+  </div>
+</div>
+
+<!-- BOTS -->
+<div class="tab-content" id="tab-bots">
+  <h1 class="section-title">Bots</h1>
+  <p class="section-subtitle">Create and manage API bots for your chats</p>
+  <div class="card">
+    <div class="card-header"><h4>Create Bot <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="botName" placeholder="Bot name"><input id="botWebhook" placeholder="Webhook URL (optional)"></div>
+    <button class="btn success" onclick="apiCreateBot(this)">Create Bot</button>
+    <div class="result-box" id="resultBots"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>My Bots <span class="badge">GET</span></h4></div>
+    <button class="btn info" onclick="apiGetMyBots(this)">Get My Bots</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Update Bot <span class="badge">PUT</span></h4></div>
+    <div class="form-row"><input id="botIdUpdate" placeholder="Bot ID"><input id="botNameUpdate" placeholder="New name"></div>
+    <div class="form-row"><input id="botWebhookUpdate" placeholder="New webhook URL"></div>
+    <button class="btn" onclick="apiUpdateBot(this)">Update Bot</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Delete Bot <span class="badge">DELETE</span></h4></div>
+    <div class="form-row"><input id="botIdDel" placeholder="Bot ID"><button class="btn danger" onclick="apiDeleteBot(this)">Delete Bot</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Regenerate Token <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="botIdRegen" placeholder="Bot ID"><button class="btn warning" onclick="apiRegenerateBotToken(this)">Regenerate Token</button></div>
+  </div>
+</div>
+
+<!-- GIFs -->
+<div class="tab-content" id="tab-gifs">
+  <h1 class="section-title">Saved GIFs</h1>
+  <p class="section-subtitle">Save, view, and manage your favorite GIFs</p>
+  <div class="card">
+    <div class="card-header"><h4>Save GIF <span class="badge">POST</span></h4></div>
+    <div class="form-row"><input id="gifUrl" placeholder="GIF URL"><button class="btn" onclick="apiSaveGif(this)">Save GIF</button></div>
+    <div class="result-box" id="resultGifs"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Get Saved GIFs <span class="badge">GET</span></h4></div>
+    <button class="btn info" onclick="apiGetSavedGifs(this)">Get Saved GIFs</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h4>Delete GIF <span class="badge">DELETE</span></h4></div>
+    <div class="form-row"><input id="gifDelUrl" placeholder="GIF URL to delete"><button class="btn danger" onclick="apiDeleteGif(this)">Delete GIF</button></div>
   </div>
 </div>
 

@@ -290,3 +290,120 @@ func (h *MessageHandler) GetMessageByID(c *gin.Context) {
 
 	response.JSON(c, 200, msg)
 }
+
+func (h *MessageHandler) SearchAllMessages(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	query := c.Query("q")
+
+	if query == "" {
+		response.BadRequest(c, "search query required")
+		return
+	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	messages, err := h.messageService.SearchAllMessages(userID.(string), query, limit, offset)
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, messages)
+}
+
+func (h *MessageHandler) ForwardMessage(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
+	var req domain.ForwardMessageRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	msg, err := h.messageService.ForwardMessage(req.MessageID, req.FromChatID, req.ToChatID, userID.(string))
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 201, msg)
+}
+
+func (h *MessageHandler) DeleteMessageForMe(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	msgID := c.Param("id")
+
+	if err := h.messageService.DeleteMessageForMe(msgID, userID.(string)); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "message deleted for you"})
+}
+
+func (h *MessageHandler) StarMessage(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	msgID := c.Param("id")
+
+	msg, err := h.messageService.StarMessage(msgID, userID.(string))
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, msg)
+}
+
+func (h *MessageHandler) UnstarMessage(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	msgID := c.Param("id")
+
+	if err := h.messageService.UnstarMessage(msgID, userID.(string)); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "message unstarred"})
+}
+
+func (h *MessageHandler) GetStarredMessages(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
+	messages, err := h.messageService.GetStarredMessages(userID.(string))
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, messages)
+}
+
+func (h *MessageHandler) GetChatMedia(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	chatID := c.Param("id")
+	mediaType := c.Query("type")
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	messages, err := h.messageService.GetChatMedia(chatID, userID.(string), mediaType, limit, offset)
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, messages)
+}
+
+func (h *MessageHandler) ExportChat(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	chatID := c.Param("id")
+
+	messages, err := h.messageService.ExportChat(chatID, userID.(string))
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, messages)
+}

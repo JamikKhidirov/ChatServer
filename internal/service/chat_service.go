@@ -515,6 +515,146 @@ func (s *chatService) SearchChats(userID, query string) ([]*domain.ChatResponse,
 	return responses, nil
 }
 
+func (s *chatService) PinChat(chatID, userID string) error {
+	isParticipant, _ := s.chatRepo.IsParticipant(chatID, userID)
+	if !isParticipant {
+		return errors.New("access denied")
+	}
+	return s.chatRepo.PinChat(userID, chatID)
+}
+
+func (s *chatService) UnpinChat(chatID, userID string) error {
+	return s.chatRepo.UnpinChat(userID, chatID)
+}
+
+func (s *chatService) ArchiveChat(chatID, userID string) error {
+	isParticipant, _ := s.chatRepo.IsParticipant(chatID, userID)
+	if !isParticipant {
+		return errors.New("access denied")
+	}
+	return s.chatRepo.ArchiveChat(userID, chatID)
+}
+
+func (s *chatService) UnarchiveChat(chatID, userID string) error {
+	return s.chatRepo.UnarchiveChat(userID, chatID)
+}
+
+func (s *chatService) ListArchivedChats(userID string) ([]*domain.ChatResponse, error) {
+	chats, err := s.chatRepo.FindByUserIDArchived(userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(chats) == 0 {
+		return []*domain.ChatResponse{}, nil
+	}
+
+	chatIDs := make([]string, len(chats))
+	for i, chat := range chats {
+		chatIDs[i] = chat.ID
+	}
+
+	participantsMap, _ := s.chatRepo.GetParticipantsByChatIDs(chatIDs)
+	allUserIDs := make([]string, 0)
+	for _, participants := range participantsMap {
+		for _, p := range participants {
+			allUserIDs = append(allUserIDs, p.UserID)
+		}
+	}
+	allUserIDs = uniqueStrings(allUserIDs)
+	userResponses := make(map[string]*domain.UserResponse)
+	if users, err := s.userRepo.FindByIDs(allUserIDs); err == nil {
+		for id, u := range users {
+			userResponses[id] = u.ToResponse()
+		}
+	}
+
+	lastMsgs, _ := s.messageRepo.GetLastMessagesByChatIDs(chatIDs)
+	lastMsgSenderIDs := make([]string, 0, len(lastMsgs))
+	for _, msg := range lastMsgs {
+		lastMsgSenderIDs = append(lastMsgSenderIDs, msg.SenderID)
+	}
+	lastMsgSenderIDs = uniqueStrings(lastMsgSenderIDs)
+	lastMsgSenders, _ := s.userRepo.FindByIDs(lastMsgSenderIDs)
+
+	unreadCounts, _ := s.chatRepo.GetUnreadCounts(userID, chatIDs)
+
+	responses := make([]*domain.ChatResponse, 0, len(chats))
+	for _, chat := range chats {
+		participants := participantsMap[chat.ID]
+		partResponses := make([]*domain.UserResponse, 0, len(participants))
+		for _, p := range participants {
+			if ur, ok := userResponses[p.UserID]; ok {
+				partResponses = append(partResponses, ur)
+			}
+		}
+
+		var lastMsgResponse *domain.MessageResponse
+		if lastMsg, ok := lastMsgs[chat.ID]; ok {
+			if sender, ok := lastMsgSenders[lastMsg.SenderID]; ok {
+				lastMsgResponse = &domain.MessageResponse{
+					ID:        lastMsg.ID,
+					ChatID:    lastMsg.ChatID,
+					Sender:    sender.ToResponse(),
+					Content:   lastMsg.Content,
+					Type:      lastMsg.Type,
+					CreatedAt: lastMsg.CreatedAt,
+					UpdatedAt: lastMsg.UpdatedAt,
+					Deleted:   lastMsg.DeletedAt != nil,
+				}
+			}
+		}
+
+		responses = append(responses, &domain.ChatResponse{
+			ID:           chat.ID,
+			Name:         chat.Name,
+			Description:  chat.Description,
+			AvatarURL:    chat.AvatarURL,
+			Type:         chat.Type,
+			CreatedBy:    chat.CreatedBy,
+			Participants: partResponses,
+			LastMessage:  lastMsgResponse,
+			UnreadCount:  unreadCounts[chat.ID],
+			CreatedAt:    chat.CreatedAt,
+		})
+	}
+
+	sort.Slice(responses, func(i, j int) bool {
+		ti := responses[i].LastMessage
+		tj := responses[j].LastMessage
+		if ti != nil && tj != nil {
+			return ti.CreatedAt.After(tj.CreatedAt)
+		}
+		if ti != nil {
+			return true
+		}
+		return false
+	})
+
+	return responses, nil
+}
+
+func (s *chatService) TransferOwnership(chatID, fromUserID, toUserID string) error {
+	chat, err := s.chatRepo.FindByID(chatID)
+	if err != nil {
+		return errors.New("chat not found")
+	}
+	if chat.CreatedBy != fromUserID {
+		return errors.New("only the creator can transfer ownership")
+	}
+	isParticipant, _ := s.chatRepo.IsParticipant(chatID, toUserID)
+	if !isParticipant {
+		return errors.New("target user is not a participant")
+	}
+	if err := s.chatRepo.SetRole(chatID, fromUserID, "admin"); err != nil {
+		return err
+	}
+	if err := s.chatRepo.SetRole(chatID, toUserID, "owner"); err != nil {
+		return err
+	}
+	chat.CreatedBy = toUserID
+	return s.chatRepo.Update(chat)
+}
+
 func (s *chatService) GetParticipants(chatID string) ([]*domain.ChatParticipant, error) {
 	return s.chatRepo.GetParticipants(chatID)
 }

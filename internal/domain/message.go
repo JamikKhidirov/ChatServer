@@ -11,6 +11,7 @@ const (
 	MessageGif    MessageType = "gif"
 	MessageVoice  MessageType = "voice"
 	MessageVideo  MessageType = "video"
+	MessageAudio  MessageType = "audio"
 	MessageSystem MessageType = "system"
 )
 
