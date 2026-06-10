@@ -1,4 +1,4 @@
-(function() {
+;(function(global) {
   'use strict';
 
   var toastContainer = document.getElementById('toastContainer');
@@ -9,16 +9,33 @@
   var connectionStatus = document.getElementById('connectionStatus');
   var statusIndicator = document.getElementById('statusIndicator');
 
-  updateTokenDisplay();
-  updateConnectionStatus();
+  init();
+
+  function init() {
+    updateTokenDisplay();
+    updateConnectionStatus();
+    bindTabSwitching();
+  }
+
+  function bindTabSwitching() {
+    document.querySelectorAll('.sidebar .tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.sidebar .tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+        tab.classList.add('active');
+        var target = document.getElementById('tab-' + tab.dataset.tab);
+        if (target) target.classList.add('active');
+      });
+    });
+  }
 
   function updateTokenDisplay() {
-    if (authToken) {
+    var token = global._api.getToken();
+    if (token) {
       tokenSection.classList.add('visible');
-      tokenDisplay.textContent = authToken;
-      localStorage.setItem('messenger_token', authToken);
+      tokenDisplay.textContent = token;
       try {
-        var parts = authToken.split('.');
+        var parts = token.split('.');
         if (parts.length === 3) {
           var payload = JSON.parse(atob(parts[1]));
           tokenInfo.style.display = 'flex';
@@ -36,14 +53,16 @@
   }
 
   function clearToken() {
-    authToken = '';
+    global._api.clearToken();
     updateTokenDisplay();
+    updateConnectionStatus();
     toast('Token cleared', 'info');
   }
 
   function copyToken() {
-    if (!authToken) { toast('No token to copy', 'error'); return; }
-    navigator.clipboard.writeText(authToken).then(function() {
+    var token = global._api.getToken();
+    if (!token) { toast('No token to copy', 'error'); return; }
+    navigator.clipboard.writeText(token).then(function() {
       toast('Token copied to clipboard', 'success');
     }).catch(function() {
       toast('Failed to copy token', 'error');
@@ -51,7 +70,7 @@
   }
 
   function updateConnectionStatus() {
-    if (authToken) {
+    if (global._api.getToken()) {
       statusIndicator.className = 'status-dot online';
       connectionStatus.textContent = 'Authenticated';
     } else {
@@ -60,19 +79,9 @@
     }
   }
 
-  document.querySelectorAll('.sidebar .tab').forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      document.querySelectorAll('.sidebar .tab').forEach(function(t) { t.classList.remove('active'); });
-      document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-      tab.classList.add('active');
-      var target = document.getElementById('tab-' + tab.dataset.tab);
-      if (target) target.classList.add('active');
-    });
-  });
-
   function toast(msg, type) {
     type = type || 'info';
-    var icons = { error: '&#x26A0;&#xFE0F;', success: '&#x2705;', info: '&#x1F4AC;' };
+    var icons = { error: '\u26A0\uFE0F', success: '\u2705', info: '\uD83D\uDCAC' };
     var iconHtml = icons[type] || icons.info;
     var t = document.createElement('div');
     t.className = 'toast ' + type;
@@ -141,7 +150,6 @@
   }
 
   function setEmoji(btn, emoji) {
-    currentEmoji = emoji;
     document.getElementById('reactEmoji').value = emoji;
     document.querySelectorAll('.emoji-grid button').forEach(function(b) { b.classList.remove('selected'); });
     if (btn) btn.classList.add('selected');
@@ -152,12 +160,14 @@
     row.style.display = row.style.display === 'none' ? 'flex' : 'none';
   }
 
-  window.updateTokenDisplay = updateTokenDisplay;
-  window.clearToken = clearToken;
-  window.copyToken = copyToken;
-  window.toast = toast;
-  window.setLoading = setLoading;
-  window.showResult = showResult;
-  window.setEmoji = setEmoji;
-  window.toggleEditMsg = toggleEditMsg;
-})();
+  // Export to window
+  global.updateTokenDisplay = updateTokenDisplay;
+  global.updateConnectionStatus = updateConnectionStatus;
+  global.clearToken = clearToken;
+  global.copyToken = copyToken;
+  global.toast = toast;
+  global.setLoading = setLoading;
+  global.showResult = showResult;
+  global.setEmoji = setEmoji;
+  global.toggleEditMsg = toggleEditMsg;
+})(window);

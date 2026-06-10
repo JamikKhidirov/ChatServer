@@ -162,6 +162,12 @@ func main() {
 	// WebSocket
 	r.GET("/ws", wsHandler.HandleWebSocket)
 
+	// Frontend static
+	r.Static("/app", "./frontend")
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/app/")
+	})
+
 	// Healthcheck
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
@@ -175,9 +181,10 @@ func main() {
 	fmt.Println("╔══════════════════════════════════════════════════════╗")
 	fmt.Println("║         CHAT MESSENGER SERVER                       ║")
 	fmt.Println("╠══════════════════════════════════════════════════════╣")
-	fmt.Printf("║  Server:  http://localhost:%s                       \n", cfg.ServerPort)
-	fmt.Printf("║  Swagger: http://localhost:%s/swagger/index.html    \n", cfg.ServerPort)
-	fmt.Printf("║  Health:  http://localhost:%s/health                \n", cfg.ServerPort)
+	fmt.Printf("║  Server:   http://localhost:%s                       \n", cfg.ServerPort)
+	fmt.Printf("║  Frontend: http://localhost:%s/app/                  \n", cfg.ServerPort)
+	fmt.Printf("║  Swagger:  http://localhost:%s/swagger/index.html    \n", cfg.ServerPort)
+	fmt.Printf("║  Health:   http://localhost:%s/health                \n", cfg.ServerPort)
 	fmt.Println("╚══════════════════════════════════════════════════════╝")
 	fmt.Println()
 
