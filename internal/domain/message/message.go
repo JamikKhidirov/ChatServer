@@ -9,10 +9,11 @@ const (
 	MessageImage  MessageType = "image"
 	MessageFile   MessageType = "file"
 	MessageGif    MessageType = "gif"
-	MessageVoice  MessageType = "voice"
-	MessageVideo  MessageType = "video"
-	MessageAudio  MessageType = "audio"
-	MessageSystem MessageType = "system"
+	MessageVoice      MessageType = "voice"
+	MessageVideo      MessageType = "video"
+	MessageVideoCircle MessageType = "video_circle"
+	MessageAudio      MessageType = "audio"
+	MessageSystem     MessageType = "system"
 )
 
 type Message struct {

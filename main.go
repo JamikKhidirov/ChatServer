@@ -17,11 +17,13 @@ import (
 	"ChatServerGolang/internal/handler/auth"
 	"ChatServerGolang/internal/handler/bot"
 	"ChatServerGolang/internal/handler/call"
+	"ChatServerGolang/internal/handler/channel"
 	"ChatServerGolang/internal/handler/chat"
 	"ChatServerGolang/internal/handler/contact"
 	"ChatServerGolang/internal/handler/draft"
 	"ChatServerGolang/internal/handler/folder"
 	"ChatServerGolang/internal/handler/gif"
+	"ChatServerGolang/internal/handler/groupcall"
 	"ChatServerGolang/internal/handler/link"
 	"ChatServerGolang/internal/handler/login"
 	"ChatServerGolang/internal/handler/message"
@@ -29,6 +31,7 @@ import (
 	"ChatServerGolang/internal/handler/schedmsg"
 	"ChatServerGolang/internal/handler/session"
 	"ChatServerGolang/internal/handler/sticker"
+	"ChatServerGolang/internal/handler/story"
 	"ChatServerGolang/internal/handler/user"
 	"ChatServerGolang/internal/handler/verification"
 	"ChatServerGolang/internal/handler/ws"
@@ -41,22 +44,27 @@ import (
 	"ChatServerGolang/internal/repository/draft"
 	"ChatServerGolang/internal/repository/folder"
 	"ChatServerGolang/internal/repository/gif"
+	"ChatServerGolang/internal/repository/channel"
+	"ChatServerGolang/internal/repository/groupcall"
 	"ChatServerGolang/internal/repository/link"
 	"ChatServerGolang/internal/repository/message"
 	"ChatServerGolang/internal/repository/poll"
 	"ChatServerGolang/internal/repository/schedmsg"
 	"ChatServerGolang/internal/repository/session"
 	"ChatServerGolang/internal/repository/sticker"
+	"ChatServerGolang/internal/repository/story"
 	"ChatServerGolang/internal/repository/user"
 	"ChatServerGolang/internal/repository/verification"
 	"ChatServerGolang/internal/service/auth"
 	"ChatServerGolang/internal/service/bot"
 	"ChatServerGolang/internal/service/call"
+	"ChatServerGolang/internal/service/channel"
 	"ChatServerGolang/internal/service/chat"
 	"ChatServerGolang/internal/service/contact"
 	"ChatServerGolang/internal/service/draft"
 	"ChatServerGolang/internal/service/folder"
 	"ChatServerGolang/internal/service/gif"
+	"ChatServerGolang/internal/service/groupcall"
 	"ChatServerGolang/internal/service/link"
 	"ChatServerGolang/internal/service/mention"
 	"ChatServerGolang/internal/service/message"
@@ -65,6 +73,7 @@ import (
 	"ChatServerGolang/internal/service/schedmsg"
 	"ChatServerGolang/internal/service/session"
 	"ChatServerGolang/internal/service/sticker"
+	"ChatServerGolang/internal/service/story"
 	"ChatServerGolang/internal/service/systemmsg"
 	"ChatServerGolang/internal/service/typing"
 	"ChatServerGolang/internal/service/user"
@@ -101,6 +110,8 @@ func main() {
 	verRepo := verrepo.NewVerificationRepository(db)
 	linkRepo := linkrepo.NewInviteLinkRepository(db)
 	folderRepo := folderrepo.NewChatFolderRepository(db)
+	storyRepo := storyrepo.NewStoryRepository(db)
+	groupCallRepo := groupcallrepo.NewGroupCallRepository(db)
 
 	hub := ws.NewHub()
 	go hub.Run()
@@ -124,6 +135,10 @@ func main() {
 	gifService := gifservice.NewSavedGifService(gifRepo)
 	linkService := linkservice.NewInviteLinkService(linkRepo, chatRepo)
 	folderService := folderservice.NewChatFolderService(folderRepo, chatRepo)
+	storyService := storyservice.NewStoryService(storyRepo, userRepo, chatRepo)
+	groupCallService := groupcallservice.NewGroupCallService(groupCallRepo, chatRepo, userRepo)
+	channelRepo := channelrepo.NewChannelSubscriberRepository(db)
+	channelService := channelservice.NewChannelService(channelRepo, chatRepo, userRepo)
 	emailSender := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass, cfg.SMTPFrom)
 	smsSender := sms.NewSender(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioPhone)
 	verService := verservice.NewVerificationService(verRepo, userRepo, emailSender, smsSender)
@@ -145,6 +160,9 @@ func main() {
 	schedMsgHandler := schedmsghandler.NewScheduledMessageHandler(schedMsgService)
 	linkHandler := linkhandler.NewInviteLinkHandler(linkService)
 	folderHandler := folderhandler.NewChatFolderHandler(folderService)
+	storyHandler := storyhandler.NewStoryHandler(storyService)
+	groupCallHandler := groupcallhandler.NewGroupCallHandler(groupCallService)
+	channelHandler := channelhandler.NewChannelHandler(channelService, chatService)
 	wsHandler := wshandler.NewWSHandler(hub, authService, userRepo, chatRepo)
 	wsEvents := wshandler.NewWebSocketEvents(hub, chatService, messageService, userService, pushService, callService)
 
@@ -313,6 +331,32 @@ func main() {
 			authorized.POST("/gifs", gifHandler.SaveGif)
 			authorized.GET("/gifs", gifHandler.GetSavedGifs)
 			authorized.DELETE("/gifs", gifHandler.DeleteGif)
+
+			// Stories
+			authorized.POST("/stories", storyHandler.CreateStory)
+			authorized.GET("/stories", storyHandler.GetFollowingStories)
+			authorized.GET("/stories/my", storyHandler.GetMyStories)
+			authorized.GET("/stories/:id", storyHandler.GetStoryByID)
+			authorized.DELETE("/stories/:id", storyHandler.DeleteStory)
+			authorized.GET("/stories/:id/views", storyHandler.GetStoryViews)
+
+			// Group calls
+			authorized.POST("/calls/group/initiate", groupCallHandler.InitiateGroupCall)
+			authorized.POST("/calls/group/respond", groupCallHandler.JoinGroupCall)
+			authorized.POST("/calls/group/:id/end", groupCallHandler.EndGroupCall)
+			authorized.GET("/calls/group/:id", groupCallHandler.GetGroupCall)
+			authorized.GET("/chats/:chatId/active-calls", groupCallHandler.GetActiveGroupCalls)
+
+			// Broadcast channels
+			authorized.POST("/channels/subscribe", channelHandler.Subscribe)
+			authorized.POST("/channels/unsubscribe", channelHandler.Unsubscribe)
+			authorized.GET("/channels", channelHandler.GetMyChannels)
+			authorized.GET("/channels/:id/subscribers", channelHandler.GetSubscribers)
+			authorized.GET("/channels/:id/subscribed", channelHandler.IsSubscribed)
+			authorized.PUT("/channels/:id/subscribers/:userId/role", channelHandler.SetSubscriberRole)
+
+			// Video circle messages
+			authorized.POST("/chats/:id/messages/video-circle", messageHandler.UploadVideoCircle)
 
 			authorized.POST("/calls/initiate", wsEvents.WrapInitiateCall(callHandler.InitiateCall))
 			authorized.POST("/calls/:id/respond", wsEvents.WrapRespondCall(callHandler.RespondCall))

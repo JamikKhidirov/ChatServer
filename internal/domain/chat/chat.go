@@ -10,6 +10,38 @@ const (
 	ChatChannel  ChatType = "channel"
 )
 
+type Role string
+
+const (
+	RoleOwner      Role = "owner"
+	RoleAdmin      Role = "admin"
+	RoleModerator  Role = "moderator"
+	RoleEditor     Role = "editor"
+	RoleMember     Role = "member"
+	RoleReadOnly   Role = "readonly"
+	RoleSubscriber Role = "subscriber"
+)
+
+func IsAdminRole(role string) bool {
+	return role == string(RoleOwner) || role == string(RoleAdmin)
+}
+
+func CanSendMessage(role string) bool {
+	return role != string(RoleReadOnly) && role != string(RoleSubscriber)
+}
+
+func CanManageMessages(role string) bool {
+	return role == string(RoleOwner) || role == string(RoleAdmin) || role == string(RoleModerator)
+}
+
+func CanManageMembers(role string) bool {
+	return role == string(RoleOwner) || role == string(RoleAdmin)
+}
+
+func CanPinMessages(role string) bool {
+	return role == string(RoleOwner) || role == string(RoleAdmin) || role == string(RoleEditor)
+}
+
 type Chat struct {
 	ID              string    `json:"id"`
 	Name            string    `json:"name"`

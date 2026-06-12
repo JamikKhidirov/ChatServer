@@ -757,3 +757,54 @@ func (h *MessageHandler) ExportChat(c *gin.Context) {
 
 	response.JSON(c, 200, messages)
 }
+
+// UploadVideoCircle uploads a circular video message
+// @Tags Messages
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param id path string true "Chat ID"
+// @Param video formData file true "Video circle recording (mp4)"
+// @Param caption formData string false "Optional caption"
+// @Success 201 {object} messagedomain.MessageResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Router /chats/{id}/messages/video-circle [post]
+func (h *MessageHandler) UploadVideoCircle(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	chatID := c.Param("id")
+
+	file, header, err := c.Request.FormFile("video")
+	if err != nil {
+		response.BadRequest(c, "video file required")
+		return
+	}
+	defer file.Close()
+
+	uploadDir := "uploads/video_circles"
+	os.MkdirAll(uploadDir, 0755)
+
+	fileName := uuid.New().String() + ".mp4"
+	filePath := filepath.Join(uploadDir, fileName)
+
+	out, err := os.Create(filePath)
+	if err != nil {
+		response.InternalError(c, "failed to save video")
+		return
+	}
+	defer out.Close()
+
+	fileSize, err := io.Copy(out, file)
+	if err != nil {
+		response.InternalError(c, "failed to save video")
+		return
+	}
+
+	msg, err := h.messageService.SendFileMessage(chatID, userID.(string), header.Filename, fileName, fileSize, nil)
+	if err != nil {
+		os.Remove(filePath)
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 201, msg)
+}

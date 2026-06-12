@@ -8,9 +8,15 @@ High-performance chat messenger server built with Go. Features REST API, real-ti
 
 - **User System** — registration, authentication (JWT), profiles, avatars, contacts sync
 - **Real-time Chat** — private & group chats, typing indicators, read receipts, slow mode
-- **Messaging** — text, files, images, voice messages, mentions, reactions, forward, pin, star, schedule
-- **WebSocket Events** — instant push for new messages, edits, deletes, calls, polls, and more
-- **Voice/Video Calls** — WebRTC-based signalling via REST + WS
+- **Messaging** — text, files, images, voice messages, video circles, mentions, reactions, forward, pin, star, schedule
+- **Reply to Messages** — quote and reply to specific messages with inline citation
+- **Supergroup Roles** — owner, admin, moderator, editor, member, read-only permission levels
+- **Broadcast Channels** — one-way broadcast channels with subscribers and admins
+- **Stories** — photo/video stories that disappear after 24 hours with view tracking
+- **WebSocket Events** — instant push for new messages, edits, deletes, calls, polls, stories, and more
+- **Voice/Video Calls** — WebRTC-based signalling via REST + WS (1-to-1)
+- **Group Calls** — multi-participant voice/video conference calls
+- **Custom Reactions** — react with any emoji
 - **Polls** — create, vote, close, real-time updates
 - **Stickers** — packs, library, custom sticker sets
 - **Bots** — create and manage bot accounts with tokens
@@ -20,7 +26,7 @@ High-performance chat messenger server built with Go. Features REST API, real-ti
 - **Sessions** — manage active sessions, force logout
 - **Self-Destructing Messages** — auto-delete after TTL
 - **Message Export** — export chat history as CSV
-- **Media Gallery** — filter by photo, video, audio, file
+- **Media Gallery** — filter by photo, video, audio, file, video_circle
 - **Archived Chats** — archive/unarchive/hide chats
 - **Global Search** — search messages and users across all chats
 - **Push Notifications** — Firebase Cloud Messaging (FCM) integration
@@ -342,6 +348,45 @@ All endpoints require `Authorization: Bearer <JWT_TOKEN>` unless noted.
 | `GET` | `/api/gifs` | List saved GIFs |
 | `DELETE` | `/api/gifs` | Remove GIF |
 
+### Stories
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/stories` | Create story (multipart: file + type + caption) |
+| `GET` | `/api/stories` | Get stories from contacts and channels |
+| `GET` | `/api/stories/my` | Get my active stories |
+| `GET` | `/api/stories/:id` | View a story (marks as viewed) |
+| `DELETE` | `/api/stories/:id` | Delete story (owner only) |
+| `GET` | `/api/stories/:id/views` | Get story viewers (owner only) |
+
+### Group Calls
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/calls/group/initiate` | Start a group call |
+| `POST` | `/api/calls/group/respond` | Join/leave/mute in a group call |
+| `POST` | `/api/calls/group/:id/end` | End a group call (caller only) |
+| `GET` | `/api/calls/group/:id` | Get group call details |
+| `GET` | `/api/chats/:chatId/active-calls` | Active calls in a chat |
+
+### Broadcast Channels
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/chats` | Create channel (with `type: "channel"`) |
+| `POST` | `/api/channels/subscribe` | Subscribe to a channel |
+| `POST` | `/api/channels/unsubscribe` | Unsubscribe from a channel |
+| `GET` | `/api/channels` | List my channels (owned + subscribed) |
+| `GET` | `/api/channels/:id/subscribers` | List subscribers (admin only) |
+| `GET` | `/api/channels/:id/subscribed` | Check if subscribed |
+| `PUT` | `/api/channels/:id/subscribers/:userId/role` | Set subscriber role (admin) |
+
+### Video Circle Messages
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/chats/:id/messages/video-circle` | Send a circular video message |
+
 ---
 
 ## WebSocket Events
@@ -391,6 +436,14 @@ Events pushed from server to connected clients in real time.
 | `invite:joined` | `{"chatId":"...","userId":"..."}` | User joined via invite |
 | `sticker:added` | `{"sticker":{...}}` | Sticker added to library |
 | `sticker:pack_created` | `{"pack":{...}}` | Sticker pack created |
+| `story:new` | `{"story":{...}}` | Story created |
+| `story:deleted` | `{"storyId":"..."}` | Story deleted |
+| `story:viewed` | `{"storyId":"...","userId":"..."}` | Story viewed |
+| `call:group_started` | `{"call":{...}}` | Group call started |
+| `call:group_joined` | `{"callId":"...","userId":"..."}` | User joined group call |
+| `call:group_left` | `{"callId":"...","userId":"..."}` | User left group call |
+| `call:group_mute` | `{"callId":"...","userId":"...","audioMuted":bool}` | Mute status changed |
+| `call:group_ended` | `{"callId":"..."}` | Group call ended |
 
 ### Client to Server
 

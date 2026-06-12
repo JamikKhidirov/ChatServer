@@ -2,7 +2,7 @@ package chatdomain
 
 type CreateChatRequest struct {
 	Name           string   `json:"name" binding:"max=64"`
-	Type           ChatType `json:"type" binding:"required,oneof=private group"`
+	Type           ChatType `json:"type" binding:"required,oneof=private group channel"`
 	ParticipantIDs []string `json:"participantIds" binding:"required,min=1"`
 	Description    string   `json:"description,omitempty" binding:"max=512"`
 }

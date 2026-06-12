@@ -12,6 +12,8 @@ import (
 	botdomain "ChatServerGolang/internal/domain/bot"
 	draftdomain "ChatServerGolang/internal/domain/draft"
 	sessiondomain "ChatServerGolang/internal/domain/session"
+	storydomain "ChatServerGolang/internal/domain/story"
+	channeldomain "ChatServerGolang/internal/domain/channel"
 )
 
 type AuthService interface {
@@ -201,4 +203,32 @@ type VerificationService interface {
 	LoginVerifyEmailCode(email, code string) (string, error)
 	LoginSendPhoneCode(phone string) (string, error)
 	LoginVerifyPhoneCode(phone, code string) (string, error)
+}
+
+type StoryService interface {
+	CreateStory(userID string, req *storydomain.CreateStoryRequest, filePath, fileURL string) (*storydomain.StoryResponse, error)
+	GetMyStories(userID string) ([]*storydomain.StoryResponse, error)
+	GetFollowingStories(userID string) ([]*storydomain.StoryResponse, error)
+	GetStoryByID(storyID, userID string) (*storydomain.StoryResponse, error)
+	DeleteStory(storyID, userID string) error
+	GetStoryViews(storyID, userID string) ([]*storydomain.StoryView, error)
+}
+
+type GroupCallService interface {
+	InitiateGroupCall(chatID, callerID string, callType calldomain.CallType) (*calldomain.GroupCallResponse, error)
+	JoinGroupCall(callID, userID string) error
+	LeaveGroupCall(callID, userID string) error
+	EndGroupCall(callID, userID string) error
+	MuteParticipant(callID, userID string, audioMuted, videoMuted bool) error
+	GetGroupCallByID(callID string) (*calldomain.GroupCallResponse, error)
+	GetActiveGroupCalls(chatID, userID string) ([]*calldomain.GroupCallResponse, error)
+}
+
+type ChannelService interface {
+	Subscribe(channelID, userID string) error
+	Unsubscribe(channelID, userID string) error
+	GetSubscribers(channelID, userID string) ([]*channeldomain.ChannelSubscriber, error)
+	GetSubscribedChannels(userID string) ([]*chatdomain.ChatResponse, error)
+	SetSubscriberRole(channelID, targetUserID, requesterID, role string) error
+	IsSubscribed(channelID, userID string) (bool, error)
 }

@@ -493,3 +493,69 @@ CREATE TABLE IF NOT EXISTS chat_themes (
 const addIsAdminField = `
 ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;
 `
+
+const addStoriesGroupCallsChannels = `
+CREATE TABLE IF NOT EXISTS stories (
+	id TEXT PRIMARY KEY,
+	user_id TEXT NOT NULL,
+	file_path TEXT NOT NULL DEFAULT '',
+	file_url TEXT NOT NULL DEFAULT '',
+	type TEXT NOT NULL DEFAULT 'photo',
+	caption TEXT NOT NULL DEFAULT '',
+	expires_at TEXT NOT NULL,
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS story_views (
+	story_id TEXT NOT NULL,
+	user_id TEXT NOT NULL,
+	viewed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (story_id, user_id),
+	FOREIGN KEY (story_id) REFERENCES stories(id),
+	FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS channel_subscribers (
+	channel_id TEXT NOT NULL,
+	user_id TEXT NOT NULL,
+	role TEXT NOT NULL DEFAULT 'subscriber',
+	subscribed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (channel_id, user_id),
+	FOREIGN KEY (channel_id) REFERENCES chats(id),
+	FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS group_calls (
+	id TEXT PRIMARY KEY,
+	chat_id TEXT NOT NULL,
+	caller_id TEXT NOT NULL,
+	type TEXT NOT NULL DEFAULT 'audio',
+	status TEXT NOT NULL DEFAULT 'initiated',
+	started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	ended_at TEXT,
+	FOREIGN KEY (chat_id) REFERENCES chats(id),
+	FOREIGN KEY (caller_id) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS group_call_participants (
+	call_id TEXT NOT NULL,
+	user_id TEXT NOT NULL,
+	joined_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	left_at TEXT,
+	audio_muted INTEGER NOT NULL DEFAULT 0,
+	video_muted INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY (call_id, user_id),
+	FOREIGN KEY (call_id) REFERENCES group_calls(id),
+	FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_stories_user_id ON stories(user_id);
+CREATE INDEX IF NOT EXISTS idx_stories_expires_at ON stories(expires_at);
+CREATE INDEX IF NOT EXISTS idx_story_views_story_id ON story_views(story_id);
+CREATE INDEX IF NOT EXISTS idx_channel_subscribers_user_id ON channel_subscribers(user_id);
+CREATE INDEX IF NOT EXISTS idx_group_calls_chat_id ON group_calls(chat_id);
+`
+
+func init() {
+	migrations = append(migrations, Migration{
+		ID:   22,
+		Name: "add_stories_group_calls_channels",
+		Up:   addStoriesGroupCallsChannels,
+	})
+}

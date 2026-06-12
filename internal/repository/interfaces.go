@@ -6,12 +6,14 @@ import (
 	authdomain "ChatServerGolang/internal/domain/auth"
 	userdomain "ChatServerGolang/internal/domain/user"
 	chatdomain "ChatServerGolang/internal/domain/chat"
+	channeldomain "ChatServerGolang/internal/domain/channel"
 	messagedomain "ChatServerGolang/internal/domain/message"
 	polldomain "ChatServerGolang/internal/domain/poll"
 	stickerdomain "ChatServerGolang/internal/domain/sticker"
 	contactdomain "ChatServerGolang/internal/domain/contact"
 	botdomain "ChatServerGolang/internal/domain/bot"
 	calldomain "ChatServerGolang/internal/domain/call"
+	storydomain "ChatServerGolang/internal/domain/story"
 	draftdomain "ChatServerGolang/internal/domain/draft"
 	sessiondomain "ChatServerGolang/internal/domain/session"
 	verificationdomain "ChatServerGolang/internal/domain/verification"
@@ -224,6 +226,42 @@ type VerificationRepository interface {
 	CreatePhoneLoginCode(code *authdomain.PhoneLoginCode) error
 	FindPhoneLoginCode(phone string) (*authdomain.PhoneLoginCode, error)
 	VerifyPhoneLoginCode(id string) error
+}
+
+type StoryRepository interface {
+	Create(story *storydomain.Story) error
+	FindByID(id string) (*storydomain.Story, error)
+	FindActiveByUserID(userID string) ([]*storydomain.Story, error)
+	FindActiveByFollowing(userIDs []string) ([]*storydomain.Story, error)
+	MarkExpired() error
+	Delete(id string) error
+	AddView(storyID, userID string) error
+	GetViewCount(storyID string) (int64, error)
+	GetViews(storyID string) ([]*storydomain.StoryView, error)
+	HasViewed(storyID, userID string) (bool, error)
+}
+
+type GroupCallRepository interface {
+	Create(call *calldomain.GroupCall) error
+	FindByID(id string) (*calldomain.GroupCall, error)
+	FindActiveByChatID(chatID string) ([]*calldomain.GroupCall, error)
+	FindActiveByUserID(userID string) (*calldomain.GroupCall, error)
+	UpdateStatus(id string, status calldomain.CallStatus) error
+	AddParticipant(callID, userID string) error
+	RemoveParticipant(callID, userID string) error
+	UpdateParticipantMute(callID, userID string, audioMuted, videoMuted bool) error
+	GetParticipants(callID string) ([]*calldomain.GroupCallParticipant, error)
+	FindByChatAndUser(chatID, userID string) ([]*calldomain.GroupCall, error)
+}
+
+type ChannelSubscriberRepository interface {
+	Subscribe(channelID, userID string, role string) error
+	Unsubscribe(channelID, userID string) error
+	IsSubscribed(channelID, userID string) (bool, error)
+	GetSubscribers(channelID string) ([]*channeldomain.ChannelSubscriber, error)
+	GetSubscribedChannels(userID string) ([]string, error)
+	SetRole(channelID, userID, role string) error
+	GetRole(channelID, userID string) (string, error)
 }
 
 func BoolToInt(b bool) int {
