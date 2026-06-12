@@ -19,6 +19,7 @@ func NewSavedMessageHandler(savedMsgService service.SavedMessageService) *SavedM
 
 // SaveMessage сохраняет указанное сообщение в личную коллекцию "Избранное" пользователя
 // @Tags Сохранённые сообщения
+// @Summary Сохранить сообщение в избранное по его ID
 // @Security BearerAuth
 // @Accept json
 // @Produce json
@@ -48,6 +49,7 @@ func (h *SavedMessageHandler) SaveMessage(c *gin.Context) {
 
 // GetSavedMessages возвращает постраничный список всех сохранённых сообщений текущего пользователя
 // @Tags Сохранённые сообщения
+// @Summary Получить список сохранённых сообщений с пагинацией
 // @Security BearerAuth
 // @Produce json
 // @Description Возвращает список сохранённых сообщений с пагинацией. Каждый элемент содержит полную информацию о сообщении (текст, тип, отправитель) и о чате, в котором оно находится. Упорядочено по дате сохранения (новые сверху).
@@ -72,6 +74,7 @@ func (h *SavedMessageHandler) GetSavedMessages(c *gin.Context) {
 
 // DeleteSavedMessage удаляет сообщение из коллекции "Избранное" по его ID
 // @Tags Сохранённые сообщения
+// @Summary Удалить сообщение из избранного по ID записи
 // @Security BearerAuth
 // @Produce json
 // @Description Удаляет ранее сохранённое сообщение из избранного. Только владелец может удалить своё сохранённое сообщение. ID можно получить из GET /saved-messages.

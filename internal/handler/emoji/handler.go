@@ -22,6 +22,7 @@ func NewEmojiHandler(emojiService service.CustomEmojiService) *EmojiHandler {
 
 // CreateEmoji загружает новый кастомный эмодзи на сервер
 // @Tags Кастомные эмодзи
+// @Summary Загрузить новый кастомный эмодзи (файл + shortcode)
 // @Security BearerAuth
 // @Accept multipart/form-data
 // @Produce json
@@ -80,6 +81,7 @@ func (h *EmojiHandler) CreateEmoji(c *gin.Context) {
 
 // GetMyEmojis возвращает список кастомных эмодзи, загруженных текущим пользователем
 // @Tags Кастомные эмодзи
+// @Summary Получить мои загруженные эмодзи
 // @Security BearerAuth
 // @Produce json
 // @Description Возвращает только те эмодзи, которые были загружены текущим пользователем. Для просмотра всех публичных эмодзи используйте GET /emojis.
@@ -98,6 +100,7 @@ func (h *EmojiHandler) GetMyEmojis(c *gin.Context) {
 
 // GetAllEmojis возвращает список всех кастомных эмодзи на сервере
 // @Tags Кастомные эмодзи
+// @Summary Получить все кастомные эмодзи (общая галерея)
 // @Security BearerAuth
 // @Produce json
 // @Description Возвращает все кастомные эмодзи, загруженные всеми пользователями. Подходит для общей галереи эмодзи в клиенте.
@@ -115,6 +118,7 @@ func (h *EmojiHandler) GetAllEmojis(c *gin.Context) {
 
 // DeleteEmoji удаляет кастомный эмодзи по его ID
 // @Tags Кастомные эмодзи
+// @Summary Удалить эмодзи по ID (только владелец)
 // @Security BearerAuth
 // @Produce json
 // @Description Удаляет эмодзи из базы данных и файл изображения с диска. Только владелец эмодзи может его удалить. После удаления эмодзи перестанет отображаться в галерее.

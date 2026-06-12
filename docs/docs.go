@@ -2274,6 +2274,7 @@ const docTemplate = `{
                 "tags": [
                     "Сообщения"
                 ],
+                "summary": "Отправить сообщение с геолокацией (координаты + опциональное название)",
                 "parameters": [
                     {
                         "type": "string",
@@ -2382,6 +2383,7 @@ const docTemplate = `{
                 "tags": [
                     "Сообщения"
                 ],
+                "summary": "Отправить круговое видеосообщение (MP4)",
                 "parameters": [
                     {
                         "type": "string",
@@ -3372,6 +3374,7 @@ const docTemplate = `{
                 "tags": [
                     "Голосовые чаты"
                 ],
+                "summary": "Создать голосовую комнату в группе",
                 "parameters": [
                     {
                         "type": "string",
@@ -3420,6 +3423,7 @@ const docTemplate = `{
                 "tags": [
                     "Голосовые чаты"
                 ],
+                "summary": "Получить активные голосовые комнаты в чате",
                 "parameters": [
                     {
                         "type": "string",
@@ -3462,6 +3466,7 @@ const docTemplate = `{
                 "tags": [
                     "Голосовые чаты"
                 ],
+                "summary": "Получить историю всех голосовых комнат в чате",
                 "parameters": [
                     {
                         "type": "string",
@@ -3860,6 +3865,7 @@ const docTemplate = `{
                 "tags": [
                     "Кастомные эмодзи"
                 ],
+                "summary": "Получить все кастомные эмодзи (общая галерея)",
                 "responses": {
                     "200": {
                         "description": "Массив всех кастомных эмодзи на сервере",
@@ -3894,6 +3900,7 @@ const docTemplate = `{
                 "tags": [
                     "Кастомные эмодзи"
                 ],
+                "summary": "Загрузить новый кастомный эмодзи (файл + shortcode)",
                 "parameters": [
                     {
                         "type": "string",
@@ -3940,6 +3947,7 @@ const docTemplate = `{
                 "tags": [
                     "Кастомные эмодзи"
                 ],
+                "summary": "Получить мои загруженные эмодзи",
                 "responses": {
                     "200": {
                         "description": "Массив кастомных эмодзи пользователя с ID, shortcode и URL",
@@ -3973,6 +3981,7 @@ const docTemplate = `{
                 "tags": [
                     "Кастомные эмодзи"
                 ],
+                "summary": "Удалить эмодзи по ID (только владелец)",
                 "parameters": [
                     {
                         "type": "string",
@@ -5113,6 +5122,7 @@ const docTemplate = `{
                 "tags": [
                     "Сохранённые сообщения"
                 ],
+                "summary": "Сохранить сообщение в избранное по его ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -5321,6 +5331,7 @@ const docTemplate = `{
                 "tags": [
                     "Сохранённые сообщения"
                 ],
+                "summary": "Получить список сохранённых сообщений с пагинацией",
                 "parameters": [
                     {
                         "type": "integer",
@@ -5365,6 +5376,7 @@ const docTemplate = `{
                 "tags": [
                     "Сохранённые сообщения"
                 ],
+                "summary": "Удалить сообщение из избранного по ID записи",
                 "parameters": [
                     {
                         "type": "string",
@@ -6837,6 +6849,7 @@ const docTemplate = `{
                 "tags": [
                     "Голосовые чаты"
                 ],
+                "summary": "Получить информацию о голосовой комнате по ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -6876,6 +6889,7 @@ const docTemplate = `{
                 "tags": [
                     "Голосовые чаты"
                 ],
+                "summary": "Завершить голосовую комнату (создатель/админ)",
                 "parameters": [
                     {
                         "type": "string",
@@ -6915,6 +6929,7 @@ const docTemplate = `{
                 "tags": [
                     "Голосовые чаты"
                 ],
+                "summary": "Присоединиться к голосовой комнате",
                 "parameters": [
                     {
                         "type": "string",
@@ -6954,6 +6969,7 @@ const docTemplate = `{
                 "tags": [
                     "Голосовые чаты"
                 ],
+                "summary": "Покинуть голосовую комнату",
                 "parameters": [
                     {
                         "type": "string",
@@ -6996,6 +7012,7 @@ const docTemplate = `{
                 "tags": [
                     "Голосовые чаты"
                 ],
+                "summary": "Включить/выключить микрофон участника",
                 "parameters": [
                     {
                         "type": "string",
@@ -7005,17 +7022,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Параметр muted: true (заглушить микрофон) или false (включить микрофон)",
+                        "description": "Параметры: muted (boolean) — true выключает микрофон, false включает",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
-                            "properties": {
-                                "muted": {
-                                    "type": "boolean"
-                                }
-                            }
+                            "$ref": "#/definitions/voicechatdomain.MuteParticipantRequest"
                         }
                     }
                 ],
@@ -8765,6 +8777,15 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
+                }
+            }
+        },
+        "voicechatdomain.MuteParticipantRequest": {
+            "type": "object",
+            "properties": {
+                "muted": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },

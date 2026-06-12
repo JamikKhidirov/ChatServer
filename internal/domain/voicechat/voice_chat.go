@@ -31,6 +31,10 @@ type VoiceChatParticipant struct {
 	Muted       bool      `json:"muted"`
 }
 
+type MuteParticipantRequest struct {
+	Muted bool `json:"muted" example:"true"`
+}
+
 type CreateVoiceChatRequest struct {
 	Title       string `json:"title,omitempty"`
 	ScheduledInMins int `json:"scheduledInMins,omitempty"`

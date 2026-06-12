@@ -760,6 +760,7 @@ func (h *MessageHandler) ExportChat(c *gin.Context) {
 
 // UploadVideoCircle загружает и отправляет круговое видео (видеосообщение) в чат
 // @Tags Сообщения
+// @Summary Отправить круговое видеосообщение (MP4)
 // @Security BearerAuth
 // @Accept multipart/form-data
 // @Produce json
@@ -812,6 +813,7 @@ func (h *MessageHandler) UploadVideoCircle(c *gin.Context) {
 
 // SendLocation отправляет сообщение с геолокацией в указанный чат
 // @Tags Сообщения
+// @Summary Отправить сообщение с геолокацией (координаты + опциональное название)
 // @Security BearerAuth
 // @Accept json
 // @Produce json

@@ -18,6 +18,7 @@ func NewVoiceChatHandler(voiceChatService service.VoiceChatService) *VoiceChatHa
 
 // CreateVoiceChat создаёт новую голосовую комнату в указанной группе
 // @Tags Голосовые чаты
+// @Summary Создать голосовую комнату в группе
 // @Security BearerAuth
 // @Accept json
 // @Produce json
@@ -48,6 +49,7 @@ func (h *VoiceChatHandler) CreateVoiceChat(c *gin.Context) {
 
 // GetVoiceChat возвращает детальную информацию о голосовой комнате
 // @Tags Голосовые чаты
+// @Summary Получить информацию о голосовой комнате по ID
 // @Security BearerAuth
 // @Produce json
 // @Description Возвращает полную информацию о голосовой комнате: статус (active/scheduled/ended), количество участников, время начала и окончания.
@@ -69,6 +71,7 @@ func (h *VoiceChatHandler) GetVoiceChat(c *gin.Context) {
 
 // GetActiveVoiceChats возвращает список активных голосовых комнат в указанном чате
 // @Tags Голосовые чаты
+// @Summary Получить активные голосовые комнаты в чате
 // @Security BearerAuth
 // @Produce json
 // @Description Показывает все активные (не завершённые) голосовые комнаты в группе. Если комната завершена, она не отображается в этом списке — используйте GET /chats/{id}/voice-chats/history.
@@ -90,6 +93,7 @@ func (h *VoiceChatHandler) GetActiveVoiceChats(c *gin.Context) {
 
 // GetVoiceChatHistory возвращает историю всех голосовых комнат в чате (включая завершённые)
 // @Tags Голосовые чаты
+// @Summary Получить историю всех голосовых комнат в чате
 // @Security BearerAuth
 // @Produce json
 // @Description Возвращает все голосовые комнаты, созданные в группе, включая активные, запланированные и завершённые. Упорядочено по дате создания (новые сверху).
@@ -111,6 +115,7 @@ func (h *VoiceChatHandler) GetVoiceChatHistory(c *gin.Context) {
 
 // JoinVoiceChat присоединяет текущего пользователя к активной голосовой комнате
 // @Tags Голосовые чаты
+// @Summary Присоединиться к голосовой комнате
 // @Security BearerAuth
 // @Produce json
 // @Description Позволяет пользователю присоединиться к голосовой комнате. Пользователь становится участником и будет отображаться в списке участников комнаты. Не требует подтверждения от создателя.
@@ -132,6 +137,7 @@ func (h *VoiceChatHandler) JoinVoiceChat(c *gin.Context) {
 
 // LeaveVoiceChat покидает голосовую комнату
 // @Tags Голосовые чаты
+// @Summary Покинуть голосовую комнату
 // @Security BearerAuth
 // @Produce json
 // @Description Отсоединяет пользователя от голосовой комнаты. Пользователь удаляется из списка участников, и счётчик участников обновляется.
@@ -153,6 +159,7 @@ func (h *VoiceChatHandler) LeaveVoiceChat(c *gin.Context) {
 
 // EndVoiceChat завершает голосовую комнату (только для создателя или администратора)
 // @Tags Голосовые чаты
+// @Summary Завершить голосовую комнату (создатель/админ)
 // @Security BearerAuth
 // @Produce json
 // @Description Завершает голосовую комнату. После завершения новые участники не могут присоединиться. Статус меняется на "ended". Все текущие участники отключаются.
@@ -174,12 +181,13 @@ func (h *VoiceChatHandler) EndVoiceChat(c *gin.Context) {
 
 // MuteParticipant включает или выключает микрофон участника в голосовой комнате
 // @Tags Голосовые чаты
+// @Summary Включить/выключить микрофон участника
 // @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Description Позволяет участнику включить или выключить свой микрофон в голосовой комнате. Администраторы могут отключить микрофон другим участникам.
 // @Param id path string true "ID голосовой комнаты"
-// @Param request body object{muted=bool} true "Параметр muted: true (заглушить микрофон) или false (включить микрофон)"
+// @Param request body voicechatdomain.MuteParticipantRequest true "Параметры: muted (boolean) — true выключает микрофон, false включает"
 // @Success 200 {object} response.MessageResponse "Статус микрофона изменён (muted/unmuted)"
 // @Failure 400 {object} response.ErrorResponse "Ошибка при изменении статуса"
 // @Router /voice-chats/{id}/mute [post]

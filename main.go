@@ -338,7 +338,7 @@ func main() {
 			authorized.GET("/chats/:id/polls", pollHandler.GetPolls)
 			authorized.POST("/polls/:pollId/vote", pollHandler.Vote)
 			authorized.POST("/polls/:pollId/close", pollHandler.ClosePoll)
-
+			
 			authorized.GET("/stickers/packs", stickerHandler.ListPacks)
 			authorized.GET("/stickers/packs/my", stickerHandler.GetMyPacks)
 			authorized.POST("/stickers/packs", stickerHandler.CreatePack)

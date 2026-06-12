@@ -1163,6 +1163,12 @@ definitions:
       title:
         type: string
     type: object
+  voicechatdomain.MuteParticipantRequest:
+    properties:
+      muted:
+        example: true
+        type: boolean
+    type: object
   voicechatdomain.VoiceChatResponse:
     properties:
       chatId:
@@ -2554,6 +2560,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отправить сообщение с геолокацией (координаты + опциональное название)
       tags:
       - Сообщения
   /chats/{id}/messages/search:
@@ -2628,6 +2635,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отправить круговое видеосообщение (MP4)
       tags:
       - Сообщения
   /chats/{id}/messages/voice:
@@ -3215,6 +3223,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Создать голосовую комнату в группе
       tags:
       - Голосовые чаты
   /chats/{id}/voice-chats/active:
@@ -3243,6 +3252,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить активные голосовые комнаты в чате
       tags:
       - Голосовые чаты
   /chats/{id}/voice-chats/history:
@@ -3270,6 +3280,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить историю всех голосовых комнат в чате
       tags:
       - Голосовые чаты
   /chats/{id}/wallpaper:
@@ -3608,6 +3619,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить все кастомные эмодзи (общая галерея)
       tags:
       - Кастомные эмодзи
     post:
@@ -3643,6 +3655,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Загрузить новый кастомный эмодзи (файл + shortcode)
       tags:
       - Кастомные эмодзи
   /emojis/{id}:
@@ -3669,6 +3682,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить эмодзи по ID (только владелец)
       tags:
       - Кастомные эмодзи
   /emojis/my:
@@ -3690,6 +3704,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить мои загруженные эмодзи
       tags:
       - Кастомные эмодзи
   /files/{filename}:
@@ -4186,6 +4201,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Сохранить сообщение в избранное по его ID
       tags:
       - Сохранённые сообщения
   /messages/{id}/star:
@@ -4522,6 +4538,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить список сохранённых сообщений с пагинацией
       tags:
       - Сохранённые сообщения
   /saved-messages/{id}:
@@ -4548,6 +4565,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить сообщение из избранного по ID записи
       tags:
       - Сохранённые сообщения
   /sessions:
@@ -5441,6 +5459,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить информацию о голосовой комнате по ID
       tags:
       - Голосовые чаты
   /voice-chats/{id}/end:
@@ -5466,6 +5485,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Завершить голосовую комнату (создатель/админ)
       tags:
       - Голосовые чаты
   /voice-chats/{id}/join:
@@ -5492,6 +5512,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Присоединиться к голосовой комнате
       tags:
       - Голосовые чаты
   /voice-chats/{id}/leave:
@@ -5517,6 +5538,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Покинуть голосовую комнату
       tags:
       - Голосовые чаты
   /voice-chats/{id}/mute:
@@ -5531,16 +5553,13 @@ paths:
         name: id
         required: true
         type: string
-      - description: 'Параметр muted: true (заглушить микрофон) или false (включить
-          микрофон)'
+      - description: 'Параметры: muted (boolean) — true выключает микрофон, false
+          включает'
         in: body
         name: request
         required: true
         schema:
-          properties:
-            muted:
-              type: boolean
-          type: object
+          $ref: '#/definitions/voicechatdomain.MuteParticipantRequest'
       produces:
       - application/json
       responses:
@@ -5554,6 +5573,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Включить/выключить микрофон участника
       tags:
       - Голосовые чаты
 schemes:
