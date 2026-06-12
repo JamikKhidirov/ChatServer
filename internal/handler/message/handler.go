@@ -314,7 +314,7 @@ func (h *MessageHandler) RemoveReaction(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Message ID"
-// @Param request body messagedomain.PinMessageRequest true 'pin: true to pin, false to unpin'
+// @Param request body messagedomain.PinMessageRequest true "pin: true to pin, false to unpin"
 // @Success 200 {object} messagedomain.MessageResponse
 // @Failure 400 {object} response.ErrorResponse
 // @Router /messages/{id}/pin [put]
@@ -674,7 +674,7 @@ func (h *MessageHandler) UnstarMessage(c *gin.Context) {
 // @Tags Messages
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} messagedomain.StarredMessageResponse
+// @Success 200 {array} chatdomain.StarredMessageResponse
 // @Failure 400 {object} response.ErrorResponse
 // @Router /messages/starred [get]
 func (h *MessageHandler) GetStarredMessages(c *gin.Context) {
@@ -758,16 +758,17 @@ func (h *MessageHandler) ExportChat(c *gin.Context) {
 	response.JSON(c, 200, messages)
 }
 
-// UploadVideoCircle uploads a circular video message
-// @Tags Messages
+// UploadVideoCircle загружает и отправляет круговое видео (видеосообщение) в чат
+// @Tags Сообщения
 // @Security BearerAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param video formData file true "Video circle recording (mp4)"
-// @Param caption formData string false "Optional caption"
-// @Success 201 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Позволяет отправить круговое видеосообщение (аналог видеосообщений в Telegram). Видео должно быть в формате MP4 с круговым обрезанием. Файл сохраняется в директории uploads/video_circles/. Можно указать подпись к видео.
+// @Param id path string true "ID чата, в который отправляется видеосообщение"
+// @Param video formData file true "Файл видео в формате MP4 для кругового видеосообщения. Рекомендуется квадратное соотношение сторон."
+// @Param caption formData string false "Подпись к видеосообщению (опционально, отображается под видео)"
+// @Success 201 {object} messagedomain.MessageResponse "Видеосообщение успешно отправлено. Тип сообщения: video_circle."
+// @Failure 400 {object} response.ErrorResponse "Ошибка: файл не загружен, неверный формат или чат не найден."
 // @Router /chats/{id}/messages/video-circle [post]
 func (h *MessageHandler) UploadVideoCircle(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -802,6 +803,46 @@ func (h *MessageHandler) UploadVideoCircle(c *gin.Context) {
 	msg, err := h.messageService.SendFileMessage(chatID, userID.(string), header.Filename, fileName, fileSize, nil)
 	if err != nil {
 		os.Remove(filePath)
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 201, msg)
+}
+
+// SendLocation отправляет сообщение с геолокацией в указанный чат
+// @Tags Сообщения
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Description Создаёт и отправляет в чат сообщение с геолокацией (тип "location"). Позволяет пользователям делиться своим местоположением на карте. В теле запроса обязательно нужно передать широту (latitude) и долготу (longitude) места. Опционально можно добавить название места (title), указать ID сообщения для ответа (replyToId) и выбрать эффект анимации (effect). После успешной отправки возвращается полный объект сообщения с координатами.
+// @Param id path string true "ID чата (группы или личного диалога), в который отправляется сообщение с геолокацией"
+// @Param request body messagedomain.SendLocationRequest true "Параметры геолокации: latitude (число, широта, обязательно), longitude (число, долгота, обязательно), title (строка, название места, опционально), replyToId (строка, ID сообщения для ответа, опционально), effect (строка, эффект анимации: confetti/fireworks/hearts/balloons/stars, опционально)"
+// @Success 201 {object} messagedomain.MessageResponse "Сообщение с геолокацией успешно создано. В ответе возвращается полный объект MessageResponse с заполненными полями latitude, longitude, locationTitle."
+// @Failure 400 {object} response.ErrorResponse "Ошибка валидации: не указаны latitude/longitude, неверный формат данных или чат не найден."
+// @Router /chats/{id}/messages/location [post]
+func (h *MessageHandler) SendLocation(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	chatID := c.Param("id")
+
+	var req messagedomain.SendLocationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ValidationError(c, err.Error())
+		return
+	}
+
+	msgReq := &messagedomain.SendMessageRequest{
+		Content:       "",
+		Type:          messagedomain.MessageLocation,
+		Latitude:      req.Latitude,
+		Longitude:     req.Longitude,
+		LocationTitle: req.Title,
+		ReplyToID:     req.ReplyToID,
+		Effect:        req.Effect,
+	}
+
+	msg, err := h.messageService.SendMessage(chatID, userID.(string), msgReq)
+	if err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}

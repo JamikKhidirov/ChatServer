@@ -91,7 +91,7 @@ func (h *ContactHandler) SearchByPhone(c *gin.Context) {
 // @Tags Contacts
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} contactdomain.UserResponse
+// @Success 200 {array} userdomain.UserResponse
 // @Failure 400 {object} response.ErrorResponse
 // @Router /contacts/registered [get]
 func (h *ContactHandler) FindRegistered(c *gin.Context) {

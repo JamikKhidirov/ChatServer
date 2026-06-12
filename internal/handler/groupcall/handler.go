@@ -141,13 +141,13 @@ func (h *GroupCallHandler) GetGroupCall(c *gin.Context) {
 // @Tags Group Calls
 // @Security BearerAuth
 // @Produce json
-// @Param chatId path string true "Chat ID"
+// @Param id path string true "Chat ID"
 // @Success 200 {array} calldomain.GroupCallResponse
 // @Failure 400 {object} response.ErrorResponse
 // @Router /chats/{chatId}/active-calls [get]
 func (h *GroupCallHandler) GetActiveGroupCalls(c *gin.Context) {
 	userID, _ := c.Get("userID")
-	chatID := c.Param("chatId")
+	chatID := c.Param("id")
 
 	calls, err := h.groupCallService.GetActiveGroupCalls(chatID, userID.(string))
 	if err != nil {

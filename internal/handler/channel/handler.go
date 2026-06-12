@@ -143,7 +143,7 @@ func (h *ChannelHandler) GetMyChannels(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Channel ID"
 // @Param userId path string true "Target user ID"
-// @Param request body object{role=string} true 'Role: "admin" or "subscriber"'
+// @Param request body object{role=string} true "Role: admin or subscriber"
 // @Success 200 {object} response.MessageResponse
 // @Failure 400 {object} response.ErrorResponse
 // @Router /channels/{id}/subscribers/{userId}/role [put]

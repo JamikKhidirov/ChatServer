@@ -11,10 +11,17 @@ const (
 	MessageGif    MessageType = "gif"
 	MessageVoice      MessageType = "voice"
 	MessageVideo      MessageType = "video"
-	MessageVideoCircle MessageType = "video_circle"
-	MessageAudio      MessageType = "audio"
-	MessageSystem     MessageType = "system"
+	MessageVideoCircle  MessageType = "video_circle"
+	MessageAudio        MessageType = "audio"
+	MessageSystem       MessageType = "system"
+	MessageLocation     MessageType = "location"
 )
+
+type LocationData struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Title     string  `json:"title,omitempty"`
+}
 
 type Message struct {
 	ID          string      `json:"id"`
@@ -32,6 +39,10 @@ type Message struct {
 	Duration    int         `json:"duration,omitempty"`
 	Width       int         `json:"width,omitempty"`
 	Height      int         `json:"height,omitempty"`
+	Latitude    float64     `json:"latitude,omitempty"`
+	Longitude   float64     `json:"longitude,omitempty"`
+	LocationTitle string   `json:"locationTitle,omitempty"`
+	Effect      string      `json:"effect,omitempty"`
 	CreatedAt   time.Time   `json:"createdAt"`
 	UpdatedAt   time.Time   `json:"updatedAt"`
 	Pinned      bool        `json:"pinned"`

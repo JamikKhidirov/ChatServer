@@ -14,6 +14,8 @@ import (
 	sessiondomain "ChatServerGolang/internal/domain/session"
 	storydomain "ChatServerGolang/internal/domain/story"
 	channeldomain "ChatServerGolang/internal/domain/channel"
+	emojidomain "ChatServerGolang/internal/domain/emoji"
+	voicechatdomain "ChatServerGolang/internal/domain/voicechat"
 )
 
 type AuthService interface {
@@ -231,4 +233,28 @@ type ChannelService interface {
 	GetSubscribedChannels(userID string) ([]*chatdomain.ChatResponse, error)
 	SetSubscriberRole(channelID, targetUserID, requesterID, role string) error
 	IsSubscribed(channelID, userID string) (bool, error)
+}
+
+type SavedMessageService interface {
+	SaveMessage(userID, messageID, chatID string) (*chatdomain.SavedMessageResponse, error)
+	GetSavedMessages(userID string, limit, offset int) ([]*chatdomain.SavedMessageResponse, int, error)
+	DeleteSavedMessage(id, userID string) error
+}
+
+type CustomEmojiService interface {
+	CreateEmoji(userID, shortcode string, filePath, fileURL string) (*emojidomain.CustomEmojiResponse, error)
+	GetMyEmojis(userID string) ([]*emojidomain.CustomEmojiResponse, error)
+	GetAllEmojis() ([]*emojidomain.CustomEmojiResponse, error)
+	DeleteEmoji(id, userID string) error
+}
+
+type VoiceChatService interface {
+	CreateVoiceChat(chatID, userID string, req *voicechatdomain.CreateVoiceChatRequest) (*voicechatdomain.VoiceChatResponse, error)
+	GetVoiceChat(id string) (*voicechatdomain.VoiceChatResponse, error)
+	GetActiveVoiceChats(chatID string) ([]*voicechatdomain.VoiceChatResponse, error)
+	GetVoiceChatHistory(chatID string) ([]*voicechatdomain.VoiceChatResponse, error)
+	JoinVoiceChat(vcID, userID string) error
+	LeaveVoiceChat(vcID, userID string) error
+	EndVoiceChat(vcID, userID string) error
+	MuteParticipant(vcID, userID string, muted bool) error
 }

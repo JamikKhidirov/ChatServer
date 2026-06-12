@@ -1,3 +1,19 @@
+// @title Chat Messenger API
+// @version 2.0.0
+// @description Сервер мессенджера на Go. Поддерживает: личные и групповые чаты, голосовые и видеозвонки, stories, голосовые комнаты, каналы, стикеры, опросы, ботов, геолокацию, кастомные эмодзи, эффекты сообщений, избранное и многое другое.
+// @termsOfService http://localhost:8080/terms
+// @contact.name API Support
+// @contact.url http://localhost:8080/support
+// @contact.email support@chatserver.local
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+// @host localhost:8080
+// @BasePath /api
+// @schemes http https
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Введите JWT токен в формате: Bearer <token>
 package main
 
 import (
@@ -35,6 +51,9 @@ import (
 	"ChatServerGolang/internal/handler/user"
 	"ChatServerGolang/internal/handler/verification"
 	"ChatServerGolang/internal/handler/ws"
+	"ChatServerGolang/internal/handler/savedmsg"
+	"ChatServerGolang/internal/handler/emoji"
+	"ChatServerGolang/internal/handler/voicechat"
 	"ChatServerGolang/internal/middleware"
 	"ChatServerGolang/internal/repository/account"
 	"ChatServerGolang/internal/repository/bot"
@@ -55,6 +74,9 @@ import (
 	"ChatServerGolang/internal/repository/story"
 	"ChatServerGolang/internal/repository/user"
 	"ChatServerGolang/internal/repository/verification"
+	"ChatServerGolang/internal/repository/savedmsg"
+	"ChatServerGolang/internal/repository/emoji"
+	"ChatServerGolang/internal/repository/voicechat"
 	"ChatServerGolang/internal/service/auth"
 	"ChatServerGolang/internal/service/bot"
 	"ChatServerGolang/internal/service/call"
@@ -75,6 +97,9 @@ import (
 	"ChatServerGolang/internal/service/sticker"
 	"ChatServerGolang/internal/service/story"
 	"ChatServerGolang/internal/service/systemmsg"
+	"ChatServerGolang/internal/service/savedmsg"
+	"ChatServerGolang/internal/service/emoji"
+	"ChatServerGolang/internal/service/voicechat"
 	"ChatServerGolang/internal/service/typing"
 	"ChatServerGolang/internal/service/user"
 	"ChatServerGolang/internal/service/verification"
@@ -112,6 +137,9 @@ func main() {
 	folderRepo := folderrepo.NewChatFolderRepository(db)
 	storyRepo := storyrepo.NewStoryRepository(db)
 	groupCallRepo := groupcallrepo.NewGroupCallRepository(db)
+	savedMsgRepo := savedmsgrepo.NewSavedMessageRepository(db)
+	customEmojiRepo := emojirepo.NewCustomEmojiRepository(db)
+	voiceChatRepo := voicechatrepo.NewVoiceChatRepository(db)
 
 	hub := ws.NewHub()
 	go hub.Run()
@@ -139,6 +167,9 @@ func main() {
 	groupCallService := groupcallservice.NewGroupCallService(groupCallRepo, chatRepo, userRepo)
 	channelRepo := channelrepo.NewChannelSubscriberRepository(db)
 	channelService := channelservice.NewChannelService(channelRepo, chatRepo, userRepo)
+	savedMsgService := savedmsgservice.NewSavedMessageService(savedMsgRepo, messageRepo, chatRepo, userRepo)
+	customEmojiService := emojiservice.NewCustomEmojiService(customEmojiRepo)
+	voiceChatService := voicechatservice.NewVoiceChatService(voiceChatRepo, chatRepo, userRepo)
 	emailSender := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass, cfg.SMTPFrom)
 	smsSender := sms.NewSender(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioPhone)
 	verService := verservice.NewVerificationService(verRepo, userRepo, emailSender, smsSender)
@@ -163,6 +194,9 @@ func main() {
 	storyHandler := storyhandler.NewStoryHandler(storyService)
 	groupCallHandler := groupcallhandler.NewGroupCallHandler(groupCallService)
 	channelHandler := channelhandler.NewChannelHandler(channelService, chatService)
+	savedMsgHandler := savedmsghandler.NewSavedMessageHandler(savedMsgService)
+	emojiHandler := emojihandler.NewEmojiHandler(customEmojiService)
+	voiceChatHandler := voicechathandler.NewVoiceChatHandler(voiceChatService)
 	wsHandler := wshandler.NewWSHandler(hub, authService, userRepo, chatRepo)
 	wsEvents := wshandler.NewWebSocketEvents(hub, chatService, messageService, userService, pushService, callService)
 
@@ -345,7 +379,7 @@ func main() {
 			authorized.POST("/calls/group/respond", groupCallHandler.JoinGroupCall)
 			authorized.POST("/calls/group/:id/end", groupCallHandler.EndGroupCall)
 			authorized.GET("/calls/group/:id", groupCallHandler.GetGroupCall)
-			authorized.GET("/chats/:chatId/active-calls", groupCallHandler.GetActiveGroupCalls)
+			authorized.GET("/chats/:id/active-calls", groupCallHandler.GetActiveGroupCalls)
 
 			// Broadcast channels
 			authorized.POST("/channels/subscribe", channelHandler.Subscribe)
@@ -357,6 +391,31 @@ func main() {
 
 			// Video circle messages
 			authorized.POST("/chats/:id/messages/video-circle", messageHandler.UploadVideoCircle)
+
+			// Location messages
+			authorized.POST("/chats/:id/messages/location", messageHandler.SendLocation)
+
+			// Message effects (via SendMessage with effect field)
+			// Saved messages
+			authorized.POST("/messages/:id/save", savedMsgHandler.SaveMessage)
+			authorized.GET("/saved-messages", savedMsgHandler.GetSavedMessages)
+			authorized.DELETE("/saved-messages/:id", savedMsgHandler.DeleteSavedMessage)
+
+			// Custom emojis
+			authorized.POST("/emojis", emojiHandler.CreateEmoji)
+			authorized.GET("/emojis", emojiHandler.GetAllEmojis)
+			authorized.GET("/emojis/my", emojiHandler.GetMyEmojis)
+			authorized.DELETE("/emojis/:id", emojiHandler.DeleteEmoji)
+
+			// Voice chats
+			authorized.POST("/chats/:id/voice-chat", voiceChatHandler.CreateVoiceChat)
+			authorized.GET("/chats/:id/voice-chats/active", voiceChatHandler.GetActiveVoiceChats)
+			authorized.GET("/chats/:id/voice-chats/history", voiceChatHandler.GetVoiceChatHistory)
+			authorized.GET("/voice-chats/:id", voiceChatHandler.GetVoiceChat)
+			authorized.POST("/voice-chats/:id/join", voiceChatHandler.JoinVoiceChat)
+			authorized.POST("/voice-chats/:id/leave", voiceChatHandler.LeaveVoiceChat)
+			authorized.POST("/voice-chats/:id/end", voiceChatHandler.EndVoiceChat)
+			authorized.POST("/voice-chats/:id/mute", voiceChatHandler.MuteParticipant)
 
 			authorized.POST("/calls/initiate", wsEvents.WrapInitiateCall(callHandler.InitiateCall))
 			authorized.POST("/calls/:id/respond", wsEvents.WrapRespondCall(callHandler.RespondCall))

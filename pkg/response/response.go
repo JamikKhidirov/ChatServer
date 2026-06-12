@@ -93,8 +93,8 @@ type ErrorResponse struct {
 }
 
 type MessageResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Data    gin.H  `json:"data,omitempty"`
+	Success bool                   `json:"success" example:"true"`
+	Data    map[string]interface{} `json:"data,omitempty"`
 }
 
 func Paginated(c *gin.Context, status int, items interface{}, total, limit, offset int) {

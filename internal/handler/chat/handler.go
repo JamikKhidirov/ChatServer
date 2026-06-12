@@ -212,7 +212,7 @@ func (h *ChatHandler) MarkAsRead(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Chat ID"
 // @Param userId path string true "Target user ID"
-// @Param request body object{role=string} true 'Role: "admin" or "member"'
+// @Param request body object{role=string} true "Role: admin or member"
 // @Success 200 {object} response.MessageResponse
 // @Failure 400 {object} response.ErrorResponse
 // @Router /chats/{id}/participants/{userId}/role [put]
@@ -410,7 +410,7 @@ func (h *ChatHandler) ListArchivedChats(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Chat ID"
-// @Param request body object{userId=string} true "New owner's user ID"
+// @Param request body object{userId=string} true "New owner user ID"
 // @Success 200 {object} response.MessageResponse
 // @Failure 400 {object} response.ErrorResponse
 // @Router /chats/{id}/transfer-ownership [post]
@@ -611,7 +611,7 @@ func (h *ChatHandler) GetOnlineMembers(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Chat ID"
-// @Param request body object{whoCanSend=string} true 'Permissions: "everyone", "admins"'
+// @Param request body object{whoCanSend=string} true "Permissions: everyone, admins"
 // @Success 200 {object} response.MessageResponse
 // @Failure 400 {object} response.ErrorResponse
 // @Router /chats/{id}/permissions [put]

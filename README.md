@@ -1,6 +1,6 @@
 # Chat Messenger Server
 
-High-performance chat messenger server built with Go. Features REST API, real-time messaging via WebSocket, WebRTC voice/video calls, stickers, polls, bots, and more.
+High-performance chat messenger server built with Go. Features REST API, real-time messaging via WebSocket, WebRTC voice/video calls, voice chats, stories, broadcast channels, polls, stickers, bots, location sharing, message effects, custom emojis, saved messages, and more.
 
 ---
 
@@ -13,6 +13,11 @@ High-performance chat messenger server built with Go. Features REST API, real-ti
 - **Supergroup Roles** — owner, admin, moderator, editor, member, read-only permission levels
 - **Broadcast Channels** — one-way broadcast channels with subscribers and admins
 - **Stories** — photo/video stories that disappear after 24 hours with view tracking
+- **Saved Messages** — bookmark any message for later reference with paginated listing
+- **Location Sharing** — share locations as messages with latitude/longitude
+- **Message Effects** — send messages with animation effects: confetti, fireworks, hearts, balloons, stars
+- **Custom Emojis** — upload custom emoji images and use them via shortcodes
+- **Voice Chats** — persistent voice chat rooms in groups with join/leave/mute
 - **WebSocket Events** — instant push for new messages, edits, deletes, calls, polls, stories, and more
 - **Voice/Video Calls** — WebRTC-based signalling via REST + WS (1-to-1)
 - **Group Calls** — multi-participant voice/video conference calls
@@ -36,6 +41,31 @@ High-performance chat messenger server built with Go. Features REST API, real-ti
 - **Rate Limiting** — protect API from abuse
 
 ---
+
+## Docker (Production)
+
+```bash
+# Build image
+docker build -t chatserver .
+
+# Run container
+docker run -d --name chatserver -p 8080:8080 \
+  -v chatserver-data:/app/data \
+  -v chatserver-uploads:/app/uploads \
+  -e DATABASE_PATH=/app/data/chatserver.db \
+  -e JWT_SECRET=change-me-in-production \
+  -e GIN_MODE=release \
+  chatserver
+```
+
+## CI/CD
+
+The project includes a GitHub Actions pipeline (`.github/workflows/deploy.yml`) that:
+1. Runs on push to `master`/`main`
+2. Checks out code, sets up Go
+3. Downloads dependencies, builds, runs `go vet`
+4. Validates Swagger documentation
+5. Builds production binary and Docker image
 
 ## Quick Start
 
@@ -76,11 +106,13 @@ internal/
 ├── domain/              # Domain models (split by sub-package)
 │   ├── auth/            #   login, register, captcha, admin
 │   ├── bot/             #   bot accounts
-│   ├── call/            #   WebRTC call models
-│   ├── chat/            #   chats, participants, folders, invite links, starred
+│   ├── call/            #   WebRTC call models + group calls
+│   ├── channel/         #   broadcast channel subscribers
+│   ├── chat/            #   chats, participants, folders, invite links, starred, saved
 │   ├── contact/         #   contacts sync
 │   ├── draft/           #   message drafts + scheduled messages
 │   ├── e2e/             #   end-to-end encryption keys
+│   ├── emoji/           #   custom emojis
 │   ├── ipblock/         #   IP block list
 │   ├── link/            #   link previews
 │   ├── message/         #   messages, reactions, read receipts, mentions,
@@ -91,63 +123,82 @@ internal/
 │   ├── session/         #   user sessions
 │   ├── sticker/         #   sticker packs & library
 │   ├── user/            #   users, blocks, account settings, status
-│   └── verification/    #   email/phone verification codes
+│   ├── verification/    #   email/phone verification codes
+│   └── voicechat/       #   persistent voice chat rooms
 ├── repository/          # SQLite data access layer (interface + impl)
 │   ├── account/         #   account settings
 │   ├── bot/             #   bot accounts
 │   ├── call/            #   call history
+│   ├── channel/         #   channel subscribers
 │   ├── chat/            #   chats, participants, slow mode
 │   ├── contact/         #   contacts
 │   ├── draft/           #   drafts + scheduled messages
+│   ├── emoji/           #   custom emojis
 │   ├── folder/          #   chat folders
 │   ├── gif/             #   saved GIFs
+│   ├── groupcall/       #   group call participants
 │   ├── link/            #   invite links
 │   ├── message/         #   messages, reactions, bookmarks, mentions
 │   ├── poll/            #   polls & votes
+│   ├── savedmsg/        #   saved messages
 │   ├── schedmsg/        #   scheduled messages
 │   ├── session/         #   user sessions
 │   ├── sticker/         #   sticker packs & library
+│   ├── story/           #   stories + views
 │   ├── user/            #   users, blocks
-│   └── verification/    #   verification codes
+│   ├── verification/    #   verification codes
+│   └── voicechat/       #   voice chat rooms + participants
 ├── service/             # Business logic layer
 │   ├── auth/            #   authentication service
 │   ├── bot/             #   bot management
 │   ├── call/            #   call signalling
+│   ├── channel/         #   channel subscription logic
 │   ├── chat/            #   chat CRUD, participants, pin, archive
 │   ├── contact/         #   contact sync & search
 │   ├── draft/           #   draft & scheduled message logic
+│   ├── emoji/           #   custom emoji service
 │   ├── folder/          #   folder CRUD
 │   ├── gif/             #   saved GIFs
+│   ├── groupcall/       #   group call management
 │   ├── link/            #   invite links
 │   ├── mention/         #   @mention parsing & notifications
 │   ├── message/         #   message CRUD, reactions, forward, export
 │   ├── poll/            #   poll CRUD & voting
 │   ├── push/            #   FCM push notifications
+│   ├── savedmsg/        #   saved messages service
 │   ├── schedmsg/        #   scheduled message dispatch
 │   ├── session/         #   session management
 │   ├── sticker/         #   sticker packs & library
+│   ├── story/           #   story CRUD + views
 │   ├── systemmsg/       #   system-generated messages
 │   ├── typing/          #   typing indicator broadcast
 │   ├── user/            #   user profiles, blocks, status
-│   └── verification/    #   email/phone code verification
+│   ├── verification/    #   email/phone code verification
+│   └── voicechat/       #   voice chat rooms
 ├── handler/             # HTTP handlers (Gin framework)
 │   ├── auth/            #   register, login, refresh, change password
 │   ├── bot/             #   bot CRUD
 │   ├── call/            #   call init/respond/end
+│   ├── channel/         #   channel subscribe/unsubscribe/roles
 │   ├── chat/            #   chat CRUD, participants, notifications
 │   ├── contact/         #   contact sync & search
 │   ├── draft/           #   draft CRUD
+│   ├── emoji/           #   custom emoji upload/CRUD
 │   ├── folder/          #   folder CRUD
 │   ├── gif/             #   saved GIFs
+│   ├── groupcall/       #   group call handlers
 │   ├── link/            #   invite links
 │   ├── login/           #   login code (email/phone)
-│   ├── message/         #   message CRUD, reactions, search, export
+│   ├── message/         #   message CRUD, reactions, search, export, location
 │   ├── poll/            #   poll CRUD & voting
+│   ├── savedmsg/        #   saved messages CRUD
 │   ├── schedmsg/        #   scheduled messages
 │   ├── session/         #   session management
 │   ├── sticker/         #   sticker packs & library
+│   ├── story/           #   story CRUD
 │   ├── user/            #   user profile, blocks, avatar
 │   ├── verification/    #   verification endpoints
+│   ├── voicechat/       #   voice chat rooms
 │   └── ws/              #   WebSocket handler + event routing
 ├── middleware/          # JWT auth, admin auth, rate limiting
 ├── ws/                  # WebSocket hub, client, event bus
@@ -386,6 +437,48 @@ All endpoints require `Authorization: Bearer <JWT_TOKEN>` unless noted.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/chats/:id/messages/video-circle` | Send a circular video message |
+
+### Location Messages
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/chats/:id/messages/location` | Send a location message (lat/lng) |
+
+### Message Effects
+
+Available via `SendMessageRequest.effect` field: `confetti`, `fireworks`, `hearts`, `balloons`, `stars`.
+
+### Saved Messages
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/messages/:id/save?chatId=` | Save a message for later |
+| `GET` | `/api/saved-messages?limit=&offset=` | List saved messages (paginated) |
+| `DELETE` | `/api/saved-messages/:id` | Remove a saved message |
+
+### Custom Emojis
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/emojis` | Upload custom emoji (multipart: `shortcode` + `emoji` file) |
+| `GET` | `/api/emojis` | List all public emojis |
+| `GET` | `/api/emojis/my` | List my uploaded emojis |
+| `DELETE` | `/api/emojis/:id` | Delete my emoji |
+
+### Voice Chats
+
+Persistent voice chat rooms in groups (not group calls).
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/chats/:id/voice-chat` | Create/start a voice chat in a group |
+| `GET` | `/api/chats/:id/voice-chats/active` | List active voice chats |
+| `GET` | `/api/chats/:id/voice-chats/history` | Voice chat history |
+| `GET` | `/api/voice-chats/:id` | Get voice chat details |
+| `POST` | `/api/voice-chats/:id/join` | Join a voice chat |
+| `POST` | `/api/voice-chats/:id/leave` | Leave a voice chat |
+| `POST` | `/api/voice-chats/:id/end` | End a voice chat |
+| `POST` | `/api/voice-chats/:id/mute` | Mute/unmute in voice chat |
 
 ---
 

@@ -1,879 +1,5568 @@
-openapi: "3.0.3"
+basePath: /api
+definitions:
+  authdomain.AdminRegisterRequest:
+    properties:
+      admin_secret:
+        type: string
+      display_name:
+        maxLength: 64
+        minLength: 1
+        type: string
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      username:
+        maxLength: 32
+        minLength: 3
+        type: string
+    required:
+    - admin_secret
+    - display_name
+    - email
+    - password
+    - username
+    type: object
+  authdomain.AuthResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/userdomain.User'
+    type: object
+  authdomain.ChangePasswordRequest:
+    properties:
+      newPassword:
+        minLength: 6
+        type: string
+      oldPassword:
+        type: string
+    required:
+    - newPassword
+    - oldPassword
+    type: object
+  authdomain.LoginByEmailRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  authdomain.LoginByEmailVerifyRequest:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+    required:
+    - code
+    - email
+    type: object
+  authdomain.LoginByPhoneRequest:
+    properties:
+      phone:
+        type: string
+    required:
+    - phone
+    type: object
+  authdomain.LoginByPhoneVerifyRequest:
+    properties:
+      code:
+        type: string
+      phone:
+        type: string
+    required:
+    - code
+    - phone
+    type: object
+  authdomain.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  authdomain.RefreshTokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  authdomain.RegisterRequest:
+    properties:
+      display_name:
+        maxLength: 64
+        minLength: 1
+        type: string
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      username:
+        maxLength: 32
+        minLength: 3
+        type: string
+    required:
+    - display_name
+    - email
+    - password
+    - username
+    type: object
+  botdomain.Bot:
+    properties:
+      active:
+        type: boolean
+      avatarUrl:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      ownerId:
+        type: string
+      webhookUrl:
+        type: string
+    type: object
+  botdomain.CreateBotRequest:
+    properties:
+      name:
+        type: string
+      webhookUrl:
+        type: string
+    required:
+    - name
+    type: object
+  botdomain.UpdateBotRequest:
+    properties:
+      avatarUrl:
+        type: string
+      name:
+        type: string
+      webhookUrl:
+        type: string
+    type: object
+  calldomain.Call:
+    properties:
+      calleeId:
+        type: string
+      callerId:
+        type: string
+      chatId:
+        type: string
+      endedAt:
+        type: string
+      id:
+        type: string
+      startedAt:
+        type: string
+      status:
+        $ref: '#/definitions/calldomain.CallStatus'
+      type:
+        $ref: '#/definitions/calldomain.CallType'
+    type: object
+  calldomain.CallStatus:
+    enum:
+    - initiated
+    - ongoing
+    - ended
+    - missed
+    - rejected
+    type: string
+    x-enum-varnames:
+    - CallInitiated
+    - CallOngoing
+    - CallEnded
+    - CallMissed
+    - CallRejected
+  calldomain.CallType:
+    enum:
+    - audio
+    - video
+    type: string
+    x-enum-varnames:
+    - CallAudio
+    - CallVideo
+  calldomain.GroupCallActionRequest:
+    properties:
+      action:
+        enum:
+        - join
+        - leave
+        - mute
+        - unmute_audio
+        - unmute_video
+        - mute_video
+        type: string
+      callId:
+        type: string
+    required:
+    - action
+    - callId
+    type: object
+  calldomain.GroupCallInitiateRequest:
+    properties:
+      chatId:
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/calldomain.CallType'
+        enum:
+        - audio
+        - video
+    required:
+    - chatId
+    - type
+    type: object
+  calldomain.GroupCallParticipant:
+    properties:
+      audioMuted:
+        type: boolean
+      callId:
+        type: string
+      joinedAt:
+        type: string
+      leftAt:
+        type: string
+      userId:
+        type: string
+      videoMuted:
+        type: boolean
+    type: object
+  calldomain.GroupCallResponse:
+    properties:
+      callerId:
+        type: string
+      chatId:
+        type: string
+      endedAt:
+        type: string
+      id:
+        type: string
+      participants:
+        items:
+          $ref: '#/definitions/calldomain.GroupCallParticipant'
+        type: array
+      startedAt:
+        type: string
+      status:
+        $ref: '#/definitions/calldomain.CallStatus'
+      type:
+        $ref: '#/definitions/calldomain.CallType'
+    type: object
+  calldomain.InitiateCallRequest:
+    properties:
+      chatId:
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/calldomain.CallType'
+        enum:
+        - audio
+        - video
+    required:
+    - chatId
+    - type
+    type: object
+  calldomain.RespondCallRequest:
+    properties:
+      action:
+        enum:
+        - accept
+        - reject
+        type: string
+    required:
+    - action
+    type: object
+  channeldomain.ChannelSubscriber:
+    properties:
+      channelId:
+        type: string
+      role:
+        type: string
+      subscribedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  chatdomain.AddParticipantRequest:
+    properties:
+      userId:
+        type: string
+    required:
+    - userId
+    type: object
+  chatdomain.ChatFolder:
+    properties:
+      createdAt:
+        type: string
+      emoji:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      order:
+        type: integer
+      userId:
+        type: string
+    type: object
+  chatdomain.ChatResponse:
+    properties:
+      avatarUrl:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      lastMessage:
+        $ref: '#/definitions/messagedomain.MessageResponse'
+      name:
+        type: string
+      participants:
+        items:
+          $ref: '#/definitions/userdomain.UserResponse'
+        type: array
+      type:
+        $ref: '#/definitions/chatdomain.ChatType'
+      unreadCount:
+        type: integer
+    type: object
+  chatdomain.ChatType:
+    enum:
+    - private
+    - group
+    - channel
+    type: string
+    x-enum-varnames:
+    - ChatPrivate
+    - ChatGroup
+    - ChatChannel
+  chatdomain.CreateChatFolderRequest:
+    properties:
+      chatIds:
+        items:
+          type: string
+        type: array
+      emoji:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  chatdomain.CreateChatRequest:
+    properties:
+      description:
+        maxLength: 512
+        type: string
+      name:
+        maxLength: 64
+        type: string
+      participantIds:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      type:
+        allOf:
+        - $ref: '#/definitions/chatdomain.ChatType'
+        enum:
+        - private
+        - group
+        - channel
+    required:
+    - participantIds
+    - type
+    type: object
+  chatdomain.CreateInviteLinkRequest:
+    properties:
+      expiresInMins:
+        type: integer
+      usageLimit:
+        type: integer
+    type: object
+  chatdomain.InviteLink:
+    properties:
+      active:
+        type: boolean
+      chatId:
+        type: string
+      code:
+        type: string
+      createdAt:
+        type: string
+      creatorId:
+        type: string
+      expiresAt:
+        type: string
+      id:
+        type: string
+      usageCount:
+        type: integer
+      usageLimit:
+        type: integer
+    type: object
+  chatdomain.JoinByInviteRequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+  chatdomain.StarredMessageResponse:
+    properties:
+      chat:
+        $ref: '#/definitions/chatdomain.ChatResponse'
+      createdAt:
+        type: string
+      message:
+        $ref: '#/definitions/messagedomain.MessageResponse'
+    type: object
+  chatdomain.UpdateChatFolderRequest:
+    properties:
+      chatIds:
+        items:
+          type: string
+        type: array
+      emoji:
+        type: string
+      name:
+        type: string
+      order:
+        type: integer
+    type: object
+  chatdomain.UpdateGroupRequest:
+    properties:
+      avatarUrl:
+        type: string
+      description:
+        maxLength: 512
+        type: string
+      name:
+        maxLength: 64
+        minLength: 1
+        type: string
+    type: object
+  contactdomain.ContactInput:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+    required:
+    - name
+    - phone
+    type: object
+  contactdomain.ContactResponse:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+      photoUrl:
+        type: string
+      userIdRef:
+        type: string
+    type: object
+  contactdomain.SyncContactsRequest:
+    properties:
+      contacts:
+        items:
+          $ref: '#/definitions/contactdomain.ContactInput'
+        type: array
+    required:
+    - contacts
+    type: object
+  contactdomain.UpdateContactPhotoRequest:
+    properties:
+      phone:
+        type: string
+      photoUrl:
+        type: string
+    required:
+    - phone
+    - photoUrl
+    type: object
+  draftdomain.Draft:
+    properties:
+      chatId:
+        type: string
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      replyToId:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  draftdomain.SaveDraftRequest:
+    properties:
+      chatId:
+        type: string
+      content:
+        type: string
+      replyToId:
+        type: string
+    required:
+    - chatId
+    type: object
+  draftdomain.ScheduleMessageRequest:
+    properties:
+      chatId:
+        type: string
+      content:
+        type: string
+      replyToId:
+        type: string
+      scheduledAt:
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/messagedomain.MessageType'
+        enum:
+        - text
+        - image
+        - file
+        - gif
+        - voice
+        - video
+    required:
+    - chatId
+    - content
+    - scheduledAt
+    - type
+    type: object
+  draftdomain.ScheduledMessage:
+    properties:
+      chatId:
+        type: string
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      replyToId:
+        type: string
+      scheduledAt:
+        type: string
+      senderId:
+        type: string
+      sent:
+        type: boolean
+      type:
+        $ref: '#/definitions/messagedomain.MessageType'
+    type: object
+  emojidomain.CustomEmojiResponse:
+    properties:
+      animated:
+        type: boolean
+      createdAt:
+        type: string
+      fileUrl:
+        type: string
+      id:
+        type: string
+      shortcode:
+        type: string
+    type: object
+  messagedomain.AddReactionRequest:
+    properties:
+      emoji:
+        type: string
+    required:
+    - emoji
+    type: object
+  messagedomain.EditMessageRequest:
+    properties:
+      content:
+        type: string
+    required:
+    - content
+    type: object
+  messagedomain.ForwardMessageRequest:
+    properties:
+      fromChatId:
+        type: string
+      messageId:
+        type: string
+      toChatId:
+        type: string
+    required:
+    - fromChatId
+    - messageId
+    - toChatId
+    type: object
+  messagedomain.MessageResponse:
+    properties:
+      caption:
+        type: string
+      chatId:
+        type: string
+      content:
+        type: string
+      createdAt:
+        type: string
+      deleted:
+        type: boolean
+      duration:
+        type: integer
+      edited:
+        type: boolean
+      effect:
+        type: string
+      fileName:
+        type: string
+      fileSize:
+        type: integer
+      fileUrl:
+        type: string
+      forwardFrom:
+        $ref: '#/definitions/userdomain.UserResponse'
+      height:
+        type: integer
+      id:
+        type: string
+      latitude:
+        type: number
+      locationTitle:
+        type: string
+      longitude:
+        type: number
+      mimeType:
+        type: string
+      pinned:
+        type: boolean
+      reactions:
+        items:
+          $ref: '#/definitions/messagedomain.Reaction'
+        type: array
+      readBy:
+        items:
+          $ref: '#/definitions/userdomain.UserResponse'
+        type: array
+      replyTo:
+        $ref: '#/definitions/messagedomain.MessageResponse'
+      sender:
+        $ref: '#/definitions/userdomain.UserResponse'
+      type:
+        $ref: '#/definitions/messagedomain.MessageType'
+      updatedAt:
+        type: string
+      width:
+        type: integer
+    type: object
+  messagedomain.MessageType:
+    enum:
+    - text
+    - image
+    - file
+    - gif
+    - voice
+    - video
+    - video_circle
+    - audio
+    - system
+    - location
+    type: string
+    x-enum-varnames:
+    - MessageText
+    - MessageImage
+    - MessageFile
+    - MessageGif
+    - MessageVoice
+    - MessageVideo
+    - MessageVideoCircle
+    - MessageAudio
+    - MessageSystem
+    - MessageLocation
+  messagedomain.PinMessageRequest:
+    properties:
+      pin:
+        type: boolean
+    type: object
+  messagedomain.Reaction:
+    properties:
+      createdAt:
+        type: string
+      emoji:
+        type: string
+      messageId:
+        type: string
+      user:
+        $ref: '#/definitions/userdomain.UserResponse'
+      userId:
+        type: string
+    type: object
+  messagedomain.SendLocationRequest:
+    properties:
+      effect:
+        enum:
+        - confetti
+        - fireworks
+        - hearts
+        - balloons
+        - stars
+        - ""
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      replyToId:
+        type: string
+      title:
+        type: string
+    required:
+    - latitude
+    - longitude
+    type: object
+  messagedomain.SendMessageRequest:
+    properties:
+      content:
+        type: string
+      effect:
+        enum:
+        - confetti
+        - fireworks
+        - hearts
+        - balloons
+        - stars
+        - ""
+        type: string
+      forwardMsgId:
+        type: string
+      latitude:
+        type: number
+      locationTitle:
+        type: string
+      longitude:
+        type: number
+      replyToId:
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/messagedomain.MessageType'
+        enum:
+        - text
+        - image
+        - file
+        - gif
+        - voice
+        - video
+        - audio
+        - system
+        - location
+    required:
+    - content
+    - type
+    type: object
+  notificationdomain.UpdateNotificationSettingRequest:
+    properties:
+      muted:
+        type: boolean
+    type: object
+  polldomain.CreatePollRequest:
+    properties:
+      chatId:
+        type: string
+      expiresInMins:
+        type: integer
+      isAnonymous:
+        type: boolean
+      multipleChoice:
+        type: boolean
+      options:
+        items:
+          type: string
+        maxItems: 10
+        minItems: 2
+        type: array
+      question:
+        type: string
+    required:
+    - chatId
+    - options
+    - question
+    type: object
+  polldomain.PollOption:
+    properties:
+      text:
+        type: string
+      votes:
+        type: integer
+    type: object
+  polldomain.PollWithResults:
+    properties:
+      chatId:
+        type: string
+      closed:
+        type: boolean
+      createdAt:
+        type: string
+      creatorId:
+        type: string
+      expiresAt:
+        type: string
+      id:
+        type: string
+      isAnonymous:
+        type: boolean
+      multipleChoice:
+        type: boolean
+      options:
+        items:
+          $ref: '#/definitions/polldomain.PollOption'
+        type: array
+      question:
+        type: string
+      totalVotes:
+        type: integer
+      votedOption:
+        type: integer
+    type: object
+  polldomain.VotePollRequest:
+    properties:
+      optionIndex:
+        type: integer
+    required:
+    - optionIndex
+    type: object
+  response.APIResponse:
+    properties:
+      code:
+        type: string
+      data: {}
+      error:
+        type: string
+      meta:
+        $ref: '#/definitions/response.Meta'
+      success:
+        type: boolean
+    type: object
+  response.ErrorResponse:
+    properties:
+      code:
+        example: ERROR_CODE
+        type: string
+      error:
+        example: error description
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  response.MessageResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.Meta:
+    properties:
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
+    type: object
+  sessiondomain.Session:
+    properties:
+      createdAt:
+        type: string
+      deviceName:
+        type: string
+      id:
+        type: string
+      ipAddress:
+        type: string
+      lastActive:
+        type: string
+      userId:
+        type: string
+    type: object
+  stickerdomain.AddStickerRequest:
+    properties:
+      emoji:
+        type: string
+      imageUrl:
+        type: string
+    required:
+    - emoji
+    type: object
+  stickerdomain.CreateStickerPackRequest:
+    properties:
+      animated:
+        type: boolean
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  stickerdomain.Sticker:
+    properties:
+      emoji:
+        type: string
+      filePath:
+        type: string
+      id:
+        type: string
+      imageUrl:
+        type: string
+      packId:
+        type: string
+    type: object
+  stickerdomain.StickerPack:
+    properties:
+      animated:
+        type: boolean
+      createdAt:
+        type: string
+      creatorId:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  storydomain.StoryResponse:
+    properties:
+      caption:
+        type: string
+      createdAt:
+        type: string
+      expiresAt:
+        type: string
+      fileUrl:
+        type: string
+      id:
+        type: string
+      type:
+        $ref: '#/definitions/storydomain.StoryType'
+      userId:
+        type: string
+      viewed:
+        type: boolean
+      views:
+        type: integer
+    type: object
+  storydomain.StoryType:
+    enum:
+    - photo
+    - video
+    type: string
+    x-enum-varnames:
+    - StoryPhoto
+    - StoryVideo
+  storydomain.StoryView:
+    properties:
+      storyId:
+        type: string
+      userId:
+        type: string
+      viewedAt:
+        type: string
+    type: object
+  userdomain.AccountSetting:
+    properties:
+      language:
+        type: string
+      lastSeenMode:
+        type: string
+      notifications:
+        type: boolean
+      soundEnabled:
+        type: boolean
+      theme:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  userdomain.BlockUserRequest:
+    properties:
+      blockedId:
+        type: string
+    required:
+    - blockedId
+    type: object
+  userdomain.UpdateAccountSettingRequest:
+    properties:
+      language:
+        type: string
+      lastSeenMode:
+        type: string
+      notifications:
+        type: boolean
+      soundEnabled:
+        type: boolean
+      theme:
+        type: string
+    type: object
+  userdomain.UpdateProfileRequest:
+    properties:
+      avatarUrl:
+        type: string
+      bio:
+        maxLength: 256
+        type: string
+      dateOfBirth:
+        maxLength: 10
+        type: string
+      displayName:
+        maxLength: 64
+        minLength: 1
+        type: string
+      email:
+        type: string
+      gender:
+        enum:
+        - male
+        - female
+        - other
+        type: string
+      phone:
+        maxLength: 20
+        type: string
+      username:
+        maxLength: 32
+        minLength: 3
+        type: string
+    type: object
+  userdomain.UpdatePushTokenRequest:
+    properties:
+      provider:
+        enum:
+        - fcm
+        - apns
+        type: string
+      token:
+        type: string
+    required:
+    - provider
+    - token
+    type: object
+  userdomain.UpdateStatusRequest:
+    properties:
+      status:
+        maxLength: 100
+        type: string
+    type: object
+  userdomain.User:
+    properties:
+      avatarUrl:
+        type: string
+      bio:
+        type: string
+      createdAt:
+        type: string
+      dateOfBirth:
+        type: string
+      displayName:
+        type: string
+      email:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      isAdmin:
+        type: boolean
+      lastSeen:
+        type: string
+      online:
+        type: boolean
+      phone:
+        type: string
+      status:
+        type: string
+      updatedAt:
+        type: string
+      username:
+        type: string
+    type: object
+  userdomain.UserResponse:
+    properties:
+      avatarUrl:
+        type: string
+      bio:
+        type: string
+      dateOfBirth:
+        type: string
+      displayName:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      isAdmin:
+        type: boolean
+      lastSeen:
+        type: string
+      online:
+        type: boolean
+      phone:
+        type: string
+      status:
+        type: string
+      username:
+        type: string
+    type: object
+  verificationdomain.SendEmailVerificationRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  verificationdomain.SendPhoneVerificationRequest:
+    properties:
+      phone:
+        type: string
+    required:
+    - phone
+    type: object
+  verificationdomain.VerifyEmailRequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+  verificationdomain.VerifyPhoneRequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+  voicechatdomain.CreateVoiceChatRequest:
+    properties:
+      scheduledInMins:
+        type: integer
+      title:
+        type: string
+    type: object
+  voicechatdomain.VoiceChatResponse:
+    properties:
+      chatId:
+        type: string
+      createdAt:
+        type: string
+      endedAt:
+        type: string
+      id:
+        type: string
+      participantCount:
+        type: integer
+      participants:
+        items:
+          type: string
+        type: array
+      scheduledAt:
+        type: string
+      startedAt:
+        type: string
+      startedBy:
+        type: string
+      status:
+        $ref: '#/definitions/voicechatdomain.VoiceChatStatus'
+      title:
+        type: string
+    type: object
+  voicechatdomain.VoiceChatStatus:
+    enum:
+    - active
+    - scheduled
+    - ended
+    type: string
+    x-enum-varnames:
+    - VoiceChatActive
+    - VoiceChatScheduled
+    - VoiceChatEnded
+host: localhost:8080
 info:
-  title: "ChatServerGolang - Messenger API"
-  description: |
-    Полноценный сервер мессенджера на Go.
-    - Регистрация и авторизация (JWT)
-    - Личные и групповые чаты
-    - Отправка и редактирование сообщений
-    - Голосовые/видеозвонки (WebRTC signaling)
-    - Push-уведомления (FCM)
-    - WebSocket для real-time обновлений
-  version: "1.0.0"
   contact:
-    name: "API Support"
-
-servers:
-  - url: "http://localhost:8080"
-    description: "Локальный сервер"
-
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-  schemas:
-    Error:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        error:
-          type: string
-
-    AuthResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: object
-          properties:
-            token:
-              type: string
-            user:
-              $ref: "#/components/schemas/User"
-
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        username:
-          type: string
-        email:
-          type: string
-          format: email
-        displayName:
-          type: string
-        avatarUrl:
-          type: string
-        bio:
-          type: string
-        online:
-          type: boolean
-        lastSeen:
-          type: string
-          format: date-time
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    UserResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        username:
-          type: string
-        displayName:
-          type: string
-        avatarUrl:
-          type: string
-        bio:
-          type: string
-        online:
-          type: boolean
-        lastSeen:
-          type: string
-          format: date-time
-
-    Chat:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        avatarUrl:
-          type: string
-        type:
-          type: string
-          enum: [private, group]
-        createdBy:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    ChatResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        avatarUrl:
-          type: string
-        type:
-          type: string
-          enum: [private, group]
-        createdBy:
-          type: string
-        participants:
-          type: array
-          items:
-            $ref: "#/components/schemas/UserResponse"
-        lastMessage:
-          $ref: "#/components/schemas/MessageResponse"
-        unreadCount:
-          type: integer
-        createdAt:
-          type: string
-          format: date-time
-
-    MessageResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        chatId:
-          type: string
-        sender:
-          $ref: "#/components/schemas/UserResponse"
-        content:
-          type: string
-        type:
-          type: string
-          enum: [text, image, file, system]
-        replyTo:
-          $ref: "#/components/schemas/MessageResponse"
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        edited:
-          type: boolean
-        deleted:
-          type: boolean
-
-    Call:
-      type: object
-      properties:
-        id:
-          type: string
-        chatId:
-          type: string
-        callerId:
-          type: string
-        calleeId:
-          type: string
-        status:
-          type: string
-          enum: [initiated, ongoing, ended, missed, rejected]
-        startedAt:
-          type: string
-          format: date-time
-        endedAt:
-          type: string
-          format: date-time
-
-    RegisterRequest:
-      type: object
-      required: [username, email, password, displayName]
-      properties:
-        username:
-          type: string
-          minLength: 3
-          maxLength: 32
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-          minLength: 6
-        displayName:
-          type: string
-          minLength: 1
-          maxLength: 64
-
-    LoginRequest:
-      type: object
-      required: [email, password]
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-
-    SendMessageRequest:
-      type: object
-      required: [content, type]
-      properties:
-        content:
-          type: string
-        type:
-          type: string
-          enum: [text, image, file]
-        replyToId:
-          type: string
-
-    CreateChatRequest:
-      type: object
-      required: [type, participantIds]
-      properties:
-        name:
-          type: string
-          maxLength: 64
-        type:
-          type: string
-          enum: [private, group]
-        participantIds:
-          type: array
-          items:
-            type: string
-          minItems: 1
-
-    UpdateProfileRequest:
-      type: object
-      properties:
-        displayName:
-          type: string
-          maxLength: 64
-        bio:
-          type: string
-          maxLength: 256
-        avatarUrl:
-          type: string
-
-    UpdatePushTokenRequest:
-      type: object
-      required: [token, provider]
-      properties:
-        token:
-          type: string
-        provider:
-          type: string
-          enum: [fcm, apns]
-
-    WebSocketEvent:
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-            - message:new
-            - message:edited
-            - message:deleted
-            - message:read
-            - user:typing
-            - user:stop_typing
-            - user:online
-            - user:offline
-            - chat:created
-            - chat:updated
-            - chat:deleted
-            - call:offer
-            - call:answer
-            - call:ice
-            - call:end
-            - call:missed
-            - call:reject
-            - call:accept
-        payload:
-          type: object
-
-security:
-  - BearerAuth: []
-
+    email: support@chatserver.local
+    name: API Support
+    url: http://localhost:8080/support
+  description: 'Сервер мессенджера на Go. Поддерживает: личные и групповые чаты, голосовые
+    и видеозвонки, stories, голосовые комнаты, каналы, стикеры, опросы, ботов, геолокацию,
+    кастомные эмодзи, эффекты сообщений, избранное и многое другое.'
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://localhost:8080/terms
+  title: Chat Messenger API
+  version: 2.0.0
 paths:
-  /api/auth/register:
-    post:
-      tags: [Auth]
-      summary: "Регистрация нового пользователя"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RegisterRequest"
+  /account:
+    delete:
+      produces:
+      - application/json
       responses:
-        "201":
-          description: "Успешная регистрация"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthResponse"
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: "Ошибка валидации"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /api/auth/login:
-    post:
-      tags: [Auth]
-      summary: "Вход в систему"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LoginRequest"
+          description: Deletion failed
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /account/settings:
+    get:
+      produces:
+      - application/json
       responses:
         "200":
-          description: "Успешный вход"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthResponse"
+          description: OK
+          schema:
+            $ref: '#/definitions/userdomain.AccountSetting'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Settings to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userdomain.UpdateAccountSettingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userdomain.AccountSetting'
+        "400":
+          description: Invalid settings
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /auth/admin/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Admin registration details with secret key
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authdomain.AdminRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Returns JWT token + user with isAdmin:true
+          schema:
+            $ref: '#/definitions/authdomain.AuthResponse'
+        "400":
+          description: Invalid admin secret, email/username taken, or invalid input
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      tags:
+      - Auth
+  /auth/change-password:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Old and new passwords
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authdomain.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Invalid input or wrong password
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authdomain.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authdomain.AuthResponse'
         "401":
-          description: "Неверные учетные данные"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /api/users/profile:
-    get:
-      tags: [Users]
-      summary: "Получить профиль текущего пользователя"
-      security:
-        - BearerAuth: []
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      tags:
+      - Auth
+  /auth/login/email:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email address
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authdomain.LoginByEmailRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          description: "Профиль пользователя"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    $ref: "#/components/schemas/UserResponse"
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      tags:
+      - Auth
+  /auth/login/email/verify:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email and code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authdomain.LoginByEmailVerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              token:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      tags:
+      - Auth
+  /auth/login/phone:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Phone number
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authdomain.LoginByPhoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      tags:
+      - Auth
+  /auth/login/phone/verify:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Phone and code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authdomain.LoginByPhoneVerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              token:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      tags:
+      - Auth
+  /auth/refresh:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authdomain.RefreshTokenResponse'
         "401":
-          description: "Не авторизован"
-    put:
-      tags: [Users]
-      summary: "Обновить профиль"
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateProfileRequest"
-      responses:
-        "200":
-          description: "Профиль обновлен"
-
-  /api/users/push-token:
-    put:
-      tags: [Users]
-      summary: "Обновить push-токен для уведомлений"
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdatePushTokenRequest"
-      responses:
-        "200":
-          description: "Push-токен обновлен"
-
-  /api/users/search:
-    get:
-      tags: [Users]
-      summary: "Поиск пользователей"
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: q
-          in: query
-          required: true
+          description: Invalid or expired token
           schema:
-            type: string
-          description: "Поисковый запрос (username или displayName)"
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 50
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
-      responses:
-        "200":
-          description: "Список пользователей"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/UserResponse"
-
-  /api/users/{id}:
-    get:
-      tags: [Users]
-      summary: "Получить пользователя по ID"
+            $ref: '#/definitions/response.ErrorResponse'
       security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: "Пользователь найден"
-        "404":
-          description: "Пользователь не найден"
-
-  /api/users/username/{username}:
-    get:
-      tags: [Users]
-      summary: "Получить пользователя по username"
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: username
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: "Пользователь найден"
-        "404":
-          description: "Пользователь не найден"
-
-  /api/chats:
-    get:
-      tags: [Chats]
-      summary: "Список чатов пользователя"
-      security:
-        - BearerAuth: []
-      responses:
-        "200":
-          description: "Список чатов"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/ChatResponse"
+      - BearerAuth: []
+      tags:
+      - Auth
+  /auth/register:
     post:
-      tags: [Chats]
-      summary: "Создать новый чат"
-      security:
-        - BearerAuth: []
-      requestBody:
+      consumes:
+      - application/json
+      parameters:
+      - description: Registration details (username, email, password, display_name)
+        in: body
+        name: request
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateChatRequest"
+        schema:
+          $ref: '#/definitions/authdomain.RegisterRequest'
+      produces:
+      - application/json
       responses:
         "201":
-          description: "Чат создан"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    $ref: "#/components/schemas/ChatResponse"
-
-  /api/chats/{id}:
+          description: Returns JWT token + user object
+          schema:
+            $ref: '#/definitions/authdomain.AuthResponse'
+        "400":
+          description: Email or username already registered, or invalid input fields
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      tags:
+      - Auth
+  /bots:
     get:
-      tags: [Chats]
-      summary: "Получить информацию о чате"
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      produces:
+      - application/json
       responses:
         "200":
-          description: "Информация о чате"
-        "404":
-          description: "Чат не найден"
-    delete:
-      tags: [Chats]
-      summary: "Удалить чат (только создатель)"
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
+          description: OK
           schema:
-            type: string
-      responses:
-        "200":
-          description: "Чат удален"
-
-  /api/chats/{id}/participants:
+            items:
+              $ref: '#/definitions/botdomain.Bot'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Bots
     post:
-      tags: [Chats]
-      summary: "Добавить участника в групповой чат"
-      security:
-        - BearerAuth: []
+      consumes:
+      - application/json
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
+      - description: Bot name and config
+        in: body
+        name: request
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [userId]
-              properties:
-                userId:
-                  type: string
-      responses:
-        "200":
-          description: "Участник добавлен"
-
-  /api/chats/{id}/participants/{userId}:
-    delete:
-      tags: [Chats]
-      summary: "Удалить участника из чата"
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: "Участник удален"
-
-  /api/chats/{id}/read:
-    post:
-      tags: [Chats]
-      summary: "Отметить чат как прочитанный"
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: "Чат отмечен как прочитанный"
-
-  /api/chats/{id}/messages:
-    get:
-      tags: [Messages]
-      summary: "Получить сообщения чата"
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 50
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
-      responses:
-        "200":
-          description: "Сообщения чата"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/MessageResponse"
-    post:
-      tags: [Messages]
-      summary: "Отправить сообщение"
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SendMessageRequest"
+        schema:
+          $ref: '#/definitions/botdomain.CreateBotRequest'
+      produces:
+      - application/json
       responses:
         "201":
-          description: "Сообщение отправлено"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    $ref: "#/components/schemas/MessageResponse"
-
-  /api/messages/{id}:
+          description: Created
+          schema:
+            $ref: '#/definitions/botdomain.Bot'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Bots
+  /bots/{id}:
+    delete:
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Bots
     put:
-      tags: [Messages]
-      summary: "Редактировать сообщение"
-      security:
-        - BearerAuth: []
+      consumes:
+      - application/json
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
+      - description: Bot ID
+        in: path
+        name: id
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [content]
-              properties:
-                content:
-                  type: string
+        type: string
+      - description: Fields to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/botdomain.UpdateBotRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          description: "Сообщение отредактировано"
-    delete:
-      tags: [Messages]
-      summary: "Удалить сообщение"
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
+          description: OK
           schema:
-            type: string
-      responses:
-        "200":
-          description: "Сообщение удалено"
-
-  /api/calls/initiate:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Bots
+  /bots/{id}/token:
     post:
-      tags: [Calls]
-      summary: "Инициировать звонок"
-      security:
-        - BearerAuth: []
-      requestBody:
+      parameters:
+      - description: Bot ID
+        in: path
+        name: id
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [chatId]
-              properties:
-                chatId:
-                  type: string
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Bots
+  /calls:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID and call type (voice/video)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/calldomain.InitiateCallRequest'
+      produces:
+      - application/json
       responses:
         "201":
-          description: "Звонок инициирован"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    $ref: "#/components/schemas/Call"
-
-  /api/calls/{id}/respond:
-    post:
-      tags: [Calls]
-      summary: "Ответить на звонок (принять/отклонить)"
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
+          description: Created
           schema:
-            type: string
-      requestBody:
+            $ref: '#/definitions/calldomain.Call'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Calls
+  /calls/{id}:
+    get:
+      parameters:
+      - description: Call ID
+        in: path
+        name: id
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [action]
-              properties:
-                action:
-                  type: string
-                  enum: [accept, reject]
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          description: "Ответ на звонок отправлен"
-
-  /api/calls/{id}/end:
+          description: OK
+          schema:
+            $ref: '#/definitions/calldomain.Call'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Calls
+  /calls/{id}/end:
     post:
-      tags: [Calls]
-      summary: "Завершить звонок"
+      parameters:
+      - description: Call ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
       security:
-        - BearerAuth: []
+      - BearerAuth: []
+      tags:
+      - Calls
+  /calls/{id}/respond:
+    post:
+      consumes:
+      - application/json
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - description: Call ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 'Action: accept or reject'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/calldomain.RespondCallRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          description: "Звонок завершен"
-
-  /api/calls/{id}:
-    get:
-      tags: [Calls]
-      summary: "Получить информацию о звонке"
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
       security:
-        - BearerAuth: []
+      - BearerAuth: []
+      tags:
+      - Calls
+  /calls/group/{id}:
+    get:
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - description: Call ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          description: "Информация о звонке"
-
-  /api/chats/{chatId}/calls:
-    get:
-      tags: [Calls]
-      summary: "История звонков в чате"
+          description: OK
+          schema:
+            $ref: '#/definitions/calldomain.GroupCallResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
       security:
-        - BearerAuth: []
+      - BearerAuth: []
+      tags:
+      - Group Calls
+  /calls/group/{id}/end:
+    post:
       parameters:
-        - name: chatId
-          in: path
-          required: true
-          schema:
-            type: string
+      - description: Call ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          description: "История звонков"
-
-  /ws:
-    get:
-      tags: [WebSocket]
-      summary: "WebSocket подключение для real-time обновлений"
-      description: |
-        Подключитесь к WebSocket с JWT токеном в query параметре `token`.
-        После подключения сервер будет отправлять события в реальном времени.
-
-        **Поддерживаемые события (type):**
-        - `message:new` - новое сообщение
-        - `message:edited` - сообщение изменено
-        - `message:deleted` - сообщение удалено
-        - `message:read` - сообщение прочитано
-        - `user:typing` - пользователь печатает
-        - `user:stop_typing` - пользователь перестал печатать
-        - `user:online` - пользователь онлайн
-        - `user:offline` - пользователь офлайн
-        - `chat:created` - создан новый чат
-        - `chat:updated` - чат обновлен
-        - `chat:deleted` - чат удален
-        - `call:offer` - WebRTC offer (входящий звонок)
-        - `call:answer` - WebRTC answer (ответ на звонок)
-        - `call:ice` - ICE кандидат
-        - `call:end` - звонок завершен
-        - `call:missed` - пропущенный звонок
-        - `call:reject` - звонок отклонен
-      parameters:
-        - name: token
-          in: query
-          required: true
+          description: OK
           schema:
-            type: string
-          description: "JWT токен авторизации"
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Group Calls
+  /calls/group/initiate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID and call type
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/calldomain.GroupCallInitiateRequest'
+      produces:
+      - application/json
       responses:
-        "101":
-          description: "WebSocket протокол переключен"
-
-  /health:
-    get:
-      tags: [System]
-      summary: "Проверка здоровья сервера"
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/calldomain.GroupCallResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Group Calls
+  /calls/group/respond:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Call ID and action
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/calldomain.GroupCallActionRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          description: "Сервер работает"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "ok"
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Group Calls
+  /channels:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/chatdomain.ChatResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      tags:
+      - Channels
+  /channels/{id}/subscribed:
+    get:
+      parameters:
+      - description: Channel ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Channels
+  /channels/{id}/subscribers:
+    get:
+      parameters:
+      - description: Channel ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/channeldomain.ChannelSubscriber'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Channels
+  /channels/{id}/subscribers/{userId}/role:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Channel ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Target user ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: 'Role: admin or subscriber'
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            role:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Channels
+  /channels/subscribe:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Channel ID
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            channelId:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Channels
+  /channels/unsubscribe:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Channel ID
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            channelId:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Channels
+  /chats:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/chatdomain.ChatResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/chatdomain.CreateChatRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/chatdomain.ChatResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{chatId}/active-calls:
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/calldomain.GroupCallResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Group Calls
+  /chats/{chatId}/calls:
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: chatId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/calldomain.Call'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Calls
+  /chats/{id}:
+    delete:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatdomain.ChatResponse'
+        "404":
+          description: Chat not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/chatdomain.UpdateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/archive:
+    post:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/demote:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Target user ID
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            userId:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/export:
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/messagedomain.MessageResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /chats/{id}/hide:
+    post:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/invite-links:
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/chatdomain.InviteLink'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - InviteLinks
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Optional expiration and usage limit
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/chatdomain.CreateInviteLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/chatdomain.InviteLink'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - InviteLinks
+  /chats/{id}/invite-links/{linkId}:
+    delete:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Link ID
+        in: path
+        name: linkId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - InviteLinks
+  /chats/{id}/leave:
+    post:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/media:
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Media type filter (photo, video, audio, document)
+        in: query
+        name: type
+        type: string
+      - description: Max results (default 50)
+        in: query
+        name: limit
+        type: integer
+      - description: Pagination offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Paginated media
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /chats/{id}/messages:
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Messages per page (default 50)
+        in: query
+        name: limit
+        type: integer
+      - description: Pagination offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Paginated messages
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message content
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/messagedomain.SendMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /chats/{id}/messages/{msgId}/resend:
+    post:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message ID to resend
+        in: path
+        name: msgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /chats/{id}/messages/file:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Optional message ID to reply to
+        in: formData
+        name: replyToId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Missing file
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /chats/{id}/messages/location:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт и отправляет в чат сообщение с геолокацией (тип "location").
+        Позволяет пользователям делиться своим местоположением на карте. В теле запроса
+        обязательно нужно передать широту (latitude) и долготу (longitude) места.
+        Опционально можно добавить название места (title), указать ID сообщения для
+        ответа (replyToId) и выбрать эффект анимации (effect). После успешной отправки
+        возвращается полный объект сообщения с координатами.
+      parameters:
+      - description: ID чата (группы или личного диалога), в который отправляется
+          сообщение с геолокацией
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 'Параметры геолокации: latitude (число, широта, обязательно),
+          longitude (число, долгота, обязательно), title (строка, название места,
+          опционально), replyToId (строка, ID сообщения для ответа, опционально),
+          effect (строка, эффект анимации: confetti/fireworks/hearts/balloons/stars,
+          опционально)'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/messagedomain.SendLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Сообщение с геолокацией успешно создано. В ответе возвращается
+            полный объект MessageResponse с заполненными полями latitude, longitude,
+            locationTitle.
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: 'Ошибка валидации: не указаны latitude/longitude, неверный
+            формат данных или чат не найден.'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Сообщения
+  /chats/{id}/messages/search:
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: Max results (default 50)
+        in: query
+        name: limit
+        type: integer
+      - description: Pagination offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Paginated results
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Missing query
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /chats/{id}/messages/video-circle:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Позволяет отправить круговое видеосообщение (аналог видеосообщений
+        в Telegram). Видео должно быть в формате MP4 с круговым обрезанием. Файл сохраняется
+        в директории uploads/video_circles/. Можно указать подпись к видео.
+      parameters:
+      - description: ID чата, в который отправляется видеосообщение
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Файл видео в формате MP4 для кругового видеосообщения. Рекомендуется
+          квадратное соотношение сторон.
+        in: formData
+        name: video
+        required: true
+        type: file
+      - description: Подпись к видеосообщению (опционально, отображается под видео)
+        in: formData
+        name: caption
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'Видеосообщение успешно отправлено. Тип сообщения: video_circle.'
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: 'Ошибка: файл не загружен, неверный формат или чат не найден.'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Сообщения
+  /chats/{id}/messages/voice:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Voice recording (opus/ogg)
+        in: formData
+        name: voice
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /chats/{id}/notifications:
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              muted:
+                type: boolean
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Mute settings
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/notificationdomain.UpdateNotificationSettingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /chats/{id}/online:
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              userIds:
+                items:
+                  type: string
+                type: array
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/participants:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User ID to add
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/chatdomain.AddParticipantRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/participants/{userId}:
+    delete:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Target user ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/participants/{userId}/role:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Target user ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: 'Role: admin or member'
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            role:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/permissions:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 'Permissions: everyone, admins'
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            whoCanSend:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/photo:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Chat photo image
+        in: formData
+        name: photo
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/pin:
+    delete:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+    post:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/pinned:
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/messagedomain.MessageResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /chats/{id}/polls:
+    get:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/polldomain.PollWithResults'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Polls
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Poll question and options
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/polldomain.CreatePollRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/polldomain.PollWithResults'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Polls
+  /chats/{id}/promote:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Target user ID
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            userId:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/read:
+    post:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/slow-mode:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Slow mode interval in seconds (0-3600, 0=disabled)
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            seconds:
+              type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Invalid value
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/transfer-ownership:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New owner user ID
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            userId:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/unarchive:
+    post:
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/{id}/voice-chat:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт постоянную голосовую комнату в групповом чате. В отличие
+        от группового звонка, голосовая комната может быть активна длительное время
+        и не требует принятия вызова. Можно указать название комнаты и время отложенного
+        старта. Создатель автоматически присоединяется к комнате.
+      parameters:
+      - description: ID группы (chatId), в которой создаётся голосовая комната. Группа
+          должна существовать и иметь тип 'group'.
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 'Параметры создания: title (название комнаты, опционально), scheduledInMins
+          (отложенный старт через N минут, опционально)'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/voicechatdomain.CreateVoiceChatRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Голосовая комната создана, возвращает ID, статус и количество
+            участников
+          schema:
+            $ref: '#/definitions/voicechatdomain.VoiceChatResponse'
+        "400":
+          description: 'Ошибка: чат не найден, это не группа или неверные параметры'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Голосовые чаты
+  /chats/{id}/voice-chats/active:
+    get:
+      description: Показывает все активные (не завершённые) голосовые комнаты в группе.
+        Если комната завершена, она не отображается в этом списке — используйте GET
+        /chats/{id}/voice-chats/history.
+      parameters:
+      - description: ID группы (chatId)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список активных голосовых комнат
+          schema:
+            items:
+              $ref: '#/definitions/voicechatdomain.VoiceChatResponse'
+            type: array
+        "400":
+          description: Ошибка при получении списка
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Голосовые чаты
+  /chats/{id}/voice-chats/history:
+    get:
+      description: Возвращает все голосовые комнаты, созданные в группе, включая активные,
+        запланированные и завершённые. Упорядочено по дате создания (новые сверху).
+      parameters:
+      - description: ID группы (chatId)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Полная история голосовых комнат
+          schema:
+            items:
+              $ref: '#/definitions/voicechatdomain.VoiceChatResponse'
+            type: array
+        "400":
+          description: Ошибка при получении истории
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Голосовые чаты
+  /chats/{id}/wallpaper:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Chat ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Wallpaper image
+        in: formData
+        name: wallpaper
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/archived:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/chatdomain.ChatResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/join:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Invite code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/chatdomain.JoinByInviteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - InviteLinks
+  /chats/search:
+    get:
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/chatdomain.ChatResponse'
+            type: array
+        "400":
+          description: Missing query
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /chats/start/{userId}:
+    post:
+      parameters:
+      - description: Target user ID to chat with
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Existing private chat
+          schema:
+            $ref: '#/definitions/chatdomain.ChatResponse'
+        "201":
+          description: New private chat created
+          schema:
+            $ref: '#/definitions/chatdomain.ChatResponse'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Chats
+  /contacts:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/contactdomain.ContactResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Contacts
+  /contacts/photo:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Phone and photo URL
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/contactdomain.UpdateContactPhotoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Contacts
+  /contacts/registered:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/userdomain.UserResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Contacts
+  /contacts/search:
+    get:
+      parameters:
+      - description: Phone number or partial to search
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/contactdomain.ContactResponse'
+            type: array
+        "400":
+          description: Missing query
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Contacts
+  /contacts/sync:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Contact list to sync
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/contactdomain.SyncContactsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Contacts
+  /drafts:
+    get:
+      parameters:
+      - description: Chat ID
+        in: query
+        name: chatId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/draftdomain.Draft'
+        "404":
+          description: No draft
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Drafts
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat ID and draft content
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/draftdomain.SaveDraftRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/draftdomain.Draft'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Drafts
+  /drafts/{id}:
+    delete:
+      parameters:
+      - description: Draft ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Drafts
+  /emojis:
+    get:
+      description: Возвращает все кастомные эмодзи, загруженные всеми пользователями.
+        Подходит для общей галереи эмодзи в клиенте.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Массив всех кастомных эмодзи на сервере
+          schema:
+            items:
+              $ref: '#/definitions/emojidomain.CustomEmojiResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Кастомные эмодзи
+    post:
+      consumes:
+      - multipart/form-data
+      description: Позволяет загрузить собственное изображение эмодзи и задать ему
+        короткое имя (shortcode). После загрузки эмодзи можно использовать в чатах.
+        Поддерживаются форматы PNG, JPG, GIF (включая анимированные). Файл сохраняется
+        в директории uploads/emojis/.
+      parameters:
+      - description: Короткое имя для эмодзи (например 'party', 'thumbsup', 'cat').
+          Будет использоваться в клиенте для вызова эмодзи.
+        in: formData
+        name: shortcode
+        required: true
+        type: string
+      - description: 'Файл изображения эмодзи (PNG, JPG, GIF). Рекомендуемый размер:
+          128x128 пикселей.'
+        in: formData
+        name: emoji
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Эмодзи успешно создан, возвращает ID, shortcode и URL файла
+          schema:
+            $ref: '#/definitions/emojidomain.CustomEmojiResponse'
+        "400":
+          description: 'Ошибка: файл не загружен, shortcode пустой или формат не поддерживается'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Кастомные эмодзи
+  /emojis/{id}:
+    delete:
+      description: Удаляет эмодзи из базы данных и файл изображения с диска. Только
+        владелец эмодзи может его удалить. После удаления эмодзи перестанет отображаться
+        в галерее.
+      parameters:
+      - description: ID эмодзи для удаления
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Эмодзи успешно удалён
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: 'Ошибка: эмодзи не найден или нет прав на удаление'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Кастомные эмодзи
+  /emojis/my:
+    get:
+      description: Возвращает только те эмодзи, которые были загружены текущим пользователем.
+        Для просмотра всех публичных эмодзи используйте GET /emojis.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Массив кастомных эмодзи пользователя с ID, shortcode и URL
+          schema:
+            items:
+              $ref: '#/definitions/emojidomain.CustomEmojiResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Кастомные эмодзи
+  /files/{filename}:
+    get:
+      parameters:
+      - description: Filename to download
+        in: path
+        name: filename
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "404":
+          description: File not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /folders:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/chatdomain.ChatFolder'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Folders
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Folder name and chat IDs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/chatdomain.CreateChatFolderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/chatdomain.ChatFolder'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Folders
+  /folders/{id}:
+    delete:
+      parameters:
+      - description: Folder ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Folders
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Folder ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/chatdomain.UpdateChatFolderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatdomain.ChatFolder'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Folders
+  /gifs:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: GIF URL to remove
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            url:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Gifs
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Gifs
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: GIF URL
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            url:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Gifs
+  /messages/{id}:
+    delete:
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Not owner
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+    get:
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated content
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/messagedomain.EditMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Invalid input or not owner
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/{id}/for-me:
+    delete:
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/{id}/history:
+    get:
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/{id}/pin:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 'pin: true to pin, false to unpin'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/messagedomain.PinMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/{id}/reactions:
+    delete:
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Emoji to remove
+        in: query
+        name: emoji
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Emoji to add
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/messagedomain.AddReactionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/{id}/read:
+    post:
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/{id}/report:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Report reason
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            reason:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/{id}/save:
+    post:
+      consumes:
+      - application/json
+      description: Добавляет сообщение в избранное пользователя по ID сообщения и
+        ID чата. Позволяет быстро находить важные сообщения позже через GET /saved-messages.
+        Одно и то же сообщение нельзя сохранить дважды.
+      parameters:
+      - description: ID сообщения, которое нужно сохранить
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: ID чата, в котором находится сообщение
+        in: query
+        name: chatId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Сообщение успешно сохранено, возвращает объект SavedMessageResponse
+            с данными сообщения и чата
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: 'Ошибка: сообщение уже сохранено или неверный запрос'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Сохранённые сообщения
+  /messages/{id}/star:
+    delete:
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+    post:
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/bulk:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Message IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            messageIds:
+              items:
+                type: string
+              type: array
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/forward:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Forward details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/messagedomain.ForwardMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/messagedomain.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/read/bulk:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Message IDs to mark as read
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            chatId:
+              type: string
+            messageIds:
+              items:
+                type: string
+              type: array
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/schedule:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat, content, and send time
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/draftdomain.ScheduleMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/draftdomain.ScheduledMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - ScheduledMessages
+  /messages/scheduled:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/draftdomain.ScheduledMessage'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - ScheduledMessages
+  /messages/scheduled/{id}:
+    delete:
+      parameters:
+      - description: Scheduled message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - ScheduledMessages
+  /messages/search:
+    get:
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: Max results (default 50)
+        in: query
+        name: limit
+        type: integer
+      - description: Pagination offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Paginated results
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Missing query
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /messages/starred:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/chatdomain.StarredMessageResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Messages
+  /polls/{pollId}/close:
+    post:
+      parameters:
+      - description: Poll ID
+        in: path
+        name: pollId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Not the creator
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Polls
+  /polls/{pollId}/vote:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Poll ID
+        in: path
+        name: pollId
+        required: true
+        type: string
+      - description: Selected option index
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/polldomain.VotePollRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Already voted or invalid option
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Polls
+  /saved-messages:
+    get:
+      description: Возвращает список сохранённых сообщений с пагинацией. Каждый элемент
+        содержит полную информацию о сообщении (текст, тип, отправитель) и о чате,
+        в котором оно находится. Упорядочено по дате сохранения (новые сверху).
+      parameters:
+      - description: Количество записей на странице (по умолчанию 50, максимум 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение от начала списка для пагинации
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Массив SavedMessageResponse с meta (total, limit, offset)
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Ошибка при получении списка
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Сохранённые сообщения
+  /saved-messages/{id}:
+    delete:
+      description: Удаляет ранее сохранённое сообщение из избранного. Только владелец
+        может удалить своё сохранённое сообщение. ID можно получить из GET /saved-messages.
+      parameters:
+      - description: ID записи сохранённого сообщения (не ID самого сообщения, а ID
+          записи в избранном)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Сообщение успешно удалено из избранного
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: 'Ошибка: запись не найдена или нет прав'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Сохранённые сообщения
+  /sessions:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Sessions
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/sessiondomain.Session'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Sessions
+  /sessions/{id}:
+    delete:
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Sessions
+  /stickers/library:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/stickerdomain.Sticker'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stickers
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Sticker ID to add
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            stickerId:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stickers
+  /stickers/packs:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/stickerdomain.StickerPack'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stickers
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Pack name and stickers
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/stickerdomain.CreateStickerPackRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/stickerdomain.StickerPack'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stickers
+  /stickers/packs/{id}:
+    delete:
+      parameters:
+      - description: Pack ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stickers
+    get:
+      parameters:
+      - description: Pack ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/stickerdomain.StickerPack'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stickers
+  /stickers/packs/{id}/stickers:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Pack ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Sticker details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/stickerdomain.AddStickerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/stickerdomain.Sticker'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stickers
+  /stickers/packs/my:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/stickerdomain.StickerPack'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stickers
+  /stories:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/storydomain.StoryResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      tags:
+      - Stories
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Story type (photo/video)
+        in: formData
+        name: type
+        required: true
+        type: string
+      - description: Optional caption
+        in: formData
+        name: caption
+        type: string
+      - description: Story media file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/storydomain.StoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stories
+  /stories/{id}:
+    delete:
+      parameters:
+      - description: Story ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stories
+    get:
+      parameters:
+      - description: Story ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storydomain.StoryResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stories
+  /stories/{id}/views:
+    get:
+      parameters:
+      - description: Story ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/storydomain.StoryView'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Stories
+  /stories/my:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/storydomain.StoryResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      tags:
+      - Stories
+  /users/{id}:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userdomain.UserResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/{id}/last-seen:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              lastSeen:
+                type: string
+              online:
+                type: boolean
+              userId:
+                type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/avatar:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Avatar image file
+        in: formData
+        name: avatar
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userdomain.UserResponse'
+        "400":
+          description: Missing or invalid file
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/block:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID to block
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userdomain.BlockUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Block failed
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/block/{userId}:
+    delete:
+      parameters:
+      - description: User ID to unblock
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Unblock failed
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/blocked:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/userdomain.UserResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/email:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: New email
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userdomain.UserResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile fields to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userdomain.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userdomain.UserResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/push-test:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Push notification fields
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            body:
+              type: string
+            title:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/push-token:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Push token details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userdomain.UpdatePushTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Invalid token
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/search:
+    get:
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: Max results (default 50)
+        in: query
+        name: limit
+        type: integer
+      - description: Pagination offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Paginated user list
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Missing query
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: New status
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userdomain.UpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userdomain.UserResponse'
+        "400":
+          description: Invalid status
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/username:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: New username
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            username:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /users/username/{username}:
+    get:
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userdomain.UserResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /verification/email:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email address
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/verificationdomain.SendEmailVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "500":
+          description: Failed to send
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /verification/email/verify:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Verification code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/verificationdomain.VerifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Wrong code
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /verification/phone:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Phone number
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/verificationdomain.SendPhoneVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "500":
+          description: Failed to send
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /verification/phone/verify:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Verification code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/verificationdomain.VerifyPhoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Wrong code
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Users
+  /voice-chats/{id}:
+    get:
+      description: 'Возвращает полную информацию о голосовой комнате: статус (active/scheduled/ended),
+        количество участников, время начала и окончания.'
+      parameters:
+      - description: ID голосовой комнаты
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о голосовой комнате
+          schema:
+            $ref: '#/definitions/voicechatdomain.VoiceChatResponse'
+        "400":
+          description: 'Ошибка: голосовая комната не найдена'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Голосовые чаты
+  /voice-chats/{id}/end:
+    post:
+      description: Завершает голосовую комнату. После завершения новые участники не
+        могут присоединиться. Статус меняется на "ended". Все текущие участники отключаются.
+      parameters:
+      - description: ID голосовой комнаты
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Голосовая комната завершена
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: 'Ошибка: нет прав на завершение'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Голосовые чаты
+  /voice-chats/{id}/join:
+    post:
+      description: Позволяет пользователю присоединиться к голосовой комнате. Пользователь
+        становится участником и будет отображаться в списке участников комнаты. Не
+        требует подтверждения от создателя.
+      parameters:
+      - description: ID голосовой комнаты
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пользователь успешно присоединился к голосовой комнате
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: 'Ошибка: комната не найдена или уже завершена'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Голосовые чаты
+  /voice-chats/{id}/leave:
+    post:
+      description: Отсоединяет пользователя от голосовой комнаты. Пользователь удаляется
+        из списка участников, и счётчик участников обновляется.
+      parameters:
+      - description: ID голосовой комнаты
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пользователь покинул голосовую комнату
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: 'Ошибка: пользователь не является участником комнаты'
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Голосовые чаты
+  /voice-chats/{id}/mute:
+    post:
+      consumes:
+      - application/json
+      description: Позволяет участнику включить или выключить свой микрофон в голосовой
+        комнате. Администраторы могут отключить микрофон другим участникам.
+      parameters:
+      - description: ID голосовой комнаты
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 'Параметр muted: true (заглушить микрофон) или false (включить
+          микрофон)'
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            muted:
+              type: boolean
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Статус микрофона изменён (muted/unmuted)
+          schema:
+            $ref: '#/definitions/response.MessageResponse'
+        "400":
+          description: Ошибка при изменении статуса
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Голосовые чаты
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: 'Введите JWT токен в формате: Bearer <token>'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -50,7 +50,7 @@ func (h *CallHandler) InitiateCall(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Call ID"
-// @Param request body calldomain.RespondCallRequest true 'Action: "accept" or "reject"'
+// @Param request body calldomain.RespondCallRequest true "Action: accept or reject"
 // @Success 200 {object} response.MessageResponse
 // @Failure 400 {object} response.ErrorResponse
 // @Router /calls/{id}/respond [post]

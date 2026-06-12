@@ -494,6 +494,61 @@ const addIsAdminField = `
 ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;
 `
 
+const addSavedMessagesEmojisVoiceChats = `
+ALTER TABLE messages ADD COLUMN latitude REAL NOT NULL DEFAULT 0;
+ALTER TABLE messages ADD COLUMN longitude REAL NOT NULL DEFAULT 0;
+ALTER TABLE messages ADD COLUMN location_title TEXT NOT NULL DEFAULT '';
+ALTER TABLE messages ADD COLUMN effect TEXT NOT NULL DEFAULT '';
+CREATE TABLE IF NOT EXISTS saved_messages (
+	id TEXT PRIMARY KEY,
+	user_id TEXT NOT NULL,
+	message_id TEXT NOT NULL,
+	chat_id TEXT NOT NULL,
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id),
+	FOREIGN KEY (message_id) REFERENCES messages(id),
+	FOREIGN KEY (chat_id) REFERENCES chats(id)
+);
+CREATE TABLE IF NOT EXISTS custom_emojis (
+	id TEXT PRIMARY KEY,
+	user_id TEXT NOT NULL,
+	shortcode TEXT NOT NULL,
+	file_url TEXT NOT NULL DEFAULT '',
+	file_path TEXT NOT NULL DEFAULT '',
+	animated INTEGER NOT NULL DEFAULT 0,
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS voice_chats (
+	id TEXT PRIMARY KEY,
+	chat_id TEXT NOT NULL,
+	started_by TEXT NOT NULL,
+	title TEXT NOT NULL DEFAULT '',
+	status TEXT NOT NULL DEFAULT 'active',
+	participant_count INTEGER NOT NULL DEFAULT 0,
+	scheduled_at TEXT,
+	started_at TEXT,
+	ended_at TEXT,
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (chat_id) REFERENCES chats(id),
+	FOREIGN KEY (started_by) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS voice_chat_participants (
+	voice_chat_id TEXT NOT NULL,
+	user_id TEXT NOT NULL,
+	joined_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	left_at TEXT,
+	muted INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY (voice_chat_id, user_id),
+	FOREIGN KEY (voice_chat_id) REFERENCES voice_chats(id),
+	FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_saved_messages_user_id ON saved_messages(user_id);
+CREATE INDEX IF NOT EXISTS idx_custom_emojis_user_id ON custom_emojis(user_id);
+CREATE INDEX IF NOT EXISTS idx_voice_chats_chat_id ON voice_chats(chat_id);
+CREATE INDEX IF NOT EXISTS idx_voice_chat_participants_user ON voice_chat_participants(user_id);
+`
+
 const addStoriesGroupCallsChannels = `
 CREATE TABLE IF NOT EXISTS stories (
 	id TEXT PRIMARY KEY,
@@ -557,5 +612,10 @@ func init() {
 		ID:   22,
 		Name: "add_stories_group_calls_channels",
 		Up:   addStoriesGroupCallsChannels,
+	})
+	migrations = append(migrations, Migration{
+		ID:   23,
+		Name: "add_saved_messages_emojis_voice_chats",
+		Up:   addSavedMessagesEmojisVoiceChats,
 	})
 }

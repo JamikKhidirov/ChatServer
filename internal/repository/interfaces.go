@@ -17,6 +17,8 @@ import (
 	draftdomain "ChatServerGolang/internal/domain/draft"
 	sessiondomain "ChatServerGolang/internal/domain/session"
 	verificationdomain "ChatServerGolang/internal/domain/verification"
+	emojidomain "ChatServerGolang/internal/domain/emoji"
+	voicechatdomain "ChatServerGolang/internal/domain/voicechat"
 )
 
 type InviteLinkRepository interface {
@@ -262,6 +264,36 @@ type ChannelSubscriberRepository interface {
 	GetSubscribedChannels(userID string) ([]string, error)
 	SetRole(channelID, userID, role string) error
 	GetRole(channelID, userID string) (string, error)
+}
+
+type SavedMessageRepository interface {
+	Save(msg *chatdomain.SavedMessage) error
+	FindByUserID(userID string, limit, offset int) ([]*chatdomain.SavedMessage, error)
+	CountByUserID(userID string) (int, error)
+	Delete(id, userID string) error
+	Exists(userID, messageID string) (bool, error)
+}
+
+type CustomEmojiRepository interface {
+	Create(emoji *emojidomain.CustomEmoji) error
+	FindByID(id string) (*emojidomain.CustomEmoji, error)
+	FindByUserID(userID string) ([]*emojidomain.CustomEmoji, error)
+	FindAll() ([]*emojidomain.CustomEmoji, error)
+	Delete(id, userID string) error
+}
+
+type VoiceChatRepository interface {
+	Create(vc *voicechatdomain.VoiceChat) error
+	FindByID(id string) (*voicechatdomain.VoiceChat, error)
+	FindActiveByChatID(chatID string) ([]*voicechatdomain.VoiceChat, error)
+	FindByChatID(chatID string) ([]*voicechatdomain.VoiceChat, error)
+	UpdateStatus(id string, status voicechatdomain.VoiceChatStatus) error
+	AddParticipant(vcID, userID string) error
+	RemoveParticipant(vcID, userID string) error
+	IsParticipant(vcID, userID string) (bool, error)
+	GetParticipants(vcID string) ([]*voicechatdomain.VoiceChatParticipant, error)
+	GetParticipantCount(vcID string) (int, error)
+	SetParticipantMuted(vcID, userID string, muted bool) error
 }
 
 func BoolToInt(b bool) int {

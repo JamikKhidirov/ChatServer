@@ -1,0 +1,57 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -o ChatServer .
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Swagger validation
+        run: |
+          go install github.com/swaggo/swag/cmd/swag@latest
+          swag init
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build for production
+        run: CGO_ENABLED=0 GOOS=linux go build -o ChatServer .
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: chatserver:latest
+
+      - name: Notify success
+        run: echo "Deployment completed successfully"
