@@ -16,13 +16,15 @@ func NewGifHandler(gifService service.SavedGifService) *GifHandler {
 }
 
 // SaveGif saves a GIF URL to the user's collection
-// @Tags Gifs
+// @Tags GIF
+// @Summary Сохранить GIF
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body object{url=string} true "GIF URL"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Сохраняет URL GIF-изображения в коллекцию пользователя для быстрого доступа при отправке.
+// @Param request body object{url=string} true "Параметры: url (URL GIF-изображения, обязательно)"
+// @Success 200 {object} response.MessageResponse "GIF сохранён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка сохранения GIF"
 // @Router /gifs [post]
 func (h *GifHandler) SaveGif(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -41,11 +43,13 @@ func (h *GifHandler) SaveGif(c *gin.Context) {
 }
 
 // GetSavedGifs returns all saved GIFs for the user
-// @Tags Gifs
+// @Tags GIF
+// @Summary Получить сохранённые GIF
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} string
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает список URL всех GIF-изображений, сохранённых пользователем.
+// @Success 200 {array} string "Список URL сохранённых GIF"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения GIF"
 // @Router /gifs [get]
 func (h *GifHandler) GetSavedGifs(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -58,13 +62,15 @@ func (h *GifHandler) GetSavedGifs(c *gin.Context) {
 }
 
 // DeleteGif removes a GIF from the user's collection
-// @Tags Gifs
+// @Tags GIF
+// @Summary Удалить GIF из коллекции
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body object{url=string} true "GIF URL to remove"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Удаляет GIF-изображение из коллекции пользователя по его URL.
+// @Param request body object{url=string} true "Параметры: url (URL GIF для удаления, обязательно)"
+// @Success 200 {object} response.MessageResponse "GIF удалён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка удаления GIF"
 // @Router /gifs [delete]
 func (h *GifHandler) DeleteGif(c *gin.Context) {
 	userID, _ := c.Get("userID")

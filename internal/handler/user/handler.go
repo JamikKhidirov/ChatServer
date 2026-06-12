@@ -24,11 +24,13 @@ func NewUserHandler(userService service.UserService, pushService service.PushSer
 }
 
 // GetProfile returns the authenticated user's profile
-// @Tags Users
+// @Tags Профиль
+// @Summary Получить профиль пользователя
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {object} userdomain.UserResponse
-// @Failure 404 {object} response.ErrorResponse "User not found"
+// @Description Возвращает полную информацию о профиле аутентифицированного пользователя, включая имя, email, аватар и настройки.
+// @Success 200 {object} userdomain.UserResponse "Профиль пользователя успешно получен"
+// @Failure 404 {object} response.ErrorResponse "Пользователь не найден"
 // @Router /users/profile [get]
 func (h *UserHandler) GetProfile(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -43,13 +45,15 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 }
 
 // UpdateProfile updates the authenticated user's profile
-// @Tags Users
+// @Tags Профиль
+// @Summary Обновить профиль пользователя
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body userdomain.UpdateProfileRequest true "Profile fields to update"
-// @Success 200 {object} userdomain.UserResponse
-// @Failure 400 {object} response.ErrorResponse "Invalid input"
+// @Description Обновляет поля профиля аутентифицированного пользователя. Можно изменить отображаемое имя, биографию, аватар и другие настройки профиля.
+// @Param request body userdomain.UpdateProfileRequest true "Обновляемые поля профиля: display_name (отображаемое имя, опционально), bio (биография, опционально), avatar_url (URL аватара, опционально)"
+// @Success 200 {object} userdomain.UserResponse "Профиль успешно обновлён"
+// @Failure 400 {object} response.ErrorResponse "Неверные входные данные"
 // @Router /users/profile [put]
 func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -70,11 +74,13 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 }
 
 // DeleteAccount permanently deletes the authenticated user's account
-// @Tags Users
+// @Tags Профиль
+// @Summary Удалить аккаунт
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Deletion failed"
+// @Description Полностью удаляет учётную запись пользователя и все связанные данные. Это действие необратимо.
+// @Success 200 {object} response.MessageResponse "Аккаунт успешно удалён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка при удалении аккаунта"
 // @Router /account [delete]
 func (h *UserHandler) DeleteAccount(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -88,14 +94,16 @@ func (h *UserHandler) DeleteAccount(c *gin.Context) {
 }
 
 // SearchUsers searches for users by query
-// @Tags Users
+// @Tags Профиль
+// @Summary Найти пользователей
 // @Security BearerAuth
 // @Produce json
-// @Param q query string true "Search query"
-// @Param limit query int false "Max results (default 50)"
-// @Param offset query int false "Pagination offset (default 0)"
-// @Success 200 {object} response.APIResponse "Paginated user list"
-// @Failure 400 {object} response.ErrorResponse "Missing query"
+// @Description Ищет пользователей по имени, username или email. Возвращает постраничный список результатов.
+// @Param q query string true "Поисковый запрос (имя, username или email)"
+// @Param limit query int false "Максимум результатов (по умолчанию 50)"
+// @Param offset query int false "Смещение пагинации (по умолчанию 0)"
+// @Success 200 {object} response.APIResponse "Постраничный список пользователей"
+// @Failure 400 {object} response.ErrorResponse "Отсутствует поисковый запрос"
 // @Router /users/search [get]
 func (h *UserHandler) SearchUsers(c *gin.Context) {
 	query := c.Query("q")
@@ -117,12 +125,14 @@ func (h *UserHandler) SearchUsers(c *gin.Context) {
 }
 
 // GetUserByID returns a user by their ID
-// @Tags Users
+// @Tags Профиль
+// @Summary Получить пользователя по ID
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "User ID"
-// @Success 200 {object} userdomain.UserResponse
-// @Failure 404 {object} response.ErrorResponse "User not found"
+// @Description Возвращает информацию о пользователе по его уникальному идентификатору.
+// @Param id path string true "ID пользователя"
+// @Success 200 {object} userdomain.UserResponse "Информация о пользователе"
+// @Failure 404 {object} response.ErrorResponse "Пользователь не найден"
 // @Router /users/{id} [get]
 func (h *UserHandler) GetUserByID(c *gin.Context) {
 	userID := c.Param("id")
@@ -137,12 +147,14 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 }
 
 // GetUserByUsername returns a user by their username
-// @Tags Users
+// @Tags Профиль
+// @Summary Получить пользователя по username
 // @Security BearerAuth
 // @Produce json
-// @Param username path string true "Username"
-// @Success 200 {object} userdomain.UserResponse
-// @Failure 404 {object} response.ErrorResponse "User not found"
+// @Description Возвращает информацию о пользователе по его уникальному имени пользователя (username).
+// @Param username path string true "Username пользователя"
+// @Success 200 {object} userdomain.UserResponse "Информация о пользователе"
+// @Failure 404 {object} response.ErrorResponse "Пользователь не найден"
 // @Router /users/username/{username} [get]
 func (h *UserHandler) GetUserByUsername(c *gin.Context) {
 	username := c.Param("username")
@@ -157,13 +169,15 @@ func (h *UserHandler) GetUserByUsername(c *gin.Context) {
 }
 
 // TestPush sends a test push notification to the authenticated user
-// @Tags Users
+// @Tags Профиль
+// @Summary Отправить тестовое push-уведомление
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body object{title=string,body=string} true "Push notification fields"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Invalid input"
+// @Description Отправляет тестовое push-уведомление на устройство пользователя для проверки настроек уведомлений.
+// @Param request body object{title=string,body=string} true "Параметры уведомления: title (заголовок, обязательно), body (текст, обязательно)"
+// @Success 200 {object} response.MessageResponse "Тестовое уведомление отправлено"
+// @Failure 400 {object} response.ErrorResponse "Неверные входные данные"
 // @Router /users/push-test [post]
 func (h *UserHandler) TestPush(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -182,13 +196,15 @@ func (h *UserHandler) TestPush(c *gin.Context) {
 }
 
 // UpdateStatus updates the user's online status
-// @Tags Users
+// @Tags Профиль
+// @Summary Обновить статус пользователя
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body userdomain.UpdateStatusRequest true "New status"
-// @Success 200 {object} userdomain.UserResponse
-// @Failure 400 {object} response.ErrorResponse "Invalid status"
+// @Description Изменяет статус активности пользователя (online, offline, busy, away).
+// @Param request body userdomain.UpdateStatusRequest true "Новый статус: status (строка, статус: online/offline/busy/away, обязательно)"
+// @Success 200 {object} userdomain.UserResponse "Статус успешно обновлён"
+// @Failure 400 {object} response.ErrorResponse "Неверный статус"
 // @Router /users/status [put]
 func (h *UserHandler) UpdateStatus(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -209,13 +225,15 @@ func (h *UserHandler) UpdateStatus(c *gin.Context) {
 }
 
 // UpdatePushToken updates the push notification token
-// @Tags Users
+// @Tags Профиль
+// @Summary Обновить push-токен
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body userdomain.UpdatePushTokenRequest true "Push token details"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Invalid token"
+// @Description Обновляет токен push-уведомлений для устройства пользователя. Необходимо для получения уведомлений на мобильные устройства.
+// @Param request body userdomain.UpdatePushTokenRequest true "Данные push-токена: token (строка, токен устройства, обязательно), provider (строка, провайдер: fcm/apns, обязательно)"
+// @Success 200 {object} response.MessageResponse "Push-токен успешно обновлён"
+// @Failure 400 {object} response.ErrorResponse "Неверный токен"
 // @Router /users/push-token [put]
 func (h *UserHandler) UpdatePushToken(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -235,13 +253,15 @@ func (h *UserHandler) UpdatePushToken(c *gin.Context) {
 }
 
 // BlockUser blocks a user
-// @Tags Users
+// @Tags Профиль
+// @Summary Заблокировать пользователя
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body userdomain.BlockUserRequest true "User ID to block"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Block failed"
+// @Description Блокирует указанного пользователя. Заблокированный пользователь не сможет отправлять вам сообщения или звонить.
+// @Param request body userdomain.BlockUserRequest true "Данные для блокировки: blocked_id (ID пользователя для блокировки, обязательно)"
+// @Success 200 {object} response.MessageResponse "Пользователь заблокирован"
+// @Failure 400 {object} response.ErrorResponse "Ошибка блокировки"
 // @Router /users/block [post]
 func (h *UserHandler) BlockUser(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -261,12 +281,14 @@ func (h *UserHandler) BlockUser(c *gin.Context) {
 }
 
 // UnblockUser unblocks a user
-// @Tags Users
+// @Tags Профиль
+// @Summary Разблокировать пользователя
 // @Security BearerAuth
 // @Produce json
-// @Param userId path string true "User ID to unblock"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Unblock failed"
+// @Description Снимает блокировку с указанного пользователя, восстанавливая возможность общения.
+// @Param userId path string true "ID пользователя для разблокировки"
+// @Success 200 {object} response.MessageResponse "Пользователь разблокирован"
+// @Failure 400 {object} response.ErrorResponse "Ошибка разблокировки"
 // @Router /users/block/{userId} [delete]
 func (h *UserHandler) UnblockUser(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -281,11 +303,13 @@ func (h *UserHandler) UnblockUser(c *gin.Context) {
 }
 
 // GetBlockedUsers returns the list of blocked users
-// @Tags Users
+// @Tags Профиль
+// @Summary Получить список заблокированных пользователей
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} userdomain.UserResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает список всех пользователей, заблокированных аутентифицированным пользователем.
+// @Success 200 {array} userdomain.UserResponse "Список заблокированных пользователей"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения списка"
 // @Router /users/blocked [get]
 func (h *UserHandler) GetBlockedUsers(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -300,14 +324,16 @@ func (h *UserHandler) GetBlockedUsers(c *gin.Context) {
 }
 
 // SetNotificationMuted mutes or unmutes notifications for a chat
-// @Tags Users
+// @Tags Профиль
+// @Summary Включить или отключить звук уведомлений чата
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param request body notificationdomain.UpdateNotificationSettingRequest true "Mute settings"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Позволяет отключить или включить звук уведомлений для указанной беседы.
+// @Param id path string true "ID чата"
+// @Param request body notificationdomain.UpdateNotificationSettingRequest true "Настройки звука: muted (boolean, true — отключить звук, false — включить, обязательно)"
+// @Success 200 {object} response.MessageResponse "Настройки уведомлений обновлены"
+// @Failure 400 {object} response.ErrorResponse "Ошибка обновления настроек"
 // @Router /chats/{id}/notifications [put]
 func (h *UserHandler) SetNotificationMuted(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -332,12 +358,14 @@ func (h *UserHandler) SetNotificationMuted(c *gin.Context) {
 }
 
 // IsNotificationMuted checks if notifications are muted for a chat
-// @Tags Users
+// @Tags Профиль
+// @Summary Проверить статус уведомлений чата
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {object} object{muted=boolean}
-// @Failure 400 {object} response.ErrorResponse
+// @Description Проверяет, отключён ли звук уведомлений для указанного чата.
+// @Param id path string true "ID чата"
+// @Success 200 {object} object{muted=boolean} "Статус уведомлений: muted (true — звук отключён, false — включён)"
+// @Failure 400 {object} response.ErrorResponse "Ошибка проверки статуса"
 // @Router /chats/{id}/notifications [get]
 func (h *UserHandler) IsNotificationMuted(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -353,14 +381,16 @@ func (h *UserHandler) IsNotificationMuted(c *gin.Context) {
 }
 
 // UploadAvatar uploads a new avatar image
-// @Tags Users
+// @Tags Профиль
+// @Summary Загрузить аватар
 // @Security BearerAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param avatar formData file true "Avatar image file"
-// @Success 200 {object} userdomain.UserResponse
-// @Failure 400 {object} response.ErrorResponse "Missing or invalid file"
-// @Failure 500 {object} response.ErrorResponse "Server error"
+// @Description Загружает новое изображение аватара для профиля пользователя. Поддерживаются изображения в форматах JPG, PNG и WEBP.
+// @Param avatar formData file true "Файл изображения аватара (JPG, PNG, WEBP)"
+// @Success 200 {object} userdomain.UserResponse "Аватар успешно загружен и профиль обновлён"
+// @Failure 400 {object} response.ErrorResponse "Файл отсутствует или неверный формат"
+// @Failure 500 {object} response.ErrorResponse "Внутренняя ошибка сервера"
 // @Router /users/avatar [post]
 func (h *UserHandler) UploadAvatar(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -410,11 +440,13 @@ func (h *UserHandler) UploadAvatar(c *gin.Context) {
 }
 
 // GetAccountSetting returns the user's account settings
-// @Tags Users
+// @Tags Профиль
+// @Summary Получить настройки аккаунта
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {object} userdomain.AccountSetting
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает текущие настройки учётной записи пользователя, включая параметры приватности и уведомлений.
+// @Success 200 {object} userdomain.AccountSetting "Настройки аккаунта"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения настроек"
 // @Router /account/settings [get]
 func (h *UserHandler) GetAccountSetting(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -429,12 +461,14 @@ func (h *UserHandler) GetAccountSetting(c *gin.Context) {
 }
 
 // GetLastSeen returns the last seen timestamp for a user
-// @Tags Users
+// @Tags Профиль
+// @Summary Получить время последнего посещения
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "User ID"
-// @Success 200 {object} object{userId=string,online=boolean,lastSeen=string}
-// @Failure 404 {object} response.ErrorResponse "User not found"
+// @Description Возвращает информацию о последнем посещении пользователя: статус онлайн и временную метку.
+// @Param id path string true "ID пользователя"
+// @Success 200 {object} object{userId=string,online=boolean,lastSeen=string} "Информация о последнем посещении: userId (ID), online (онлайн ли), lastSeen (время последнего визита)"
+// @Failure 404 {object} response.ErrorResponse "Пользователь не найден"
 // @Router /users/{id}/last-seen [get]
 func (h *UserHandler) GetLastSeen(c *gin.Context) {
 	targetID := c.Param("id")
@@ -454,13 +488,15 @@ func (h *UserHandler) GetLastSeen(c *gin.Context) {
 }
 
 // ChangeUsername changes the user's username
-// @Tags Users
+// @Tags Профиль
+// @Summary Изменить username
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body object{username=string} true "New username"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Изменяет имя пользователя (username). Длина username должна быть от 3 до 32 символов.
+// @Param request body object{username=string} true "Новый username (строка, от 3 до 32 символов, обязательно)"
+// @Success 200 {object} response.MessageResponse "Username успешно изменён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка: неверный формат или username уже занят"
 // @Router /users/username [put]
 func (h *UserHandler) ChangeUsername(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -483,13 +519,15 @@ func (h *UserHandler) ChangeUsername(c *gin.Context) {
 }
 
 // ChangeEmail changes the user's email address
-// @Tags Users
+// @Tags Профиль
+// @Summary Изменить email
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body object{email=string} true "New email"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Изменяет адрес электронной почты пользователя. Новый email должен быть валидным и не занятым другим пользователем.
+// @Param request body object{email=string} true "Новый email (строка, валидный email, обязательно)"
+// @Success 200 {object} response.MessageResponse "Email успешно изменён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка: неверный формат email или адрес уже занят"
 // @Router /users/email [put]
 func (h *UserHandler) ChangeEmail(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -512,13 +550,15 @@ func (h *UserHandler) ChangeEmail(c *gin.Context) {
 }
 
 // UpdateAccountSetting updates the user's account settings
-// @Tags Users
+// @Tags Профиль
+// @Summary Обновить настройки аккаунта
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body userdomain.UpdateAccountSettingRequest true "Settings to update"
-// @Success 200 {object} userdomain.AccountSetting
-// @Failure 400 {object} response.ErrorResponse "Invalid settings"
+// @Description Обновляет настройки учётной записи пользователя, такие как приватность, язык интерфейса и параметры уведомлений.
+// @Param request body userdomain.UpdateAccountSettingRequest true "Обновляемые настройки: language (язык, опционально), privacy (настройки приватности, опционально)"
+// @Success 200 {object} userdomain.AccountSetting "Настройки успешно обновлены"
+// @Failure 400 {object} response.ErrorResponse "Неверные настройки"
 // @Router /account/settings [put]
 func (h *UserHandler) UpdateAccountSetting(c *gin.Context) {
 	userID, _ := c.Get("userID")

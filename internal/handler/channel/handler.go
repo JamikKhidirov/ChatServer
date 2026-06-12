@@ -21,13 +21,15 @@ func NewChannelHandler(channelService service.ChannelService, chatService servic
 }
 
 // Subscribe subscribes to a broadcast channel
-// @Tags Channels
+// @Tags Чаты
+// @Summary Подписаться на канал
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body object{channelId=string} true "Channel ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Подписывает пользователя на указанный канал для получения обновлений и новых постов.
+// @Param request body object{channelId=string} true "Параметры: channelId (ID канала, обязательно)"
+// @Success 200 {object} response.MessageResponse "Подписка оформлена"
+// @Failure 400 {object} response.ErrorResponse "Ошибка подписки"
 // @Router /channels/subscribe [post]
 func (h *ChannelHandler) Subscribe(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -49,13 +51,15 @@ func (h *ChannelHandler) Subscribe(c *gin.Context) {
 }
 
 // Unsubscribe unsubscribes from a broadcast channel
-// @Tags Channels
+// @Tags Чаты
+// @Summary Отписаться от канала
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body object{channelId=string} true "Channel ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Отменяет подписку пользователя на указанный канал. Пользователь перестанет получать обновления.
+// @Param request body object{channelId=string} true "Параметры: channelId (ID канала, обязательно)"
+// @Success 200 {object} response.MessageResponse "Подписка отменена"
+// @Failure 400 {object} response.ErrorResponse "Ошибка отмены подписки"
 // @Router /channels/unsubscribe [post]
 func (h *ChannelHandler) Unsubscribe(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -77,12 +81,14 @@ func (h *ChannelHandler) Unsubscribe(c *gin.Context) {
 }
 
 // GetSubscribers returns subscriber list (admin only)
-// @Tags Channels
+// @Tags Чаты
+// @Summary Получить подписчиков канала
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Channel ID"
-// @Success 200 {array} channeldomain.ChannelSubscriber
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает список подписчиков канала. Доступно только администраторам канала.
+// @Param id path string true "ID канала"
+// @Success 200 {array} channeldomain.ChannelSubscriber "Список подписчиков"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения подписчиков"
 // @Router /channels/{id}/subscribers [get]
 func (h *ChannelHandler) GetSubscribers(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -98,10 +104,12 @@ func (h *ChannelHandler) GetSubscribers(c *gin.Context) {
 }
 
 // GetMyChannels returns channels the user has created or is subscribed to
-// @Tags Channels
+// @Tags Чаты
+// @Summary Получить мои каналы
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} chatdomain.ChatResponse
+// @Description Возвращает список каналов, созданных пользователем или на которые он подписан.
+// @Success 200 {array} chatdomain.ChatResponse "Список каналов"
 // @Router /channels [get]
 func (h *ChannelHandler) GetMyChannels(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -137,15 +145,17 @@ func (h *ChannelHandler) GetMyChannels(c *gin.Context) {
 }
 
 // SetSubscriberRole changes a subscriber's role (admin only)
-// @Tags Channels
+// @Tags Чаты
+// @Summary Изменить роль подписчика канала
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Channel ID"
-// @Param userId path string true "Target user ID"
-// @Param request body object{role=string} true "Role: admin or subscriber"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Изменяет роль подписчика канала: admin (администратор) или subscriber (подписчик). Доступно администраторам.
+// @Param id path string true "ID канала"
+// @Param userId path string true "ID целевого пользователя"
+// @Param request body object{role=string} true "Новая роль: role (admin — администратор, subscriber — подписчик, обязательно)"
+// @Success 200 {object} response.MessageResponse "Роль обновлена"
+// @Failure 400 {object} response.ErrorResponse "Ошибка изменения роли"
 // @Router /channels/{id}/subscribers/{userId}/role [put]
 func (h *ChannelHandler) SetSubscriberRole(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -169,11 +179,13 @@ func (h *ChannelHandler) SetSubscriberRole(c *gin.Context) {
 }
 
 // IsSubscribed checks if user is subscribed to a channel
-// @Tags Channels
+// @Tags Чаты
+// @Summary Проверить подписку на канал
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Channel ID"
-// @Success 200 {object} response.MessageResponse
+// @Description Проверяет, подписан ли текущий пользователь на указанный канал.
+// @Param id path string true "ID канала"
+// @Success 200 {object} response.MessageResponse "Статус подписки: subscribed (boolean)"
 // @Router /channels/{id}/subscribed [get]
 func (h *ChannelHandler) IsSubscribed(c *gin.Context) {
 	userID, _ := c.Get("userID")

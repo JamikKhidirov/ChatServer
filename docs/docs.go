@@ -31,21 +31,23 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Полностью удаляет учётную запись пользователя и все связанные данные. Это действие необратимо.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Удалить аккаунт",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Аккаунт успешно удалён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Deletion failed",
+                        "description": "Ошибка при удалении аккаунта",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -60,21 +62,23 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает текущие настройки учётной записи пользователя, включая параметры приватности и уведомлений.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Получить настройки аккаунта",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Настройки аккаунта",
                         "schema": {
                             "$ref": "#/definitions/userdomain.AccountSetting"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения настроек",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -87,6 +91,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Обновляет настройки учётной записи пользователя, такие как приватность, язык интерфейса и параметры уведомлений.",
                 "consumes": [
                     "application/json"
                 ],
@@ -94,11 +99,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Обновить настройки аккаунта",
                 "parameters": [
                     {
-                        "description": "Settings to update",
+                        "description": "Обновляемые настройки: language (язык, опционально), privacy (настройки приватности, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -109,13 +115,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Настройки успешно обновлены",
                         "schema": {
                             "$ref": "#/definitions/userdomain.AccountSetting"
                         }
                     },
                     "400": {
-                        "description": "Invalid settings",
+                        "description": "Неверные настройки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -125,6 +131,7 @@ const docTemplate = `{
         },
         "/auth/admin/register": {
             "post": {
+                "description": "Создаёт учётную запись администратора с повышенными правами. Требует указания секретного ключа администратора, а также email, username и password.",
                 "consumes": [
                     "application/json"
                 ],
@@ -132,11 +139,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Аутентификация"
                 ],
+                "summary": "Зарегистрировать администратора",
                 "parameters": [
                     {
-                        "description": "Admin registration details with secret key",
+                        "description": "Данные для регистрации администратора: username (логин, обязательно), email (почта, обязательно), password (пароль, обязательно), secret (секретный ключ администратора, обязательно), display_name (отображаемое имя, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -147,13 +155,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Returns JWT token + user with isAdmin:true",
+                        "description": "Администратор создан, возвращается JWT-токен и информация о пользователе с правами администратора",
                         "schema": {
                             "$ref": "#/definitions/authdomain.AuthResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid admin secret, email/username taken, or invalid input",
+                        "description": "Неверный секретный ключ, email или username уже заняты, или неверные входные данные",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -168,6 +176,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Обновляет пароль аутентифицированного пользователя. Требуется указать старый пароль для проверки и новый пароль.",
                 "consumes": [
                     "application/json"
                 ],
@@ -175,11 +184,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Аутентификация"
                 ],
+                "summary": "Изменить пароль",
                 "parameters": [
                     {
-                        "description": "Old and new passwords",
+                        "description": "Параметры смены пароля: old_password (старый пароль, обязательно), new_password (новый пароль, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -190,13 +200,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Пароль успешно изменён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid input or wrong password",
+                        "description": "Неверные данные или неправильный старый пароль",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -206,6 +216,7 @@ const docTemplate = `{
         },
         "/auth/login": {
             "post": {
+                "description": "Аутентифицирует пользователя по email и паролю. Возвращает JWT-токен для последующих запросов, а также информацию о пользователе.",
                 "consumes": [
                     "application/json"
                 ],
@@ -213,11 +224,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Аутентификация"
                 ],
+                "summary": "Войти в аккаунт",
                 "parameters": [
                     {
-                        "description": "Login credentials",
+                        "description": "Учётные данные: email (почта, обязательно) и password (пароль, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -228,13 +240,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Успешный вход, возвращается JWT-токен и данные пользователя",
                         "schema": {
                             "$ref": "#/definitions/authdomain.AuthResponse"
                         }
                     },
                     "401": {
-                        "description": "Invalid credentials",
+                        "description": "Неверный email или пароль",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -411,21 +423,23 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Обновляет срок действия текущего JWT-токена для аутентифицированного пользователя. Требует действительный токен в заголовке Authorization.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Аутентификация"
                 ],
+                "summary": "Обновить JWT-токен",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Новый JWT-токен успешно сгенерирован",
                         "schema": {
                             "$ref": "#/definitions/authdomain.RefreshTokenResponse"
                         }
                     },
                     "401": {
-                        "description": "Invalid or expired token",
+                        "description": "Недействительный или просроченный токен",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -435,6 +449,7 @@ const docTemplate = `{
         },
         "/auth/register": {
             "post": {
+                "description": "Создаёт нового пользователя с указанными email, username и паролем. После успешной регистрации возвращается JWT-токен для авторизации.",
                 "consumes": [
                     "application/json"
                 ],
@@ -442,11 +457,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Аутентификация"
                 ],
+                "summary": "Зарегистрировать новый аккаунт",
                 "parameters": [
                     {
-                        "description": "Registration details (username, email, password, display_name)",
+                        "description": "Данные для регистрации: username (логин, обязательно), email (почта, обязательно), password (пароль, обязательно), display_name (отображаемое имя, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -457,13 +473,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Returns JWT token + user object",
+                        "description": "Аккаунт создан, возвращается JWT-токен и информация о пользователе",
                         "schema": {
                             "$ref": "#/definitions/authdomain.AuthResponse"
                         }
                     },
                     "400": {
-                        "description": "Email or username already registered, or invalid input fields",
+                        "description": "Email или username уже зарегистрированы, или неверные поля ввода",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -478,15 +494,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список всех ботов, созданных аутентифицированным пользователем.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Bots"
+                    "Боты"
                 ],
+                "summary": "Получить моих ботов",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список ботов",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -495,7 +513,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения ботов",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -508,6 +526,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт нового бота с указанным именем и конфигурацией. Владелец бота может управлять его настройками.",
                 "consumes": [
                     "application/json"
                 ],
@@ -515,11 +534,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Bots"
+                    "Боты"
                 ],
+                "summary": "Создать бота",
                 "parameters": [
                     {
-                        "description": "Bot name and config",
+                        "description": "Данные бота: name (имя, обязательно), description (описание, опционально), avatar_url (URL аватара, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -530,13 +550,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Бот создан",
                         "schema": {
                             "$ref": "#/definitions/botdomain.Bot"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка создания бота",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -551,6 +571,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Изменяет настройки существующего бота, такие как имя, описание или аватар. Доступно только владельцу.",
                 "consumes": [
                     "application/json"
                 ],
@@ -558,18 +579,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Bots"
+                    "Боты"
                 ],
+                "summary": "Обновить настройки бота",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bot ID",
+                        "description": "ID бота",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Fields to update",
+                        "description": "Обновляемые поля: name (имя, опционально), description (описание, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -580,13 +602,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Бот обновлён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка обновления бота",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -599,16 +621,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет бота и все связанные с ним данные. Доступно только владельцу бота.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Bots"
+                    "Боты"
                 ],
+                "summary": "Удалить бота",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bot ID",
+                        "description": "ID бота",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -616,13 +640,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Бот удалён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка удаления бота",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -637,16 +661,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт новый API-токен для бота, аннулируя старый. Используется при компрометации текущего токена.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Bots"
+                    "Боты"
                 ],
+                "summary": "Перегенерировать токен бота",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bot ID",
+                        "description": "ID бота",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -654,13 +680,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Токен перегенерирован",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка генерации токена",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -675,6 +701,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Инициирует голосовой или видеозвонок в указанном чате. Тип звонка указывается в параметрах.",
                 "consumes": [
                     "application/json"
                 ],
@@ -682,11 +709,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Calls"
+                    "Звонки"
                 ],
+                "summary": "Начать звонок",
                 "parameters": [
                     {
-                        "description": "Chat ID and call type (voice/video)",
+                        "description": "Параметры звонка: chat_id (ID чата, обязательно), type (тип: voice/video, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -697,13 +725,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Звонок начат",
                         "schema": {
                             "$ref": "#/definitions/calldomain.Call"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка инициализации звонка",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -718,6 +746,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Инициирует групповой голосовой или видеозвонок в указанном чате. Все участники чата получают уведомление.",
                 "consumes": [
                     "application/json"
                 ],
@@ -725,11 +754,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Group Calls"
+                    "Звонки"
                 ],
+                "summary": "Начать групповой звонок",
                 "parameters": [
                     {
-                        "description": "Chat ID and call type",
+                        "description": "Параметры группы: chat_id (ID чата, обязательно), type (тип: voice/video, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -740,13 +770,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Групповой звонок начат",
                         "schema": {
                             "$ref": "#/definitions/calldomain.GroupCallResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка инициализации группового звонка",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -761,6 +791,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Позволяет присоединиться к активному групповому звонку, выйти из него, а также управлять микрофоном и камерой.",
                 "consumes": [
                     "application/json"
                 ],
@@ -768,11 +799,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Group Calls"
+                    "Звонки"
                 ],
+                "summary": "Присоединиться к групповому звонку",
                 "parameters": [
                     {
-                        "description": "Call ID and action",
+                        "description": "Действие: call_id (ID звонка, обязательно), action (join/leave/mute/unmute_audio/mute_video/unmute_video, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -783,13 +815,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Действие выполнено",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка выполнения действия",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -804,16 +836,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает информацию о групповом звонке: участники, статус аудио/видео, длительность.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Group Calls"
+                    "Звонки"
                 ],
+                "summary": "Получить детали группового звонка",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Call ID",
+                        "description": "ID звонка",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -821,13 +855,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Детали группового звонка",
                         "schema": {
                             "$ref": "#/definitions/calldomain.GroupCallResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Звонок не найден",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -842,16 +876,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Завершает активный групповой звонок. Доступно только инициатору звонка.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Group Calls"
+                    "Звонки"
                 ],
+                "summary": "Завершить групповой звонок",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Call ID",
+                        "description": "ID звонка",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -859,13 +895,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Групповой звонок завершён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка завершения звонка",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -880,16 +916,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает информацию о звонке по его идентификатору: участники, статус, длительность.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Calls"
+                    "Звонки"
                 ],
+                "summary": "Получить детали звонка",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Call ID",
+                        "description": "ID звонка",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -897,13 +935,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Детали звонка",
                         "schema": {
                             "$ref": "#/definitions/calldomain.Call"
                         }
                     },
                     "404": {
-                        "description": "Not found",
+                        "description": "Звонок не найден",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -918,16 +956,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Завершает активный звонок. Любой участник звонка может его завершить.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Calls"
+                    "Звонки"
                 ],
+                "summary": "Завершить звонок",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Call ID",
+                        "description": "ID звонка",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -935,13 +975,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Звонок завершён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка завершения звонка",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -956,6 +996,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Принимает или отклоняет входящий звонок. Действие указывается в параметрах: accept (принять) или reject (отклонить).",
                 "consumes": [
                     "application/json"
                 ],
@@ -963,18 +1004,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Calls"
+                    "Звонки"
                 ],
+                "summary": "Ответить на звонок",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Call ID",
+                        "description": "ID звонка",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Action: accept or reject",
+                        "description": "Действие: action (строка: accept — принять, reject — отклонить, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -985,13 +1027,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Ответ на звонок отправлен",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка ответа на звонок",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1006,15 +1048,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список каналов, созданных пользователем или на которые он подписан.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Channels"
+                    "Чаты"
                 ],
+                "summary": "Получить мои каналы",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список каналов",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -1032,6 +1076,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Подписывает пользователя на указанный канал для получения обновлений и новых постов.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1039,11 +1084,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Channels"
+                    "Чаты"
                 ],
+                "summary": "Подписаться на канал",
                 "parameters": [
                     {
-                        "description": "Channel ID",
+                        "description": "Параметры: channelId (ID канала, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1059,13 +1105,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Подписка оформлена",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка подписки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1080,6 +1126,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Отменяет подписку пользователя на указанный канал. Пользователь перестанет получать обновления.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1087,11 +1134,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Channels"
+                    "Чаты"
                 ],
+                "summary": "Отписаться от канала",
                 "parameters": [
                     {
-                        "description": "Channel ID",
+                        "description": "Параметры: channelId (ID канала, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1107,13 +1155,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Подписка отменена",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка отмены подписки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1128,16 +1176,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Проверяет, подписан ли текущий пользователь на указанный канал.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Channels"
+                    "Чаты"
                 ],
+                "summary": "Проверить подписку на канал",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Channel ID",
+                        "description": "ID канала",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1145,7 +1195,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Статус подписки: subscribed (boolean)",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
@@ -1160,16 +1210,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список подписчиков канала. Доступно только администраторам канала.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Channels"
+                    "Чаты"
                 ],
+                "summary": "Получить подписчиков канала",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Channel ID",
+                        "description": "ID канала",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1177,7 +1229,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список подписчиков",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -1186,7 +1238,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения подписчиков",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1201,6 +1253,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Изменяет роль подписчика канала: admin (администратор) или subscriber (подписчик). Доступно администраторам.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1208,25 +1261,26 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Channels"
+                    "Чаты"
                 ],
+                "summary": "Изменить роль подписчика канала",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Channel ID",
+                        "description": "ID канала",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Target user ID",
+                        "description": "ID целевого пользователя",
                         "name": "userId",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Role: admin or subscriber",
+                        "description": "Новая роль: role (admin — администратор, subscriber — подписчик, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1242,13 +1296,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Роль обновлена",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка изменения роли",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1263,15 +1317,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает все чаты аутентифицированного пользователя, включая личные и групповые диалоги, отсортированные по времени последней активности.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Получить список чатов",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список чатов пользователя",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -1280,7 +1336,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения списка чатов",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1293,6 +1349,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт новый личный или групповой чат. Для личного чата укажите тип private и список участников. Для группового — тип group, название и участников.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1300,11 +1357,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Создать новый чат",
                 "parameters": [
                     {
-                        "description": "Chat details",
+                        "description": "Данные для создания чата: type (тип: private/group/channel, обязательно), participant_ids (ID участников, обязательно), name (название для группы, опционально), description (описание группы, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1315,13 +1373,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Чат успешно создан",
                         "schema": {
                             "$ref": "#/definitions/chatdomain.ChatResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid input",
+                        "description": "Неверные входные данные",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1336,15 +1394,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список архивированных чатов пользователя.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Получить архивированные чаты",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список архивированных чатов",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -1353,7 +1413,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения архивированных чатов",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1411,16 +1471,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Ищет чаты пользователя по названию или имени собеседника.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Найти чаты по названию",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Search query",
+                        "description": "Поисковый запрос (название чата или имя участника)",
                         "name": "q",
                         "in": "query",
                         "required": true
@@ -1428,7 +1490,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Найденные чаты",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -1437,7 +1499,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Missing query",
+                        "description": "Отсутствует поисковый запрос",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1452,16 +1514,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Находит существующий или создаёт новый личный чат с указанным пользователем. Нельзя создать чат с самим собой.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Начать личный чат с пользователем",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Target user ID to chat with",
+                        "description": "ID пользователя для начала диалога",
                         "name": "userId",
                         "in": "path",
                         "required": true
@@ -1469,25 +1533,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Existing private chat",
+                        "description": "Существующий личный чат",
                         "schema": {
                             "$ref": "#/definitions/chatdomain.ChatResponse"
                         }
                     },
                     "201": {
-                        "description": "New private chat created",
+                        "description": "Новый личный чат создан",
                         "schema": {
                             "$ref": "#/definitions/chatdomain.ChatResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid user ID",
+                        "description": "Неверный ID пользователя",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "Пользователь не найден",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1502,16 +1566,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список активных групповых звонков в указанном чате.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Group Calls"
+                    "Звонки"
                 ],
+                "summary": "Получить активные групповые звонки",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1519,7 +1585,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список активных групповых звонков",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -1528,7 +1594,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения звонков",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1543,16 +1609,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает историю всех звонков, совершённых в указанном чате.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Calls"
+                    "Звонки"
                 ],
+                "summary": "Получить историю звонков",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "chatId",
                         "in": "path",
                         "required": true
@@ -1560,7 +1628,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "История звонков",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -1569,7 +1637,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения истории",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1584,16 +1652,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает полную информацию о чате, включая участников, настройки и последнее сообщение.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Получить детали чата",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1601,13 +1671,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Детали чата",
                         "schema": {
                             "$ref": "#/definitions/chatdomain.ChatResponse"
                         }
                     },
                     "404": {
-                        "description": "Chat not found",
+                        "description": "Чат не найден",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1620,6 +1690,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Обновляет название, описание или аватар группового чата. Требуются права администратора.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1627,18 +1698,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Обновить групповой чат",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Fields to update",
+                        "description": "Обновляемые поля: name (название, опционально), description (описание, опционально), avatar_url (URL аватара, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1649,13 +1721,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Группа обновлена",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка обновления группы",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1668,16 +1740,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет чат. Доступно только владельцу группы или канала. Личные чаты удаляются для всех участников.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Удалить чат",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1685,13 +1759,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Чат успешно удалён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка удаления чата",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1706,16 +1780,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Перемещает чат в архив. Архивированные чаты не отображаются в основном списке, но сохраняют все сообщения.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Архивировать чат",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1723,13 +1799,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Чат архивирован",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка архивации чата",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1744,6 +1820,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Понижает администратора группового чата до обычного участника. Доступно только владельцу группы.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1751,18 +1828,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Понизить с администратора до участника",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Target user ID",
+                        "description": "ID целевого пользователя: userId (строка, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1778,13 +1856,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Пользователь понижен до участника",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка понижения",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1799,16 +1877,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Экспортирует все сообщения из указанного чата в формате JSON для резервного копирования.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Экспортировать сообщения чата",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1816,7 +1896,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Все сообщения чата",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -1825,7 +1905,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка экспорта",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -1840,16 +1920,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Скрывает указанный чат из основного списка чатов пользователя. Чат можно восстановить через поиск.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Скрыть чат из списка",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1857,13 +1939,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Чат скрыт",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка скрытия чата",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2012,16 +2094,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Позволяет аутентифицированному пользователю выйти из группового чата.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Покинуть групповой чат",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -2029,13 +2113,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Вы покинули группу",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка выхода из группы",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2050,48 +2134,50 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает постраничный список медиасообщений из чата. Можно фильтровать по типу (photo, video, audio, document).",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Получить медиафайлы чата",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Media type filter (photo, video, audio, document)",
+                        "description": "Фильтр по типу медиа (photo, video, audio, document)",
                         "name": "type",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Max results (default 50)",
+                        "description": "Максимум результатов (по умолчанию 50)",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Pagination offset (default 0)",
+                        "description": "Смещение пагинации (по умолчанию 0)",
                         "name": "offset",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Paginated media",
+                        "description": "Постраничный список медиа",
                         "schema": {
                             "$ref": "#/definitions/response.APIResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения медиа",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2106,42 +2192,44 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает постраничный список сообщений для указанного чата. Поддерживает пагинацию через параметры limit и offset.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Получить сообщения чата",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Messages per page (default 50)",
+                        "description": "Сообщений на странице (по умолчанию 50)",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Pagination offset (default 0)",
+                        "description": "Смещение пагинации (по умолчанию 0)",
                         "name": "offset",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Paginated messages",
+                        "description": "Постраничный список сообщений",
                         "schema": {
                             "$ref": "#/definitions/response.APIResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения сообщений",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2154,6 +2242,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Отправляет текстовое сообщение в указанный чат. Можно указать тип сообщения, прикрепить ReplyToID для ответа на другое сообщение.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2161,18 +2250,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Отправить сообщение",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Message content",
+                        "description": "Содержимое сообщения: content (текст сообщения, обязательно), type (тип: text/location/..., опционально), reply_to_id (ID сообщения для ответа, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -2183,13 +2273,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Сообщение успешно отправлено",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid input",
+                        "description": "Неверные входные данные",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2204,6 +2294,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Загружает файл и отправляет его как вложение в чат. Поддерживаются различные типы файлов. Можно указать ID сообщения для ответа.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -2211,45 +2302,46 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Загрузить файл",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "file",
-                        "description": "File to upload",
+                        "description": "Файл для загрузки",
                         "name": "file",
                         "in": "formData",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Optional message ID to reply to",
+                        "description": "ID сообщения для ответа (опционально)",
                         "name": "replyToId",
                         "in": "formData"
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Файл загружен и отправлен как сообщение",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Missing file",
+                        "description": "Файл отсутствует",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Server error",
+                        "description": "Внутренняя ошибка сервера",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2316,49 +2408,51 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Ищет сообщения внутри указанного чата по текстовому запросу. Возвращает постраничные результаты.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Искать сообщения в чате",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Search query",
+                        "description": "Поисковый запрос",
                         "name": "q",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Max results (default 50)",
+                        "description": "Максимум результатов (по умолчанию 50)",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Pagination offset (default 0)",
+                        "description": "Смещение пагинации (по умолчанию 0)",
                         "name": "offset",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Paginated results",
+                        "description": "Постраничные результаты поиска",
                         "schema": {
                             "$ref": "#/definitions/response.APIResponse"
                         }
                     },
                     "400": {
-                        "description": "Missing query",
+                        "description": "Отсутствует поисковый запрос",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2429,6 +2523,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Загружает и отправляет голосовое сообщение (аудиозапись) в чат. Поддерживается формат Opus/Ogg.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -2436,19 +2531,20 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Отправить голосовое сообщение",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "file",
-                        "description": "Voice recording (opus/ogg)",
+                        "description": "Аудиозапись голосового сообщения (формат Opus/Ogg)",
                         "name": "voice",
                         "in": "formData",
                         "required": true
@@ -2456,13 +2552,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Голосовое сообщение отправлено",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка загрузки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2477,23 +2573,25 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Повторно отправляет сообщение, которое не было доставлено. Создаёт новое сообщение с тем же содержимым.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Повторно отправить сообщение",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Message ID to resend",
+                        "description": "ID сообщения для повторной отправки",
                         "name": "msgId",
                         "in": "path",
                         "required": true
@@ -2501,13 +2599,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Сообщение повторно отправлено",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка повторной отправки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2522,16 +2620,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Проверяет, отключён ли звук уведомлений для указанного чата.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Проверить статус уведомлений чата",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -2539,7 +2639,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Статус уведомлений: muted (true — звук отключён, false — включён)",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -2550,7 +2650,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка проверки статуса",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2563,6 +2663,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Позволяет отключить или включить звук уведомлений для указанной беседы.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2570,18 +2671,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Включить или отключить звук уведомлений чата",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Mute settings",
+                        "description": "Настройки звука: muted (boolean, true — отключить звук, false — включить, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -2592,13 +2694,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Настройки уведомлений обновлены",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка обновления настроек",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2613,16 +2715,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список ID участников чата, которые в данный момент находятся онлайн.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Получить онлайн-участников чата",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -2630,7 +2734,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список ID онлайн-участников: userIds (массив строк)",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -2644,7 +2748,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения списка",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2659,6 +2763,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Добавляет нового участника в групповой чат. Требуются права администратора.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2666,18 +2771,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Добавить участника в группу",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "User ID to add",
+                        "description": "Данные для добавления: user_id (ID пользователя, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -2688,13 +2794,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Участник добавлен",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка добавления участника",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2709,23 +2815,25 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет указанного участника из группового чата. Требуются права администратора.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Удалить участника из группы",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Target user ID",
+                        "description": "ID пользователя для удаления",
                         "name": "userId",
                         "in": "path",
                         "required": true
@@ -2733,13 +2841,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Участник удалён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка удаления участника",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2754,6 +2862,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Изменяет роль участника в групповом чате: admin (администратор) или member (участник). Требуются права владельца.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2761,25 +2870,26 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Изменить роль участника",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Target user ID",
+                        "description": "ID целевого пользователя",
                         "name": "userId",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Role: admin or member",
+                        "description": "Новая роль: admin (администратор) или member (участник)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -2795,13 +2905,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Роль участника обновлена",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка изменения роли",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2816,6 +2926,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Настраивает права участников группы: кто может отправлять сообщения и добавлять участников. Доступно администраторам.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2823,24 +2934,28 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Установить права группы",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Permissions: everyone, admins",
+                        "description": "Права доступа: who_can_send (кто может писать: everyone/admins, обязательно), who_can_add (кто может добавлять: everyone/admins, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
                             "type": "object",
                             "properties": {
+                                "whoCanAdd": {
+                                    "type": "string"
+                                },
                                 "whoCanSend": {
                                     "type": "string"
                                 }
@@ -2850,13 +2965,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Права обновлены",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка установки прав",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2871,6 +2986,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Загружает новое изображение для аватара группового чата. Поддерживаются форматы JPG, PNG и WEBP.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -2878,19 +2994,20 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Загрузить фото чата",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "file",
-                        "description": "Chat photo image",
+                        "description": "Файл изображения для аватара чата",
                         "name": "photo",
                         "in": "formData",
                         "required": true
@@ -2898,13 +3015,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Фото чата обновлено",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка загрузки фото",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2919,16 +3036,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Закрепляет чат в верхней части списка диалогов для быстрого доступа.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Закрепить чат вверху списка",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -2936,13 +3055,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Чат закреплён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка закрепления чата",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2955,16 +3074,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Открепляет ранее закреплённый чат, возвращая его в обычный порядок списка.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Открепить чат",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -2972,13 +3093,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Чат откреплён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка открепления чата",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2993,16 +3114,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список всех закреплённых сообщений в указанном чате.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Получить закреплённые сообщения",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -3010,7 +3133,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список закреплённых сообщений",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -3019,7 +3142,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения закреплённых сообщений",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3034,16 +3157,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает все голосования, созданные в указанном чате.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Polls"
+                    "Голосований"
                 ],
+                "summary": "Получить список голосований",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -3051,7 +3176,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список голосований",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -3060,7 +3185,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения голосований",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3073,6 +3198,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт новое голосование в указанном чате. Можно задать вопрос и несколько вариантов ответа.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3080,18 +3206,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Polls"
+                    "Голосований"
                 ],
+                "summary": "Создать голосование",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Poll question and options",
+                        "description": "Параметры голосования: question (вопрос, обязательно), options (варианты ответа, обязательно), is_anonymous (анонимное, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -3102,13 +3229,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Голосование создано",
                         "schema": {
                             "$ref": "#/definitions/polldomain.PollWithResults"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка создания голосования",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3123,6 +3250,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Повышает участника группового чата до роли администратора. Доступно только владельцу группы.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3130,18 +3258,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Повысить до администратора",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Target user ID",
+                        "description": "ID целевого пользователя: userId (строка, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -3157,13 +3286,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Пользователь повышен до администратора",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка повышения",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3178,16 +3307,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Помечает все непрочитанные сообщения в чате как прочитанные для текущего пользователя.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Отметить чат как прочитанный",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -3195,13 +3326,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Чат отмечен как прочитанный",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка отметки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3216,6 +3347,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Устанавливает интервал медленного режима в групповом чате. Участники смогут отправлять сообщения не чаще указанного интервала. 0 — отключить.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3223,18 +3355,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Установить медленный режим",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Slow mode interval in seconds (0-3600, 0=disabled)",
+                        "description": "Интервал медленного режима в секундах (0-3600, 0 = отключено): seconds (целое число, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -3250,13 +3383,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Медленный режим обновлён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid value",
+                        "description": "Неверное значение интервала",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3271,6 +3404,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Передаёт права владельца группового чата другому участнику. Доступно только текущему владельцу.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3278,18 +3412,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Передать права владельца группы",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "New owner user ID",
+                        "description": "ID нового владельца: userId (строка, ID пользователя, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -3305,13 +3440,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Права владельца переданы",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка передачи прав",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3326,16 +3461,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает архивированный чат обратно в основной список диалогов.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Разархивировать чат",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -3343,13 +3480,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Чат разархивирован",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка разархивации чата",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3502,6 +3639,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Загружает и устанавливает фоновое изображение (обои) для указанного чата.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -3509,19 +3647,20 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Chats"
+                    "Чаты"
                 ],
+                "summary": "Установить обои чата",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "file",
-                        "description": "Wallpaper image",
+                        "description": "Изображение для обоев чата",
                         "name": "wallpaper",
                         "in": "formData",
                         "required": true
@@ -3529,13 +3668,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Обои чата установлены",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка загрузки обоев",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3550,15 +3689,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает все синхронизированные контакты пользователя с информацией о регистрации на платформе.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Contacts"
+                    "Контакты"
                 ],
+                "summary": "Получить список контактов",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список контактов пользователя",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -3567,7 +3708,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения контактов",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3582,6 +3723,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Обновляет фотографию, связанную с контактом из телефонной книги.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3589,11 +3731,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Contacts"
+                    "Контакты"
                 ],
+                "summary": "Обновить фото контакта",
                 "parameters": [
                     {
-                        "description": "Phone and photo URL",
+                        "description": "Данные для обновления: phone (номер телефона, обязательно), photo_url (URL фотографии, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -3604,13 +3747,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Фото контакта обновлено",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка обновления фото",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3625,15 +3768,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Проверяет, какие из контактов телефонной книги пользователя уже зарегистрированы на платформе.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Contacts"
+                    "Контакты"
                 ],
+                "summary": "Найти зарегистрированных пользователей среди контактов",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список зарегистрированных пользователей из контактов",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -3642,7 +3787,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка поиска",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3657,16 +3802,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Ищет контакты пользователя по номеру телефона. Поддерживает частичный поиск.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Contacts"
+                    "Контакты"
                 ],
+                "summary": "Найти контакты по номеру телефона",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Phone number or partial to search",
+                        "description": "Номер телефона или его часть для поиска",
                         "name": "q",
                         "in": "query",
                         "required": true
@@ -3674,7 +3821,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Найденные контакты",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -3683,7 +3830,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Missing query",
+                        "description": "Отсутствует поисковый запрос",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3698,6 +3845,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Синхронизирует телефонную книгу пользователя с сервером. Позволяет найти друзей, уже зарегистрированных в приложении.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3705,11 +3853,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Contacts"
+                    "Контакты"
                 ],
+                "summary": "Синхронизировать контакты телефона",
                 "parameters": [
                     {
-                        "description": "Contact list to sync",
+                        "description": "Список контактов для синхронизации: contacts (массив объектов с phone и name, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -3720,13 +3869,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Контакты успешно синхронизированы",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка синхронизации",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3741,16 +3890,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает сохранённый черновик сообщения для указанного чата.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Drafts"
+                    "Черновики"
                 ],
+                "summary": "Получить черновик чата",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Chat ID",
+                        "description": "ID чата",
                         "name": "chatId",
                         "in": "query",
                         "required": true
@@ -3758,13 +3909,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Черновик сообщения",
                         "schema": {
                             "$ref": "#/definitions/draftdomain.Draft"
                         }
                     },
                     "404": {
-                        "description": "No draft",
+                        "description": "Черновик не найден",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3777,6 +3928,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Сохраняет черновик сообщения для указанного чата. Черновик можно будет позже восстановить и отредактировать.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3784,11 +3936,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Drafts"
+                    "Черновики"
                 ],
+                "summary": "Сохранить черновик сообщения",
                 "parameters": [
                     {
-                        "description": "Chat ID and draft content",
+                        "description": "Данные черновика: chat_id (ID чата, обязательно), content (текст сообщения, обязательно), reply_to_id (ID сообщения для ответа, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -3799,13 +3952,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Черновик сохранён",
                         "schema": {
                             "$ref": "#/definitions/draftdomain.Draft"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка сохранения черновика",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -3820,16 +3973,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет сохранённый черновик сообщения по его идентификатору.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Drafts"
+                    "Черновики"
                 ],
+                "summary": "Удалить черновик",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Draft ID",
+                        "description": "ID черновика",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -3837,13 +3992,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Черновик удалён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка удаления черновика",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4014,16 +4169,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Загружает ранее загруженный файл по его имени из директории uploads.",
                 "produces": [
                     "application/octet-stream"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Скачать файл",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Filename to download",
+                        "description": "Имя файла для скачивания",
                         "name": "filename",
                         "in": "path",
                         "required": true
@@ -4031,13 +4188,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Файл успешно загружен",
                         "schema": {
                             "type": "file"
                         }
                     },
                     "404": {
-                        "description": "File not found",
+                        "description": "Файл не найден",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4211,15 +4368,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список URL всех GIF-изображений, сохранённых пользователем.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Gifs"
+                    "GIF"
                 ],
+                "summary": "Получить сохранённые GIF",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список URL сохранённых GIF",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -4228,7 +4387,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения GIF",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4241,6 +4400,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Сохраняет URL GIF-изображения в коллекцию пользователя для быстрого доступа при отправке.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4248,11 +4408,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Gifs"
+                    "GIF"
                 ],
+                "summary": "Сохранить GIF",
                 "parameters": [
                     {
-                        "description": "GIF URL",
+                        "description": "Параметры: url (URL GIF-изображения, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -4268,13 +4429,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "GIF сохранён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка сохранения GIF",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4287,6 +4448,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет GIF-изображение из коллекции пользователя по его URL.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4294,11 +4456,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Gifs"
+                    "GIF"
                 ],
+                "summary": "Удалить GIF из коллекции",
                 "parameters": [
                     {
-                        "description": "GIF URL to remove",
+                        "description": "Параметры: url (URL GIF для удаления, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -4314,13 +4477,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "GIF удалён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка удаления GIF",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4335,6 +4498,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет несколько сообщений для текущего пользователя. Сообщения удаляются только для отправителя.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4342,11 +4506,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Массовое удаление сообщений",
                 "parameters": [
                     {
-                        "description": "Message IDs to delete",
+                        "description": "Параметры: messageIds (массив ID сообщений для удаления, обязательно, мин. 1)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -4365,13 +4530,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Сообщения удалены",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка удаления",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4386,6 +4551,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Пересылает сообщение из одного чата в другой. Исходное сообщение остаётся без изменений.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4393,11 +4559,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Переслать сообщение",
                 "parameters": [
                     {
-                        "description": "Forward details",
+                        "description": "Детали пересылки: message_id (ID сообщения, обязательно), from_chat_id (ID исходного чата, обязательно), to_chat_id (ID целевого чата, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -4408,13 +4575,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Сообщение переслано",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка пересылки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4429,6 +4596,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Помечает несколько сообщений как прочитанные за один запрос. Принимает массив ID сообщений и ID чата.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4436,11 +4604,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Отметить несколько сообщений как прочитанные",
                 "parameters": [
                     {
-                        "description": "Message IDs to mark as read",
+                        "description": "Параметры: messageIds (массив ID сообщений, обязательно, мин. 1), chatId (ID чата, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -4462,13 +4631,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Сообщения отмечены как прочитанные",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка отметки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4596,42 +4765,44 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Ищет сообщения по всем чатам пользователя. Возвращает постраничные результаты с информацией о чате.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Искать сообщения по всем чатам",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Search query",
+                        "description": "Поисковый запрос",
                         "name": "q",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Max results (default 50)",
+                        "description": "Максимум результатов (по умолчанию 50)",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Pagination offset (default 0)",
+                        "description": "Смещение пагинации (по умолчанию 0)",
                         "name": "offset",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Paginated results",
+                        "description": "Постраничные результаты поиска",
                         "schema": {
                             "$ref": "#/definitions/response.APIResponse"
                         }
                     },
                     "400": {
-                        "description": "Missing query",
+                        "description": "Отсутствует поисковый запрос",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4646,15 +4817,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает все сообщения, добавленные пользователем в избранное.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Получить избранные сообщения",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список избранных сообщений",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -4663,7 +4836,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения списка",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4678,16 +4851,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает одно сообщение по его уникальному идентификатору.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Получить сообщение по ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -4695,13 +4870,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Информация о сообщении",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения сообщения",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4714,6 +4889,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Редактирует текст сообщения. Доступно только отправителю сообщения.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4721,18 +4897,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Редактировать сообщение",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Updated content",
+                        "description": "Обновлённое содержание: content (новый текст сообщения, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -4743,13 +4920,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Сообщение отредактировано",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid input or not owner",
+                        "description": "Неверные данные или сообщение принадлежит другому пользователю",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4762,16 +4939,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет сообщение (мягкое удаление). Доступно только отправителю сообщения.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Удалить сообщение",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -4779,13 +4958,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Сообщение удалено",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Not owner",
+                        "description": "Недостаточно прав для удаления",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4800,16 +4979,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет сообщение только для текущего пользователя. Остальные участники чата по-прежнему видят сообщение.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Удалить сообщение только для себя",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -4817,13 +4998,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Сообщение удалено для вас",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка удаления",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4838,16 +5019,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает историю редактирования сообщения, включая все предыдущие версии текста.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Получить историю изменений сообщения",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -4855,13 +5038,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "История изменений сообщения",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения истории",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4876,6 +5059,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Закрепляет или открепляет сообщение в чате. Закреплённые сообщения отображаются в верхней части чата.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4883,18 +5067,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Закрепить или открепить сообщение",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "pin: true to pin, false to unpin",
+                        "description": "Параметры: pin (boolean, true — закрепить, false — открепить, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -4905,13 +5090,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Статус закрепления изменён",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка изменения статуса",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4926,6 +5111,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Добавляет реакцию в виде эмодзи к указанному сообщению. Пользователь может добавить только одну реакцию каждого типа.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4933,18 +5119,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Добавить реакцию к сообщению",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Emoji to add",
+                        "description": "Эмодзи для реакции: emoji (строка с эмодзи, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -4955,13 +5142,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Реакция добавлена",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка добавления реакции",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -4974,23 +5161,25 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет ранее добавленную реакцию (эмодзи) с указанного сообщения.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Удалить реакцию с сообщения",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Emoji to remove",
+                        "description": "Эмодзи для удаления",
                         "name": "emoji",
                         "in": "query",
                         "required": true
@@ -4998,13 +5187,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Реакция удалена",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка удаления реакции",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5019,16 +5208,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Помечает одно сообщение как прочитанное для текущего пользователя.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Отметить сообщение как прочитанное",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -5036,13 +5227,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Сообщение отмечено как прочитанное",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка отметки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5057,6 +5248,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Отправляет жалобу на сообщение модераторам. Необходимо указать причину жалобы.",
                 "consumes": [
                     "application/json"
                 ],
@@ -5064,18 +5256,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Пожаловаться на сообщение",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Report reason",
+                        "description": "Причина жалобы: reason (строка, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -5091,13 +5284,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Жалоба отправлена",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка отправки жалобы",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5162,16 +5355,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Добавляет сообщение в список избранных для быстрого доступа. Звёздочка видна только пользователю.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Добавить сообщение в избранное",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -5179,13 +5374,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Сообщение добавлено в избранное",
                         "schema": {
                             "$ref": "#/definitions/messagedomain.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка добавления",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5198,16 +5393,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет сообщение из списка избранных.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Messages"
+                    "Сообщения"
                 ],
+                "summary": "Удалить сообщение из избранного",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message ID",
+                        "description": "ID сообщения",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -5215,13 +5412,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Сообщение удалено из избранного",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка удаления",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5236,16 +5433,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Закрывает голосование для дальнейшего голосования. Доступно только создателю голосования.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Polls"
+                    "Голосований"
                 ],
+                "summary": "Закрыть голосование",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Poll ID",
+                        "description": "ID голосования",
                         "name": "pollId",
                         "in": "path",
                         "required": true
@@ -5253,13 +5452,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Голосование закрыто",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Not the creator",
+                        "description": "Недостаточно прав для закрытия",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5274,6 +5473,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Отдаёт голос за один из вариантов ответа в указанном голосовании.",
                 "consumes": [
                     "application/json"
                 ],
@@ -5281,18 +5481,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Polls"
+                    "Голосований"
                 ],
+                "summary": "Проголосовать",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Poll ID",
+                        "description": "ID голосования",
                         "name": "pollId",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Selected option index",
+                        "description": "Выбранный вариант: option_index (индекс варианта, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -5303,13 +5504,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Голос учтён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Already voted or invalid option",
+                        "description": "Уже голосовали или неверный вариант",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5409,15 +5610,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список всех активных сессий аутентифицированного пользователя, включая информацию об устройстве и времени входа.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Sessions"
+                    "Сессии"
                 ],
+                "summary": "Получить активные сессии",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список активных сессий",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -5426,7 +5629,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения сессий",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5439,21 +5642,23 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Завершает все активные сессии пользователя, кроме текущей. Полезно при подозрении на несанкционированный доступ.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Sessions"
+                    "Сессии"
                 ],
+                "summary": "Завершить все сессии",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Все остальные сессии завершены",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка завершения сессий",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5468,16 +5673,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Завершает указанную активную сессию пользователя. Пользователь будет вынужден авторизоваться заново на этом устройстве.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Sessions"
+                    "Сессии"
                 ],
+                "summary": "Завершить сессию",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Session ID",
+                        "description": "ID сессии",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -5485,13 +5692,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Сессия завершена",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка завершения сессии",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5506,15 +5713,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список стикеров, добавленных пользователем в личную библиотеку.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Stickers"
+                    "Стикеры"
                 ],
+                "summary": "Получить библиотеку стикеров",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Библиотека стикеров",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -5523,7 +5732,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения библиотеки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5536,6 +5745,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Добавляет стикер в личную библиотеку пользователя для быстрого доступа.",
                 "consumes": [
                     "application/json"
                 ],
@@ -5543,11 +5753,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Stickers"
+                    "Стикеры"
                 ],
+                "summary": "Добавить стикер в библиотеку",
                 "parameters": [
                     {
-                        "description": "Sticker ID to add",
+                        "description": "Параметры: stickerId (ID стикера, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -5563,13 +5774,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Стикер добавлен в библиотеку",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка добавления",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5584,15 +5795,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список всех общедоступных наборов стикеров на платформе.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Stickers"
+                    "Стикеры"
                 ],
+                "summary": "Получить публичные наборы стикеров",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список публичных наборов стикеров",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -5601,7 +5814,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения наборов",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5614,6 +5827,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт новый набор стикеров с указанным названием и списком стикеров.",
                 "consumes": [
                     "application/json"
                 ],
@@ -5621,11 +5835,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Stickers"
+                    "Стикеры"
                 ],
+                "summary": "Создать набор стикеров",
                 "parameters": [
                     {
-                        "description": "Pack name and stickers",
+                        "description": "Данные набора: name (название, обязательно), stickers (массив стикеров, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -5636,13 +5851,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Набор стикеров создан",
                         "schema": {
                             "$ref": "#/definitions/stickerdomain.StickerPack"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка создания набора",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5657,15 +5872,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает наборы стикеров, созданные аутентифицированным пользователем.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Stickers"
+                    "Стикеры"
                 ],
+                "summary": "Получить мои наборы стикеров",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список ваших наборов стикеров",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -5674,7 +5891,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения наборов",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5689,16 +5906,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает информацию о наборе стикеров и его содержимом по идентификатору.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Stickers"
+                    "Стикеры"
                 ],
+                "summary": "Получить набор стикеров по ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Pack ID",
+                        "description": "ID набора",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -5706,13 +5925,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Информация о наборе стикеров",
                         "schema": {
                             "$ref": "#/definitions/stickerdomain.StickerPack"
                         }
                     },
                     "404": {
-                        "description": "Not found",
+                        "description": "Набор не найден",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5725,16 +5944,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет набор стикеров и все его содержимое. Доступно только владельцу набора.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Stickers"
+                    "Стикеры"
                 ],
+                "summary": "Удалить набор стикеров",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Pack ID",
+                        "description": "ID набора",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -5742,13 +5963,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Набор стикеров удалён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка удаления набора",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5763,6 +5984,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Добавляет новый стикер в существующий набор стикеров. Доступно только владельцу набора.",
                 "consumes": [
                     "application/json"
                 ],
@@ -5770,18 +5992,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Stickers"
+                    "Стикеры"
                 ],
+                "summary": "Добавить стикер в набор",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Pack ID",
+                        "description": "ID набора",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Sticker details",
+                        "description": "Данные стикера: image_url (URL изображения, обязательно), emoji (связанный эмодзи, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -5792,13 +6015,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Стикер добавлен",
                         "schema": {
                             "$ref": "#/definitions/stickerdomain.Sticker"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка добавления стикера",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6032,6 +6255,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Загружает новое изображение аватара для профиля пользователя. Поддерживаются изображения в форматах JPG, PNG и WEBP.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -6039,12 +6263,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Загрузить аватар",
                 "parameters": [
                     {
                         "type": "file",
-                        "description": "Avatar image file",
+                        "description": "Файл изображения аватара (JPG, PNG, WEBP)",
                         "name": "avatar",
                         "in": "formData",
                         "required": true
@@ -6052,19 +6277,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Аватар успешно загружен и профиль обновлён",
                         "schema": {
                             "$ref": "#/definitions/userdomain.UserResponse"
                         }
                     },
                     "400": {
-                        "description": "Missing or invalid file",
+                        "description": "Файл отсутствует или неверный формат",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Server error",
+                        "description": "Внутренняя ошибка сервера",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6079,6 +6304,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Блокирует указанного пользователя. Заблокированный пользователь не сможет отправлять вам сообщения или звонить.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6086,11 +6312,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Заблокировать пользователя",
                 "parameters": [
                     {
-                        "description": "User ID to block",
+                        "description": "Данные для блокировки: blocked_id (ID пользователя для блокировки, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -6101,13 +6328,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Пользователь заблокирован",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Block failed",
+                        "description": "Ошибка блокировки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6122,16 +6349,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Снимает блокировку с указанного пользователя, восстанавливая возможность общения.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Разблокировать пользователя",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID to unblock",
+                        "description": "ID пользователя для разблокировки",
                         "name": "userId",
                         "in": "path",
                         "required": true
@@ -6139,13 +6368,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Пользователь разблокирован",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Unblock failed",
+                        "description": "Ошибка разблокировки",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6160,15 +6389,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список всех пользователей, заблокированных аутентифицированным пользователем.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Получить список заблокированных пользователей",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Список заблокированных пользователей",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -6177,7 +6408,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка получения списка",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6192,6 +6423,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Изменяет адрес электронной почты пользователя. Новый email должен быть валидным и не занятым другим пользователем.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6199,11 +6431,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Изменить email",
                 "parameters": [
                     {
-                        "description": "New email",
+                        "description": "Новый email (строка, валидный email, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -6219,13 +6452,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Email успешно изменён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка: неверный формат email или адрес уже занят",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6240,21 +6473,23 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает полную информацию о профиле аутентифицированного пользователя, включая имя, email, аватар и настройки.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Получить профиль пользователя",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Профиль пользователя успешно получен",
                         "schema": {
                             "$ref": "#/definitions/userdomain.UserResponse"
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "Пользователь не найден",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6267,6 +6502,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Обновляет поля профиля аутентифицированного пользователя. Можно изменить отображаемое имя, биографию, аватар и другие настройки профиля.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6274,11 +6510,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Обновить профиль пользователя",
                 "parameters": [
                     {
-                        "description": "Profile fields to update",
+                        "description": "Обновляемые поля профиля: display_name (отображаемое имя, опционально), bio (биография, опционально), avatar_url (URL аватара, опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -6289,13 +6526,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Профиль успешно обновлён",
                         "schema": {
                             "$ref": "#/definitions/userdomain.UserResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid input",
+                        "description": "Неверные входные данные",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6310,6 +6547,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Отправляет тестовое push-уведомление на устройство пользователя для проверки настроек уведомлений.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6317,11 +6555,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Отправить тестовое push-уведомление",
                 "parameters": [
                     {
-                        "description": "Push notification fields",
+                        "description": "Параметры уведомления: title (заголовок, обязательно), body (текст, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -6340,13 +6579,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Тестовое уведомление отправлено",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid input",
+                        "description": "Неверные входные данные",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6361,6 +6600,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Обновляет токен push-уведомлений для устройства пользователя. Необходимо для получения уведомлений на мобильные устройства.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6368,11 +6608,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Обновить push-токен",
                 "parameters": [
                     {
-                        "description": "Push token details",
+                        "description": "Данные push-токена: token (строка, токен устройства, обязательно), provider (строка, провайдер: fcm/apns, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -6383,13 +6624,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Push-токен успешно обновлён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid token",
+                        "description": "Неверный токен",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6404,42 +6645,44 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Ищет пользователей по имени, username или email. Возвращает постраничный список результатов.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Найти пользователей",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Search query",
+                        "description": "Поисковый запрос (имя, username или email)",
                         "name": "q",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Max results (default 50)",
+                        "description": "Максимум результатов (по умолчанию 50)",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Pagination offset (default 0)",
+                        "description": "Смещение пагинации (по умолчанию 0)",
                         "name": "offset",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Paginated user list",
+                        "description": "Постраничный список пользователей",
                         "schema": {
                             "$ref": "#/definitions/response.APIResponse"
                         }
                     },
                     "400": {
-                        "description": "Missing query",
+                        "description": "Отсутствует поисковый запрос",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6454,6 +6697,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Изменяет статус активности пользователя (online, offline, busy, away).",
                 "consumes": [
                     "application/json"
                 ],
@@ -6461,11 +6705,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Обновить статус пользователя",
                 "parameters": [
                     {
-                        "description": "New status",
+                        "description": "Новый статус: status (строка, статус: online/offline/busy/away, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -6476,13 +6721,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Статус успешно обновлён",
                         "schema": {
                             "$ref": "#/definitions/userdomain.UserResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid status",
+                        "description": "Неверный статус",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6497,6 +6742,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Изменяет имя пользователя (username). Длина username должна быть от 3 до 32 символов.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6504,11 +6750,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Изменить username",
                 "parameters": [
                     {
-                        "description": "New username",
+                        "description": "Новый username (строка, от 3 до 32 символов, обязательно)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -6524,13 +6771,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Username успешно изменён",
                         "schema": {
                             "$ref": "#/definitions/response.MessageResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка: неверный формат или username уже занят",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6545,16 +6792,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает информацию о пользователе по его уникальному имени пользователя (username).",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Получить пользователя по username",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Username",
+                        "description": "Username пользователя",
                         "name": "username",
                         "in": "path",
                         "required": true
@@ -6562,13 +6811,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Информация о пользователе",
                         "schema": {
                             "$ref": "#/definitions/userdomain.UserResponse"
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "Пользователь не найден",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6583,16 +6832,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает информацию о пользователе по его уникальному идентификатору.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Получить пользователя по ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "ID пользователя",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -6600,13 +6851,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Информация о пользователе",
                         "schema": {
                             "$ref": "#/definitions/userdomain.UserResponse"
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "Пользователь не найден",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -6621,16 +6872,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает информацию о последнем посещении пользователя: статус онлайн и временную метку.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Профиль"
                 ],
+                "summary": "Получить время последнего посещения",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "ID пользователя",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -6638,7 +6891,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Информация о последнем посещении: userId (ID), online (онлайн ли), lastSeen (время последнего визита)",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -6655,7 +6908,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "Пользователь не найден",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }

@@ -16,11 +16,13 @@ func NewSessionHandler(sessionService service.SessionService) *SessionHandler {
 }
 
 // GetSessions returns all active sessions for the authenticated user
-// @Tags Sessions
+// @Tags Сессии
+// @Summary Получить активные сессии
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} sessiondomain.Session
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает список всех активных сессий аутентифицированного пользователя, включая информацию об устройстве и времени входа.
+// @Success 200 {array} sessiondomain.Session "Список активных сессий"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения сессий"
 // @Router /sessions [get]
 func (h *SessionHandler) GetSessions(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -35,12 +37,14 @@ func (h *SessionHandler) GetSessions(c *gin.Context) {
 }
 
 // DeleteSession terminates a specific session
-// @Tags Sessions
+// @Tags Сессии
+// @Summary Завершить сессию
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Session ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Завершает указанную активную сессию пользователя. Пользователь будет вынужден авторизоваться заново на этом устройстве.
+// @Param id path string true "ID сессии"
+// @Success 200 {object} response.MessageResponse "Сессия завершена"
+// @Failure 400 {object} response.ErrorResponse "Ошибка завершения сессии"
 // @Router /sessions/{id} [delete]
 func (h *SessionHandler) DeleteSession(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -55,11 +59,13 @@ func (h *SessionHandler) DeleteSession(c *gin.Context) {
 }
 
 // DeleteAllSessions terminates all sessions except current
-// @Tags Sessions
+// @Tags Сессии
+// @Summary Завершить все сессии
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Завершает все активные сессии пользователя, кроме текущей. Полезно при подозрении на несанкционированный доступ.
+// @Success 200 {object} response.MessageResponse "Все остальные сессии завершены"
+// @Failure 400 {object} response.ErrorResponse "Ошибка завершения сессий"
 // @Router /sessions [delete]
 func (h *SessionHandler) DeleteAllSessions(c *gin.Context) {
 	userID, _ := c.Get("userID")

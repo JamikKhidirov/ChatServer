@@ -24,14 +24,16 @@ func NewMessageHandler(messageService service.MessageService) *MessageHandler {
 }
 
 // SendMessage sends a message to a chat
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Отправить сообщение
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param request body messagedomain.SendMessageRequest true "Message content"
-// @Success 201 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Invalid input"
+// @Description Отправляет текстовое сообщение в указанный чат. Можно указать тип сообщения, прикрепить ReplyToID для ответа на другое сообщение.
+// @Param id path string true "ID чата"
+// @Param request body messagedomain.SendMessageRequest true "Содержимое сообщения: content (текст сообщения, обязательно), type (тип: text/location/..., опционально), reply_to_id (ID сообщения для ответа, опционально)"
+// @Success 201 {object} messagedomain.MessageResponse "Сообщение успешно отправлено"
+// @Failure 400 {object} response.ErrorResponse "Неверные входные данные"
 // @Router /chats/{id}/messages [post]
 func (h *MessageHandler) SendMessage(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -53,14 +55,16 @@ func (h *MessageHandler) SendMessage(c *gin.Context) {
 }
 
 // GetMessages returns paginated messages for a chat
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Получить сообщения чата
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param limit query int false "Messages per page (default 50)"
-// @Param offset query int false "Pagination offset (default 0)"
-// @Success 200 {object} response.APIResponse "Paginated messages"
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает постраничный список сообщений для указанного чата. Поддерживает пагинацию через параметры limit и offset.
+// @Param id path string true "ID чата"
+// @Param limit query int false "Сообщений на странице (по умолчанию 50)"
+// @Param offset query int false "Смещение пагинации (по умолчанию 0)"
+// @Success 200 {object} response.APIResponse "Постраничный список сообщений"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения сообщений"
 // @Router /chats/{id}/messages [get]
 func (h *MessageHandler) GetMessages(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -79,15 +83,17 @@ func (h *MessageHandler) GetMessages(c *gin.Context) {
 }
 
 // SearchMessages searches messages within a chat
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Искать сообщения в чате
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param q query string true "Search query"
-// @Param limit query int false "Max results (default 50)"
-// @Param offset query int false "Pagination offset (default 0)"
-// @Success 200 {object} response.APIResponse "Paginated results"
-// @Failure 400 {object} response.ErrorResponse "Missing query"
+// @Description Ищет сообщения внутри указанного чата по текстовому запросу. Возвращает постраничные результаты.
+// @Param id path string true "ID чата"
+// @Param q query string true "Поисковый запрос"
+// @Param limit query int false "Максимум результатов (по умолчанию 50)"
+// @Param offset query int false "Смещение пагинации (по умолчанию 0)"
+// @Success 200 {object} response.APIResponse "Постраничные результаты поиска"
+// @Failure 400 {object} response.ErrorResponse "Отсутствует поисковый запрос"
 // @Router /chats/{id}/messages/search [get]
 func (h *MessageHandler) SearchMessages(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -112,14 +118,16 @@ func (h *MessageHandler) SearchMessages(c *gin.Context) {
 }
 
 // EditMessage edits a message (sender only)
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Редактировать сообщение
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Message ID"
-// @Param request body messagedomain.EditMessageRequest true "Updated content"
-// @Success 200 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Invalid input or not owner"
+// @Description Редактирует текст сообщения. Доступно только отправителю сообщения.
+// @Param id path string true "ID сообщения"
+// @Param request body messagedomain.EditMessageRequest true "Обновлённое содержание: content (новый текст сообщения, обязательно)"
+// @Success 200 {object} messagedomain.MessageResponse "Сообщение отредактировано"
+// @Failure 400 {object} response.ErrorResponse "Неверные данные или сообщение принадлежит другому пользователю"
 // @Router /messages/{id} [put]
 func (h *MessageHandler) EditMessage(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -141,12 +149,14 @@ func (h *MessageHandler) EditMessage(c *gin.Context) {
 }
 
 // DeleteMessage deletes a message (soft delete)
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Удалить сообщение
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Message ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Not owner"
+// @Description Удаляет сообщение (мягкое удаление). Доступно только отправителю сообщения.
+// @Param id path string true "ID сообщения"
+// @Success 200 {object} response.MessageResponse "Сообщение удалено"
+// @Failure 400 {object} response.ErrorResponse "Недостаточно прав для удаления"
 // @Router /messages/{id} [delete]
 func (h *MessageHandler) DeleteMessage(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -161,16 +171,18 @@ func (h *MessageHandler) DeleteMessage(c *gin.Context) {
 }
 
 // UploadFile uploads a file as a message attachment
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Загрузить файл
 // @Security BearerAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param file formData file true "File to upload"
-// @Param replyToId formData string false "Optional message ID to reply to"
-// @Success 201 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Missing file"
-// @Failure 500 {object} response.ErrorResponse "Server error"
+// @Description Загружает файл и отправляет его как вложение в чат. Поддерживаются различные типы файлов. Можно указать ID сообщения для ответа.
+// @Param id path string true "ID чата"
+// @Param file formData file true "Файл для загрузки"
+// @Param replyToId formData string false "ID сообщения для ответа (опционально)"
+// @Success 201 {object} messagedomain.MessageResponse "Файл загружен и отправлен как сообщение"
+// @Failure 400 {object} response.ErrorResponse "Файл отсутствует"
+// @Failure 500 {object} response.ErrorResponse "Внутренняя ошибка сервера"
 // @Router /chats/{id}/messages/file [post]
 func (h *MessageHandler) UploadFile(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -226,12 +238,14 @@ func (h *MessageHandler) UploadFile(c *gin.Context) {
 }
 
 // DownloadFile serves a previously uploaded file
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Скачать файл
 // @Security BearerAuth
 // @Produce application/octet-stream
-// @Param filename path string true "Filename to download"
-// @Success 200 {file} binary
-// @Failure 404 {object} response.ErrorResponse "File not found"
+// @Description Загружает ранее загруженный файл по его имени из директории uploads.
+// @Param filename path string true "Имя файла для скачивания"
+// @Success 200 {file} binary "Файл успешно загружен"
+// @Failure 404 {object} response.ErrorResponse "Файл не найден"
 // @Router /files/{filename} [get]
 func (h *MessageHandler) DownloadFile(c *gin.Context) {
 	fileName := c.Param("filename")
@@ -252,14 +266,16 @@ func (h *MessageHandler) DownloadFile(c *gin.Context) {
 }
 
 // AddReaction adds a reaction (emoji) to a message
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Добавить реакцию к сообщению
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Message ID"
-// @Param request body messagedomain.AddReactionRequest true "Emoji to add"
-// @Success 200 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Добавляет реакцию в виде эмодзи к указанному сообщению. Пользователь может добавить только одну реакцию каждого типа.
+// @Param id path string true "ID сообщения"
+// @Param request body messagedomain.AddReactionRequest true "Эмодзи для реакции: emoji (строка с эмодзи, обязательно)"
+// @Success 200 {object} messagedomain.MessageResponse "Реакция добавлена"
+// @Failure 400 {object} response.ErrorResponse "Ошибка добавления реакции"
 // @Router /messages/{id}/reactions [post]
 func (h *MessageHandler) AddReaction(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -281,13 +297,15 @@ func (h *MessageHandler) AddReaction(c *gin.Context) {
 }
 
 // RemoveReaction removes a reaction from a message
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Удалить реакцию с сообщения
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Message ID"
-// @Param emoji query string true "Emoji to remove"
-// @Success 200 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Удаляет ранее добавленную реакцию (эмодзи) с указанного сообщения.
+// @Param id path string true "ID сообщения"
+// @Param emoji query string true "Эмодзи для удаления"
+// @Success 200 {object} messagedomain.MessageResponse "Реакция удалена"
+// @Failure 400 {object} response.ErrorResponse "Ошибка удаления реакции"
 // @Router /messages/{id}/reactions [delete]
 func (h *MessageHandler) RemoveReaction(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -309,14 +327,16 @@ func (h *MessageHandler) RemoveReaction(c *gin.Context) {
 }
 
 // TogglePin pins or unpins a message in a chat
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Закрепить или открепить сообщение
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Message ID"
-// @Param request body messagedomain.PinMessageRequest true "pin: true to pin, false to unpin"
-// @Success 200 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Закрепляет или открепляет сообщение в чате. Закреплённые сообщения отображаются в верхней части чата.
+// @Param id path string true "ID сообщения"
+// @Param request body messagedomain.PinMessageRequest true "Параметры: pin (boolean, true — закрепить, false — открепить, обязательно)"
+// @Success 200 {object} messagedomain.MessageResponse "Статус закрепления изменён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка изменения статуса"
 // @Router /messages/{id}/pin [put]
 func (h *MessageHandler) TogglePin(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -338,12 +358,14 @@ func (h *MessageHandler) TogglePin(c *gin.Context) {
 }
 
 // GetPinned returns all pinned messages in a chat
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Получить закреплённые сообщения
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {array} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает список всех закреплённых сообщений в указанном чате.
+// @Param id path string true "ID чата"
+// @Success 200 {array} messagedomain.MessageResponse "Список закреплённых сообщений"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения закреплённых сообщений"
 // @Router /chats/{id}/pinned [get]
 func (h *MessageHandler) GetPinned(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -359,12 +381,14 @@ func (h *MessageHandler) GetPinned(c *gin.Context) {
 }
 
 // MarkMessageRead marks a single message as read
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Отметить сообщение как прочитанное
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Message ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Помечает одно сообщение как прочитанное для текущего пользователя.
+// @Param id path string true "ID сообщения"
+// @Success 200 {object} response.MessageResponse "Сообщение отмечено как прочитанное"
+// @Failure 400 {object} response.ErrorResponse "Ошибка отметки"
 // @Router /messages/{id}/read [post]
 func (h *MessageHandler) MarkMessageRead(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -379,13 +403,15 @@ func (h *MessageHandler) MarkMessageRead(c *gin.Context) {
 }
 
 // ResendMessage resends a message (useful for failed sends)
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Повторно отправить сообщение
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param msgId path string true "Message ID to resend"
-// @Success 201 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Повторно отправляет сообщение, которое не было доставлено. Создаёт новое сообщение с тем же содержимым.
+// @Param id path string true "ID чата"
+// @Param msgId path string true "ID сообщения для повторной отправки"
+// @Success 201 {object} messagedomain.MessageResponse "Сообщение повторно отправлено"
+// @Failure 400 {object} response.ErrorResponse "Ошибка повторной отправки"
 // @Router /chats/{id}/messages/{msgId}/resend [post]
 func (h *MessageHandler) ResendMessage(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -402,12 +428,14 @@ func (h *MessageHandler) ResendMessage(c *gin.Context) {
 }
 
 // GetMessageByID returns a single message by its ID
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Получить сообщение по ID
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Message ID"
-// @Success 200 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает одно сообщение по его уникальному идентификатору.
+// @Param id path string true "ID сообщения"
+// @Success 200 {object} messagedomain.MessageResponse "Информация о сообщении"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения сообщения"
 // @Router /messages/{id} [get]
 func (h *MessageHandler) GetMessageByID(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -423,13 +451,15 @@ func (h *MessageHandler) GetMessageByID(c *gin.Context) {
 }
 
 // BulkMarkRead marks multiple messages as read
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Отметить несколько сообщений как прочитанные
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body object{messageIds=[]string,chatId=string} true "Message IDs to mark as read"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Помечает несколько сообщений как прочитанные за один запрос. Принимает массив ID сообщений и ID чата.
+// @Param request body object{messageIds=[]string,chatId=string} true "Параметры: messageIds (массив ID сообщений, обязательно, мин. 1), chatId (ID чата, обязательно)"
+// @Success 200 {object} response.MessageResponse "Сообщения отмечены как прочитанные"
+// @Failure 400 {object} response.ErrorResponse "Ошибка отметки"
 // @Router /messages/read/bulk [post]
 func (h *MessageHandler) BulkMarkRead(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -451,13 +481,15 @@ func (h *MessageHandler) BulkMarkRead(c *gin.Context) {
 }
 
 // BulkDeleteMessages soft deletes multiple messages for the current user
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Массовое удаление сообщений
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body object{messageIds=[]string} true "Message IDs to delete"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Удаляет несколько сообщений для текущего пользователя. Сообщения удаляются только для отправителя.
+// @Param request body object{messageIds=[]string} true "Параметры: messageIds (массив ID сообщений для удаления, обязательно, мин. 1)"
+// @Success 200 {object} response.MessageResponse "Сообщения удалены"
+// @Failure 400 {object} response.ErrorResponse "Ошибка удаления"
 // @Router /messages/bulk [delete]
 func (h *MessageHandler) BulkDeleteMessages(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -478,14 +510,16 @@ func (h *MessageHandler) BulkDeleteMessages(c *gin.Context) {
 }
 
 // UploadVoice uploads a voice message
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Отправить голосовое сообщение
 // @Security BearerAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param voice formData file true "Voice recording (opus/ogg)"
-// @Success 201 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Загружает и отправляет голосовое сообщение (аудиозапись) в чат. Поддерживается формат Opus/Ogg.
+// @Param id path string true "ID чата"
+// @Param voice formData file true "Аудиозапись голосового сообщения (формат Opus/Ogg)"
+// @Success 201 {object} messagedomain.MessageResponse "Голосовое сообщение отправлено"
+// @Failure 400 {object} response.ErrorResponse "Ошибка загрузки"
 // @Router /chats/{id}/messages/voice [post]
 func (h *MessageHandler) UploadVoice(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -528,14 +562,16 @@ func (h *MessageHandler) UploadVoice(c *gin.Context) {
 }
 
 // SearchAllMessages searches all chats for the user
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Искать сообщения по всем чатам
 // @Security BearerAuth
 // @Produce json
-// @Param q query string true "Search query"
-// @Param limit query int false "Max results (default 50)"
-// @Param offset query int false "Pagination offset (default 0)"
-// @Success 200 {object} response.APIResponse "Paginated results"
-// @Failure 400 {object} response.ErrorResponse "Missing query"
+// @Description Ищет сообщения по всем чатам пользователя. Возвращает постраничные результаты с информацией о чате.
+// @Param q query string true "Поисковый запрос"
+// @Param limit query int false "Максимум результатов (по умолчанию 50)"
+// @Param offset query int false "Смещение пагинации (по умолчанию 0)"
+// @Success 200 {object} response.APIResponse "Постраничные результаты поиска"
+// @Failure 400 {object} response.ErrorResponse "Отсутствует поисковый запрос"
 // @Router /messages/search [get]
 func (h *MessageHandler) SearchAllMessages(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -559,13 +595,15 @@ func (h *MessageHandler) SearchAllMessages(c *gin.Context) {
 }
 
 // ForwardMessage forwards a message from one chat to another
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Переслать сообщение
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body messagedomain.ForwardMessageRequest true "Forward details"
-// @Success 201 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Пересылает сообщение из одного чата в другой. Исходное сообщение остаётся без изменений.
+// @Param request body messagedomain.ForwardMessageRequest true "Детали пересылки: message_id (ID сообщения, обязательно), from_chat_id (ID исходного чата, обязательно), to_chat_id (ID целевого чата, обязательно)"
+// @Success 201 {object} messagedomain.MessageResponse "Сообщение переслано"
+// @Failure 400 {object} response.ErrorResponse "Ошибка пересылки"
 // @Router /messages/forward [post]
 func (h *MessageHandler) ForwardMessage(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -586,14 +624,16 @@ func (h *MessageHandler) ForwardMessage(c *gin.Context) {
 }
 
 // ReportMessage reports a message for moderation
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Пожаловаться на сообщение
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Message ID"
-// @Param request body object{reason=string} true "Report reason"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Отправляет жалобу на сообщение модераторам. Необходимо указать причину жалобы.
+// @Param id path string true "ID сообщения"
+// @Param request body object{reason=string} true "Причина жалобы: reason (строка, обязательно)"
+// @Success 200 {object} response.MessageResponse "Жалоба отправлена"
+// @Failure 400 {object} response.ErrorResponse "Ошибка отправки жалобы"
 // @Router /messages/{id}/report [post]
 func (h *MessageHandler) ReportMessage(c *gin.Context) {
 	msgID := c.Param("id")
@@ -610,12 +650,14 @@ func (h *MessageHandler) ReportMessage(c *gin.Context) {
 }
 
 // DeleteMessageForMe deletes a message only for the current user
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Удалить сообщение только для себя
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Message ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Удаляет сообщение только для текущего пользователя. Остальные участники чата по-прежнему видят сообщение.
+// @Param id path string true "ID сообщения"
+// @Success 200 {object} response.MessageResponse "Сообщение удалено для вас"
+// @Failure 400 {object} response.ErrorResponse "Ошибка удаления"
 // @Router /messages/{id}/for-me [delete]
 func (h *MessageHandler) DeleteMessageForMe(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -630,12 +672,14 @@ func (h *MessageHandler) DeleteMessageForMe(c *gin.Context) {
 }
 
 // StarMessage stars a message for quick access
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Добавить сообщение в избранное
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Message ID"
-// @Success 200 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Добавляет сообщение в список избранных для быстрого доступа. Звёздочка видна только пользователю.
+// @Param id path string true "ID сообщения"
+// @Success 200 {object} messagedomain.MessageResponse "Сообщение добавлено в избранное"
+// @Failure 400 {object} response.ErrorResponse "Ошибка добавления"
 // @Router /messages/{id}/star [post]
 func (h *MessageHandler) StarMessage(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -651,12 +695,14 @@ func (h *MessageHandler) StarMessage(c *gin.Context) {
 }
 
 // UnstarMessage removes a star from a message
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Удалить сообщение из избранного
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Message ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Удаляет сообщение из списка избранных.
+// @Param id path string true "ID сообщения"
+// @Success 200 {object} response.MessageResponse "Сообщение удалено из избранного"
+// @Failure 400 {object} response.ErrorResponse "Ошибка удаления"
 // @Router /messages/{id}/star [delete]
 func (h *MessageHandler) UnstarMessage(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -671,11 +717,13 @@ func (h *MessageHandler) UnstarMessage(c *gin.Context) {
 }
 
 // GetStarredMessages returns all starred messages for the user
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Получить избранные сообщения
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} chatdomain.StarredMessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает все сообщения, добавленные пользователем в избранное.
+// @Success 200 {array} chatdomain.StarredMessageResponse "Список избранных сообщений"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения списка"
 // @Router /messages/starred [get]
 func (h *MessageHandler) GetStarredMessages(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -690,15 +738,17 @@ func (h *MessageHandler) GetStarredMessages(c *gin.Context) {
 }
 
 // GetChatMedia returns paginated media messages from a chat
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Получить медиафайлы чата
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param type query string false "Media type filter (photo, video, audio, document)"
-// @Param limit query int false "Max results (default 50)"
-// @Param offset query int false "Pagination offset (default 0)"
-// @Success 200 {object} response.APIResponse "Paginated media"
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает постраничный список медиасообщений из чата. Можно фильтровать по типу (photo, video, audio, document).
+// @Param id path string true "ID чата"
+// @Param type query string false "Фильтр по типу медиа (photo, video, audio, document)"
+// @Param limit query int false "Максимум результатов (по умолчанию 50)"
+// @Param offset query int false "Смещение пагинации (по умолчанию 0)"
+// @Success 200 {object} response.APIResponse "Постраничный список медиа"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения медиа"
 // @Router /chats/{id}/media [get]
 func (h *MessageHandler) GetChatMedia(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -717,12 +767,14 @@ func (h *MessageHandler) GetChatMedia(c *gin.Context) {
 }
 
 // GetMessageHistory returns message edit history
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Получить историю изменений сообщения
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Message ID"
-// @Success 200 {object} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает историю редактирования сообщения, включая все предыдущие версии текста.
+// @Param id path string true "ID сообщения"
+// @Success 200 {object} messagedomain.MessageResponse "История изменений сообщения"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения истории"
 // @Router /messages/{id}/history [get]
 func (h *MessageHandler) GetMessageHistory(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -738,12 +790,14 @@ func (h *MessageHandler) GetMessageHistory(c *gin.Context) {
 }
 
 // ExportChat exports all messages from a chat
-// @Tags Messages
+// @Tags Сообщения
+// @Summary Экспортировать сообщения чата
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {array} messagedomain.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Экспортирует все сообщения из указанного чата в формате JSON для резервного копирования.
+// @Param id path string true "ID чата"
+// @Success 200 {array} messagedomain.MessageResponse "Все сообщения чата"
+// @Failure 400 {object} response.ErrorResponse "Ошибка экспорта"
 // @Router /chats/{id}/export [get]
 func (h *MessageHandler) ExportChat(c *gin.Context) {
 	userID, _ := c.Get("userID")

@@ -17,14 +17,16 @@ func NewPollHandler(pollService service.PollService) *PollHandler {
 }
 
 // CreatePoll creates a poll in a chat
-// @Tags Polls
+// @Tags Голосований
+// @Summary Создать голосование
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param request body polldomain.CreatePollRequest true "Poll question and options"
-// @Success 201 {object} polldomain.PollWithResults
-// @Failure 400 {object} response.ErrorResponse
+// @Description Создаёт новое голосование в указанном чате. Можно задать вопрос и несколько вариантов ответа.
+// @Param id path string true "ID чата"
+// @Param request body polldomain.CreatePollRequest true "Параметры голосования: question (вопрос, обязательно), options (варианты ответа, обязательно), is_anonymous (анонимное, опционально)"
+// @Success 201 {object} polldomain.PollWithResults "Голосование создано"
+// @Failure 400 {object} response.ErrorResponse "Ошибка создания голосования"
 // @Router /chats/{id}/polls [post]
 func (h *PollHandler) CreatePoll(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -42,12 +44,14 @@ func (h *PollHandler) CreatePoll(c *gin.Context) {
 }
 
 // GetPolls returns all polls in a chat
-// @Tags Polls
+// @Tags Голосований
+// @Summary Получить список голосований
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {array} polldomain.PollWithResults
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает все голосования, созданные в указанном чате.
+// @Param id path string true "ID чата"
+// @Success 200 {array} polldomain.PollWithResults "Список голосований"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения голосований"
 // @Router /chats/{id}/polls [get]
 func (h *PollHandler) GetPolls(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -61,14 +65,16 @@ func (h *PollHandler) GetPolls(c *gin.Context) {
 }
 
 // Vote casts a vote in a poll
-// @Tags Polls
+// @Tags Голосований
+// @Summary Проголосовать
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param pollId path string true "Poll ID"
-// @Param request body polldomain.VotePollRequest true "Selected option index"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Already voted or invalid option"
+// @Description Отдаёт голос за один из вариантов ответа в указанном голосовании.
+// @Param pollId path string true "ID голосования"
+// @Param request body polldomain.VotePollRequest true "Выбранный вариант: option_index (индекс варианта, обязательно)"
+// @Success 200 {object} response.MessageResponse "Голос учтён"
+// @Failure 400 {object} response.ErrorResponse "Уже голосовали или неверный вариант"
 // @Router /polls/{pollId}/vote [post]
 func (h *PollHandler) Vote(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -86,12 +92,14 @@ func (h *PollHandler) Vote(c *gin.Context) {
 }
 
 // ClosePoll closes a poll (creator only)
-// @Tags Polls
+// @Tags Голосований
+// @Summary Закрыть голосование
 // @Security BearerAuth
 // @Produce json
-// @Param pollId path string true "Poll ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Not the creator"
+// @Description Закрывает голосование для дальнейшего голосования. Доступно только создателю голосования.
+// @Param pollId path string true "ID голосования"
+// @Success 200 {object} response.MessageResponse "Голосование закрыто"
+// @Failure 400 {object} response.ErrorResponse "Недостаточно прав для закрытия"
 // @Router /polls/{pollId}/close [post]
 func (h *PollHandler) ClosePoll(c *gin.Context) {
 	userID, _ := c.Get("userID")

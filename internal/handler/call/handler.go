@@ -17,13 +17,15 @@ func NewCallHandler(callService service.CallService) *CallHandler {
 }
 
 // InitiateCall initiates a voice or video call in a chat
-// @Tags Calls
+// @Tags Звонки
+// @Summary Начать звонок
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body calldomain.InitiateCallRequest true "Chat ID and call type (voice/video)"
-// @Success 201 {object} calldomain.Call
-// @Failure 400 {object} response.ErrorResponse
+// @Description Инициирует голосовой или видеозвонок в указанном чате. Тип звонка указывается в параметрах.
+// @Param request body calldomain.InitiateCallRequest true "Параметры звонка: chat_id (ID чата, обязательно), type (тип: voice/video, обязательно)"
+// @Success 201 {object} calldomain.Call "Звонок начат"
+// @Failure 400 {object} response.ErrorResponse "Ошибка инициализации звонка"
 // @Router /calls [post]
 func (h *CallHandler) InitiateCall(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -45,14 +47,16 @@ func (h *CallHandler) InitiateCall(c *gin.Context) {
 }
 
 // RespondCall accepts or rejects an incoming call
-// @Tags Calls
+// @Tags Звонки
+// @Summary Ответить на звонок
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Call ID"
-// @Param request body calldomain.RespondCallRequest true "Action: accept or reject"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Принимает или отклоняет входящий звонок. Действие указывается в параметрах: accept (принять) или reject (отклонить).
+// @Param id path string true "ID звонка"
+// @Param request body calldomain.RespondCallRequest true "Действие: action (строка: accept — принять, reject — отклонить, обязательно)"
+// @Success 200 {object} response.MessageResponse "Ответ на звонок отправлен"
+// @Failure 400 {object} response.ErrorResponse "Ошибка ответа на звонок"
 // @Router /calls/{id}/respond [post]
 func (h *CallHandler) RespondCall(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -81,12 +85,14 @@ func (h *CallHandler) RespondCall(c *gin.Context) {
 }
 
 // EndCall terminates an active call
-// @Tags Calls
+// @Tags Звонки
+// @Summary Завершить звонок
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Call ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Завершает активный звонок. Любой участник звонка может его завершить.
+// @Param id path string true "ID звонка"
+// @Success 200 {object} response.MessageResponse "Звонок завершён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка завершения звонка"
 // @Router /calls/{id}/end [post]
 func (h *CallHandler) EndCall(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -101,12 +107,14 @@ func (h *CallHandler) EndCall(c *gin.Context) {
 }
 
 // GetCall returns details of a specific call
-// @Tags Calls
+// @Tags Звонки
+// @Summary Получить детали звонка
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Call ID"
-// @Success 200 {object} calldomain.Call
-// @Failure 404 {object} response.ErrorResponse "Not found"
+// @Description Возвращает информацию о звонке по его идентификатору: участники, статус, длительность.
+// @Param id path string true "ID звонка"
+// @Success 200 {object} calldomain.Call "Детали звонка"
+// @Failure 404 {object} response.ErrorResponse "Звонок не найден"
 // @Router /calls/{id} [get]
 func (h *CallHandler) GetCall(c *gin.Context) {
 	callID := c.Param("id")
@@ -121,12 +129,14 @@ func (h *CallHandler) GetCall(c *gin.Context) {
 }
 
 // GetCallHistory returns call history for a chat
-// @Tags Calls
+// @Tags Звонки
+// @Summary Получить историю звонков
 // @Security BearerAuth
 // @Produce json
-// @Param chatId path string true "Chat ID"
-// @Success 200 {array} calldomain.Call
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает историю всех звонков, совершённых в указанном чате.
+// @Param chatId path string true "ID чата"
+// @Success 200 {array} calldomain.Call "История звонков"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения истории"
 // @Router /chats/{chatId}/calls [get]
 func (h *CallHandler) GetCallHistory(c *gin.Context) {
 	userID, _ := c.Get("userID")

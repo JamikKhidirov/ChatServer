@@ -17,13 +17,15 @@ func NewContactHandler(contactService service.ContactService) *ContactHandler {
 }
 
 // SyncContacts synchronizes the user's phone contacts
-// @Tags Contacts
+// @Tags Контакты
+// @Summary Синхронизировать контакты телефона
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body contactdomain.SyncContactsRequest true "Contact list to sync"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Синхронизирует телефонную книгу пользователя с сервером. Позволяет найти друзей, уже зарегистрированных в приложении.
+// @Param request body contactdomain.SyncContactsRequest true "Список контактов для синхронизации: contacts (массив объектов с phone и name, обязательно)"
+// @Success 200 {object} response.MessageResponse "Контакты успешно синхронизированы"
+// @Failure 400 {object} response.ErrorResponse "Ошибка синхронизации"
 // @Router /contacts/sync [post]
 func (h *ContactHandler) SyncContacts(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -43,11 +45,13 @@ func (h *ContactHandler) SyncContacts(c *gin.Context) {
 }
 
 // GetContacts returns all synced contacts for the user
-// @Tags Contacts
+// @Tags Контакты
+// @Summary Получить список контактов
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} contactdomain.ContactResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает все синхронизированные контакты пользователя с информацией о регистрации на платформе.
+// @Success 200 {array} contactdomain.ContactResponse "Список контактов пользователя"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения контактов"
 // @Router /contacts [get]
 func (h *ContactHandler) GetContacts(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -62,12 +66,14 @@ func (h *ContactHandler) GetContacts(c *gin.Context) {
 }
 
 // SearchByPhone searches contacts by phone number
-// @Tags Contacts
+// @Tags Контакты
+// @Summary Найти контакты по номеру телефона
 // @Security BearerAuth
 // @Produce json
-// @Param q query string true "Phone number or partial to search"
-// @Success 200 {array} contactdomain.ContactResponse
-// @Failure 400 {object} response.ErrorResponse "Missing query"
+// @Description Ищет контакты пользователя по номеру телефона. Поддерживает частичный поиск.
+// @Param q query string true "Номер телефона или его часть для поиска"
+// @Success 200 {array} contactdomain.ContactResponse "Найденные контакты"
+// @Failure 400 {object} response.ErrorResponse "Отсутствует поисковый запрос"
 // @Router /contacts/search [get]
 func (h *ContactHandler) SearchByPhone(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -88,11 +94,13 @@ func (h *ContactHandler) SearchByPhone(c *gin.Context) {
 }
 
 // FindRegistered returns contacts that are registered on the platform
-// @Tags Contacts
+// @Tags Контакты
+// @Summary Найти зарегистрированных пользователей среди контактов
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} userdomain.UserResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Проверяет, какие из контактов телефонной книги пользователя уже зарегистрированы на платформе.
+// @Success 200 {array} userdomain.UserResponse "Список зарегистрированных пользователей из контактов"
+// @Failure 400 {object} response.ErrorResponse "Ошибка поиска"
 // @Router /contacts/registered [get]
 func (h *ContactHandler) FindRegistered(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -107,13 +115,15 @@ func (h *ContactHandler) FindRegistered(c *gin.Context) {
 }
 
 // UpdateContactPhoto updates the photo associated with a contact
-// @Tags Contacts
+// @Tags Контакты
+// @Summary Обновить фото контакта
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body contactdomain.UpdateContactPhotoRequest true "Phone and photo URL"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Обновляет фотографию, связанную с контактом из телефонной книги.
+// @Param request body contactdomain.UpdateContactPhotoRequest true "Данные для обновления: phone (номер телефона, обязательно), photo_url (URL фотографии, обязательно)"
+// @Success 200 {object} response.MessageResponse "Фото контакта обновлено"
+// @Failure 400 {object} response.ErrorResponse "Ошибка обновления фото"
 // @Router /contacts/photo [post]
 func (h *ContactHandler) UpdateContactPhoto(c *gin.Context) {
 	userID, _ := c.Get("userID")

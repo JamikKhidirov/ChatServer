@@ -17,13 +17,15 @@ func NewDraftHandler(draftService service.DraftService) *DraftHandler {
 }
 
 // SaveDraft saves a message draft for a chat
-// @Tags Drafts
+// @Tags Черновики
+// @Summary Сохранить черновик сообщения
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body draftdomain.SaveDraftRequest true "Chat ID and draft content"
-// @Success 200 {object} draftdomain.Draft
-// @Failure 400 {object} response.ErrorResponse
+// @Description Сохраняет черновик сообщения для указанного чата. Черновик можно будет позже восстановить и отредактировать.
+// @Param request body draftdomain.SaveDraftRequest true "Данные черновика: chat_id (ID чата, обязательно), content (текст сообщения, обязательно), reply_to_id (ID сообщения для ответа, опционально)"
+// @Success 200 {object} draftdomain.Draft "Черновик сохранён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка сохранения черновика"
 // @Router /drafts [post]
 func (h *DraftHandler) SaveDraft(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -41,12 +43,14 @@ func (h *DraftHandler) SaveDraft(c *gin.Context) {
 }
 
 // GetDraft returns the draft for a specific chat
-// @Tags Drafts
+// @Tags Черновики
+// @Summary Получить черновик чата
 // @Security BearerAuth
 // @Produce json
-// @Param chatId query string true "Chat ID"
-// @Success 200 {object} draftdomain.Draft
-// @Failure 404 {object} response.ErrorResponse "No draft"
+// @Description Возвращает сохранённый черновик сообщения для указанного чата.
+// @Param chatId query string true "ID чата"
+// @Success 200 {object} draftdomain.Draft "Черновик сообщения"
+// @Failure 404 {object} response.ErrorResponse "Черновик не найден"
 // @Router /drafts [get]
 func (h *DraftHandler) GetDraft(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -64,12 +68,14 @@ func (h *DraftHandler) GetDraft(c *gin.Context) {
 }
 
 // DeleteDraft deletes a saved draft
-// @Tags Drafts
+// @Tags Черновики
+// @Summary Удалить черновик
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Draft ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Удаляет сохранённый черновик сообщения по его идентификатору.
+// @Param id path string true "ID черновика"
+// @Success 200 {object} response.MessageResponse "Черновик удалён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка удаления черновика"
 // @Router /drafts/{id} [delete]
 func (h *DraftHandler) DeleteDraft(c *gin.Context) {
 	userID, _ := c.Get("userID")

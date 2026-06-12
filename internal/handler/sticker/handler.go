@@ -17,13 +17,15 @@ func NewStickerHandler(stickerService service.StickerService) *StickerHandler {
 }
 
 // CreatePack creates a new sticker pack
-// @Tags Stickers
+// @Tags Стикеры
+// @Summary Создать набор стикеров
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body stickerdomain.CreateStickerPackRequest true "Pack name and stickers"
-// @Success 201 {object} stickerdomain.StickerPack
-// @Failure 400 {object} response.ErrorResponse
+// @Description Создаёт новый набор стикеров с указанным названием и списком стикеров.
+// @Param request body stickerdomain.CreateStickerPackRequest true "Данные набора: name (название, обязательно), stickers (массив стикеров, обязательно)"
+// @Success 201 {object} stickerdomain.StickerPack "Набор стикеров создан"
+// @Failure 400 {object} response.ErrorResponse "Ошибка создания набора"
 // @Router /stickers/packs [post]
 func (h *StickerHandler) CreatePack(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -41,11 +43,13 @@ func (h *StickerHandler) CreatePack(c *gin.Context) {
 }
 
 // ListPacks returns all public sticker packs
-// @Tags Stickers
+// @Tags Стикеры
+// @Summary Получить публичные наборы стикеров
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} stickerdomain.StickerPack
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает список всех общедоступных наборов стикеров на платформе.
+// @Success 200 {array} stickerdomain.StickerPack "Список публичных наборов стикеров"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения наборов"
 // @Router /stickers/packs [get]
 func (h *StickerHandler) ListPacks(c *gin.Context) {
 	packs, err := h.stickerService.GetPacks()
@@ -57,11 +61,13 @@ func (h *StickerHandler) ListPacks(c *gin.Context) {
 }
 
 // GetMyPacks returns the authenticated user's sticker packs
-// @Tags Stickers
+// @Tags Стикеры
+// @Summary Получить мои наборы стикеров
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} stickerdomain.StickerPack
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает наборы стикеров, созданные аутентифицированным пользователем.
+// @Success 200 {array} stickerdomain.StickerPack "Список ваших наборов стикеров"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения наборов"
 // @Router /stickers/packs/my [get]
 func (h *StickerHandler) GetMyPacks(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -74,12 +80,14 @@ func (h *StickerHandler) GetMyPacks(c *gin.Context) {
 }
 
 // GetPack returns a sticker pack by ID
-// @Tags Stickers
+// @Tags Стикеры
+// @Summary Получить набор стикеров по ID
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Pack ID"
-// @Success 200 {object} stickerdomain.StickerPack
-// @Failure 404 {object} response.ErrorResponse "Not found"
+// @Description Возвращает информацию о наборе стикеров и его содержимом по идентификатору.
+// @Param id path string true "ID набора"
+// @Success 200 {object} stickerdomain.StickerPack "Информация о наборе стикеров"
+// @Failure 404 {object} response.ErrorResponse "Набор не найден"
 // @Router /stickers/packs/{id} [get]
 func (h *StickerHandler) GetPack(c *gin.Context) {
 	id := c.Param("id")
@@ -92,14 +100,16 @@ func (h *StickerHandler) GetPack(c *gin.Context) {
 }
 
 // AddSticker adds a sticker to an existing pack
-// @Tags Stickers
+// @Tags Стикеры
+// @Summary Добавить стикер в набор
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Pack ID"
-// @Param request body stickerdomain.AddStickerRequest true "Sticker details"
-// @Success 201 {object} stickerdomain.Sticker
-// @Failure 400 {object} response.ErrorResponse
+// @Description Добавляет новый стикер в существующий набор стикеров. Доступно только владельцу набора.
+// @Param id path string true "ID набора"
+// @Param request body stickerdomain.AddStickerRequest true "Данные стикера: image_url (URL изображения, обязательно), emoji (связанный эмодзи, опционально)"
+// @Success 201 {object} stickerdomain.Sticker "Стикер добавлен"
+// @Failure 400 {object} response.ErrorResponse "Ошибка добавления стикера"
 // @Router /stickers/packs/{id}/stickers [post]
 func (h *StickerHandler) AddSticker(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -118,12 +128,14 @@ func (h *StickerHandler) AddSticker(c *gin.Context) {
 }
 
 // DeletePack deletes a sticker pack (owner only)
-// @Tags Stickers
+// @Tags Стикеры
+// @Summary Удалить набор стикеров
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Pack ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Удаляет набор стикеров и все его содержимое. Доступно только владельцу набора.
+// @Param id path string true "ID набора"
+// @Success 200 {object} response.MessageResponse "Набор стикеров удалён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка удаления набора"
 // @Router /stickers/packs/{id} [delete]
 func (h *StickerHandler) DeletePack(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -136,13 +148,15 @@ func (h *StickerHandler) DeletePack(c *gin.Context) {
 }
 
 // AddToLibrary adds a sticker to the user's personal library
-// @Tags Stickers
+// @Tags Стикеры
+// @Summary Добавить стикер в библиотеку
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body object{stickerId=string} true "Sticker ID to add"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Добавляет стикер в личную библиотеку пользователя для быстрого доступа.
+// @Param request body object{stickerId=string} true "Параметры: stickerId (ID стикера, обязательно)"
+// @Success 200 {object} response.MessageResponse "Стикер добавлен в библиотеку"
+// @Failure 400 {object} response.ErrorResponse "Ошибка добавления"
 // @Router /stickers/library [post]
 func (h *StickerHandler) AddToLibrary(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -161,11 +175,13 @@ func (h *StickerHandler) AddToLibrary(c *gin.Context) {
 }
 
 // GetLibrary returns the user's personal sticker library
-// @Tags Stickers
+// @Tags Стикеры
+// @Summary Получить библиотеку стикеров
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} stickerdomain.Sticker
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает список стикеров, добавленных пользователем в личную библиотеку.
+// @Success 200 {array} stickerdomain.Sticker "Библиотека стикеров"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения библиотеки"
 // @Router /stickers/library [get]
 func (h *StickerHandler) GetLibrary(c *gin.Context) {
 	userID, _ := c.Get("userID")

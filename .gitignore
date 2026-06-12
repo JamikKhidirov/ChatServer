@@ -10,4 +10,6 @@ ChatServer.exe
 body.json
 
 ChatFrontend/
+frontend/node_modules/
+frontend/dist/
 

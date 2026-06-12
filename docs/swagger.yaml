@@ -1224,43 +1224,52 @@ info:
 paths:
   /account:
     delete:
+      description: Полностью удаляет учётную запись пользователя и все связанные данные.
+        Это действие необратимо.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Аккаунт успешно удалён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Deletion failed
+          description: Ошибка при удалении аккаунта
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить аккаунт
       tags:
-      - Users
+      - Профиль
   /account/settings:
     get:
+      description: Возвращает текущие настройки учётной записи пользователя, включая
+        параметры приватности и уведомлений.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Настройки аккаунта
           schema:
             $ref: '#/definitions/userdomain.AccountSetting'
         "400":
-          description: Bad Request
+          description: Ошибка получения настроек
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить настройки аккаунта
       tags:
-      - Users
+      - Профиль
     put:
       consumes:
       - application/json
+      description: Обновляет настройки учётной записи пользователя, такие как приватность,
+        язык интерфейса и параметры уведомлений.
       parameters:
-      - description: Settings to update
+      - description: 'Обновляемые настройки: language (язык, опционально), privacy
+          (настройки приватности, опционально)'
         in: body
         name: request
         required: true
@@ -1270,23 +1279,28 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Настройки успешно обновлены
           schema:
             $ref: '#/definitions/userdomain.AccountSetting'
         "400":
-          description: Invalid settings
+          description: Неверные настройки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Обновить настройки аккаунта
       tags:
-      - Users
+      - Профиль
   /auth/admin/register:
     post:
       consumes:
       - application/json
+      description: Создаёт учётную запись администратора с повышенными правами. Требует
+        указания секретного ключа администратора, а также email, username и password.
       parameters:
-      - description: Admin registration details with secret key
+      - description: 'Данные для регистрации администратора: username (логин, обязательно),
+          email (почта, обязательно), password (пароль, обязательно), secret (секретный
+          ключ администратора, обязательно), display_name (отображаемое имя, опционально)'
         in: body
         name: request
         required: true
@@ -1296,21 +1310,27 @@ paths:
       - application/json
       responses:
         "201":
-          description: Returns JWT token + user with isAdmin:true
+          description: Администратор создан, возвращается JWT-токен и информация о
+            пользователе с правами администратора
           schema:
             $ref: '#/definitions/authdomain.AuthResponse'
         "400":
-          description: Invalid admin secret, email/username taken, or invalid input
+          description: Неверный секретный ключ, email или username уже заняты, или
+            неверные входные данные
           schema:
             $ref: '#/definitions/response.ErrorResponse'
+      summary: Зарегистрировать администратора
       tags:
-      - Auth
+      - Аутентификация
   /auth/change-password:
     put:
       consumes:
       - application/json
+      description: Обновляет пароль аутентифицированного пользователя. Требуется указать
+        старый пароль для проверки и новый пароль.
       parameters:
-      - description: Old and new passwords
+      - description: 'Параметры смены пароля: old_password (старый пароль, обязательно),
+          new_password (новый пароль, обязательно)'
         in: body
         name: request
         required: true
@@ -1320,23 +1340,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Пароль успешно изменён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Invalid input or wrong password
+          description: Неверные данные или неправильный старый пароль
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Изменить пароль
       tags:
-      - Auth
+      - Аутентификация
   /auth/login:
     post:
       consumes:
       - application/json
+      description: Аутентифицирует пользователя по email и паролю. Возвращает JWT-токен
+        для последующих запросов, а также информацию о пользователе.
       parameters:
-      - description: Login credentials
+      - description: 'Учётные данные: email (почта, обязательно) и password (пароль,
+          обязательно)'
         in: body
         name: request
         required: true
@@ -1346,15 +1370,16 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Успешный вход, возвращается JWT-токен и данные пользователя
           schema:
             $ref: '#/definitions/authdomain.AuthResponse'
         "401":
-          description: Invalid credentials
+          description: Неверный email или пароль
           schema:
             $ref: '#/definitions/response.ErrorResponse'
+      summary: Войти в аккаунт
       tags:
-      - Auth
+      - Аутентификация
   /auth/login/email:
     post:
       consumes:
@@ -1459,27 +1484,34 @@ paths:
       - Auth
   /auth/refresh:
     get:
+      description: Обновляет срок действия текущего JWT-токена для аутентифицированного
+        пользователя. Требует действительный токен в заголовке Authorization.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Новый JWT-токен успешно сгенерирован
           schema:
             $ref: '#/definitions/authdomain.RefreshTokenResponse'
         "401":
-          description: Invalid or expired token
+          description: Недействительный или просроченный токен
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Обновить JWT-токен
       tags:
-      - Auth
+      - Аутентификация
   /auth/register:
     post:
       consumes:
       - application/json
+      description: Создаёт нового пользователя с указанными email, username и паролем.
+        После успешной регистрации возвращается JWT-токен для авторизации.
       parameters:
-      - description: Registration details (username, email, password, display_name)
+      - description: 'Данные для регистрации: username (логин, обязательно), email
+          (почта, обязательно), password (пароль, обязательно), display_name (отображаемое
+          имя, опционально)'
         in: body
         name: request
         required: true
@@ -1489,39 +1521,46 @@ paths:
       - application/json
       responses:
         "201":
-          description: Returns JWT token + user object
+          description: Аккаунт создан, возвращается JWT-токен и информация о пользователе
           schema:
             $ref: '#/definitions/authdomain.AuthResponse'
         "400":
-          description: Email or username already registered, or invalid input fields
+          description: Email или username уже зарегистрированы, или неверные поля
+            ввода
           schema:
             $ref: '#/definitions/response.ErrorResponse'
+      summary: Зарегистрировать новый аккаунт
       tags:
-      - Auth
+      - Аутентификация
   /bots:
     get:
+      description: Возвращает список всех ботов, созданных аутентифицированным пользователем.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список ботов
           schema:
             items:
               $ref: '#/definitions/botdomain.Bot'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения ботов
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить моих ботов
       tags:
-      - Bots
+      - Боты
     post:
       consumes:
       - application/json
+      description: Создаёт нового бота с указанным именем и конфигурацией. Владелец
+        бота может управлять его настройками.
       parameters:
-      - description: Bot name and config
+      - description: 'Данные бота: name (имя, обязательно), description (описание,
+          опционально), avatar_url (URL аватара, опционально)'
         in: body
         name: request
         required: true
@@ -1531,21 +1570,24 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Бот создан
           schema:
             $ref: '#/definitions/botdomain.Bot'
         "400":
-          description: Bad Request
+          description: Ошибка создания бота
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Создать бота
       tags:
-      - Bots
+      - Боты
   /bots/{id}:
     delete:
+      description: Удаляет бота и все связанные с ним данные. Доступно только владельцу
+        бота.
       parameters:
-      - description: Bot ID
+      - description: ID бота
         in: path
         name: id
         required: true
@@ -1554,27 +1596,31 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Бот удалён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка удаления бота
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить бота
       tags:
-      - Bots
+      - Боты
     put:
       consumes:
       - application/json
+      description: Изменяет настройки существующего бота, такие как имя, описание
+        или аватар. Доступно только владельцу.
       parameters:
-      - description: Bot ID
+      - description: ID бота
         in: path
         name: id
         required: true
         type: string
-      - description: Fields to update
+      - description: 'Обновляемые поля: name (имя, опционально), description (описание,
+          опционально)'
         in: body
         name: request
         required: true
@@ -1584,21 +1630,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Бот обновлён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка обновления бота
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Обновить настройки бота
       tags:
-      - Bots
+      - Боты
   /bots/{id}/token:
     post:
+      description: Создаёт новый API-токен для бота, аннулируя старый. Используется
+        при компрометации текущего токена.
       parameters:
-      - description: Bot ID
+      - description: ID бота
         in: path
         name: id
         required: true
@@ -1607,23 +1656,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Токен перегенерирован
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка генерации токена
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Перегенерировать токен бота
       tags:
-      - Bots
+      - Боты
   /calls:
     post:
       consumes:
       - application/json
+      description: Инициирует голосовой или видеозвонок в указанном чате. Тип звонка
+        указывается в параметрах.
       parameters:
-      - description: Chat ID and call type (voice/video)
+      - description: 'Параметры звонка: chat_id (ID чата, обязательно), type (тип:
+          voice/video, обязательно)'
         in: body
         name: request
         required: true
@@ -1633,21 +1686,24 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Звонок начат
           schema:
             $ref: '#/definitions/calldomain.Call'
         "400":
-          description: Bad Request
+          description: Ошибка инициализации звонка
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Начать звонок
       tags:
-      - Calls
+      - Звонки
   /calls/{id}:
     get:
+      description: 'Возвращает информацию о звонке по его идентификатору: участники,
+        статус, длительность.'
       parameters:
-      - description: Call ID
+      - description: ID звонка
         in: path
         name: id
         required: true
@@ -1656,21 +1712,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Детали звонка
           schema:
             $ref: '#/definitions/calldomain.Call'
         "404":
-          description: Not found
+          description: Звонок не найден
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить детали звонка
       tags:
-      - Calls
+      - Звонки
   /calls/{id}/end:
     post:
+      description: Завершает активный звонок. Любой участник звонка может его завершить.
       parameters:
-      - description: Call ID
+      - description: ID звонка
         in: path
         name: id
         required: true
@@ -1679,28 +1737,32 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Звонок завершён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка завершения звонка
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Завершить звонок
       tags:
-      - Calls
+      - Звонки
   /calls/{id}/respond:
     post:
       consumes:
       - application/json
+      description: 'Принимает или отклоняет входящий звонок. Действие указывается
+        в параметрах: accept (принять) или reject (отклонить).'
       parameters:
-      - description: Call ID
+      - description: ID звонка
         in: path
         name: id
         required: true
         type: string
-      - description: 'Action: accept or reject'
+      - description: 'Действие: action (строка: accept — принять, reject — отклонить,
+          обязательно)'
         in: body
         name: request
         required: true
@@ -1710,21 +1772,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Ответ на звонок отправлен
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка ответа на звонок
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Ответить на звонок
       tags:
-      - Calls
+      - Звонки
   /calls/group/{id}:
     get:
+      description: 'Возвращает информацию о групповом звонке: участники, статус аудио/видео,
+        длительность.'
       parameters:
-      - description: Call ID
+      - description: ID звонка
         in: path
         name: id
         required: true
@@ -1733,21 +1798,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Детали группового звонка
           schema:
             $ref: '#/definitions/calldomain.GroupCallResponse'
         "404":
-          description: Not Found
+          description: Звонок не найден
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить детали группового звонка
       tags:
-      - Group Calls
+      - Звонки
   /calls/group/{id}/end:
     post:
+      description: Завершает активный групповой звонок. Доступно только инициатору
+        звонка.
       parameters:
-      - description: Call ID
+      - description: ID звонка
         in: path
         name: id
         required: true
@@ -1756,23 +1824,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Групповой звонок завершён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка завершения звонка
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Завершить групповой звонок
       tags:
-      - Group Calls
+      - Звонки
   /calls/group/initiate:
     post:
       consumes:
       - application/json
+      description: Инициирует групповой голосовой или видеозвонок в указанном чате.
+        Все участники чата получают уведомление.
       parameters:
-      - description: Chat ID and call type
+      - description: 'Параметры группы: chat_id (ID чата, обязательно), type (тип:
+          voice/video, обязательно)'
         in: body
         name: request
         required: true
@@ -1782,23 +1854,27 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Групповой звонок начат
           schema:
             $ref: '#/definitions/calldomain.GroupCallResponse'
         "400":
-          description: Bad Request
+          description: Ошибка инициализации группового звонка
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Начать групповой звонок
       tags:
-      - Group Calls
+      - Звонки
   /calls/group/respond:
     post:
       consumes:
       - application/json
+      description: Позволяет присоединиться к активному групповому звонку, выйти из
+        него, а также управлять микрофоном и камерой.
       parameters:
-      - description: Call ID and action
+      - description: 'Действие: call_id (ID звонка, обязательно), action (join/leave/mute/unmute_audio/mute_video/unmute_video,
+          обязательно)'
         in: body
         name: request
         required: true
@@ -1808,36 +1884,41 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Действие выполнено
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка выполнения действия
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Присоединиться к групповому звонку
       tags:
-      - Group Calls
+      - Звонки
   /channels:
     get:
+      description: Возвращает список каналов, созданных пользователем или на которые
+        он подписан.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список каналов
           schema:
             items:
               $ref: '#/definitions/chatdomain.ChatResponse'
             type: array
       security:
       - BearerAuth: []
+      summary: Получить мои каналы
       tags:
-      - Channels
+      - Чаты
   /channels/{id}/subscribed:
     get:
+      description: Проверяет, подписан ли текущий пользователь на указанный канал.
       parameters:
-      - description: Channel ID
+      - description: ID канала
         in: path
         name: id
         required: true
@@ -1846,17 +1927,20 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 'Статус подписки: subscribed (boolean)'
           schema:
             $ref: '#/definitions/response.MessageResponse'
       security:
       - BearerAuth: []
+      summary: Проверить подписку на канал
       tags:
-      - Channels
+      - Чаты
   /channels/{id}/subscribers:
     get:
+      description: Возвращает список подписчиков канала. Доступно только администраторам
+        канала.
       parameters:
-      - description: Channel ID
+      - description: ID канала
         in: path
         name: id
         required: true
@@ -1865,35 +1949,39 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список подписчиков
           schema:
             items:
               $ref: '#/definitions/channeldomain.ChannelSubscriber'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения подписчиков
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить подписчиков канала
       tags:
-      - Channels
+      - Чаты
   /channels/{id}/subscribers/{userId}/role:
     put:
       consumes:
       - application/json
+      description: 'Изменяет роль подписчика канала: admin (администратор) или subscriber
+        (подписчик). Доступно администраторам.'
       parameters:
-      - description: Channel ID
+      - description: ID канала
         in: path
         name: id
         required: true
         type: string
-      - description: Target user ID
+      - description: ID целевого пользователя
         in: path
         name: userId
         required: true
         type: string
-      - description: 'Role: admin or subscriber'
+      - description: 'Новая роль: role (admin — администратор, subscriber — подписчик,
+          обязательно)'
         in: body
         name: request
         required: true
@@ -1906,23 +1994,26 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Роль обновлена
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка изменения роли
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Изменить роль подписчика канала
       tags:
-      - Channels
+      - Чаты
   /channels/subscribe:
     post:
       consumes:
       - application/json
+      description: Подписывает пользователя на указанный канал для получения обновлений
+        и новых постов.
       parameters:
-      - description: Channel ID
+      - description: 'Параметры: channelId (ID канала, обязательно)'
         in: body
         name: request
         required: true
@@ -1935,23 +2026,26 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Подписка оформлена
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка подписки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Подписаться на канал
       tags:
-      - Channels
+      - Чаты
   /channels/unsubscribe:
     post:
       consumes:
       - application/json
+      description: Отменяет подписку пользователя на указанный канал. Пользователь
+        перестанет получать обновления.
       parameters:
-      - description: Channel ID
+      - description: 'Параметры: channelId (ID канала, обязательно)'
         in: body
         name: request
         required: true
@@ -1964,41 +2058,49 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Подписка отменена
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка отмены подписки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отписаться от канала
       tags:
-      - Channels
+      - Чаты
   /chats:
     get:
+      description: Возвращает все чаты аутентифицированного пользователя, включая
+        личные и групповые диалоги, отсортированные по времени последней активности.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список чатов пользователя
           schema:
             items:
               $ref: '#/definitions/chatdomain.ChatResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения списка чатов
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить список чатов
       tags:
-      - Chats
+      - Чаты
     post:
       consumes:
       - application/json
+      description: Создаёт новый личный или групповой чат. Для личного чата укажите
+        тип private и список участников. Для группового — тип group, название и участников.
       parameters:
-      - description: Chat details
+      - description: 'Данные для создания чата: type (тип: private/group/channel,
+          обязательно), participant_ids (ID участников, обязательно), name (название
+          для группы, опционально), description (описание группы, опционально)'
         in: body
         name: request
         required: true
@@ -2008,21 +2110,23 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Чат успешно создан
           schema:
             $ref: '#/definitions/chatdomain.ChatResponse'
         "400":
-          description: Invalid input
+          description: Неверные входные данные
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Создать новый чат
       tags:
-      - Chats
+      - Чаты
   /chats/{chatId}/active-calls:
     get:
+      description: Возвращает список активных групповых звонков в указанном чате.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2031,23 +2135,25 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список активных групповых звонков
           schema:
             items:
               $ref: '#/definitions/calldomain.GroupCallResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения звонков
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить активные групповые звонки
       tags:
-      - Group Calls
+      - Звонки
   /chats/{chatId}/calls:
     get:
+      description: Возвращает историю всех звонков, совершённых в указанном чате.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: chatId
         required: true
@@ -2056,23 +2162,26 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: История звонков
           schema:
             items:
               $ref: '#/definitions/calldomain.Call'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения истории
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить историю звонков
       tags:
-      - Calls
+      - Звонки
   /chats/{id}:
     delete:
+      description: Удаляет чат. Доступно только владельцу группы или канала. Личные
+        чаты удаляются для всех участников.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2081,20 +2190,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Чат успешно удалён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка удаления чата
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить чат
       tags:
-      - Chats
+      - Чаты
     get:
+      description: Возвращает полную информацию о чате, включая участников, настройки
+        и последнее сообщение.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2103,27 +2215,31 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Детали чата
           schema:
             $ref: '#/definitions/chatdomain.ChatResponse'
         "404":
-          description: Chat not found
+          description: Чат не найден
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить детали чата
       tags:
-      - Chats
+      - Чаты
     put:
       consumes:
       - application/json
+      description: Обновляет название, описание или аватар группового чата. Требуются
+        права администратора.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Fields to update
+      - description: 'Обновляемые поля: name (название, опционально), description
+          (описание, опционально), avatar_url (URL аватара, опционально)'
         in: body
         name: request
         required: true
@@ -2133,21 +2249,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Группа обновлена
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка обновления группы
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Обновить групповой чат
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/archive:
     post:
+      description: Перемещает чат в архив. Архивированные чаты не отображаются в основном
+        списке, но сохраняют все сообщения.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2156,28 +2275,31 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Чат архивирован
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка архивации чата
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Архивировать чат
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/demote:
     post:
       consumes:
       - application/json
+      description: Понижает администратора группового чата до обычного участника.
+        Доступно только владельцу группы.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Target user ID
+      - description: 'ID целевого пользователя: userId (строка, обязательно)'
         in: body
         name: request
         required: true
@@ -2190,21 +2312,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Пользователь понижен до участника
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка понижения
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Понизить с администратора до участника
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/export:
     get:
+      description: Экспортирует все сообщения из указанного чата в формате JSON для
+        резервного копирования.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2213,23 +2338,26 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Все сообщения чата
           schema:
             items:
               $ref: '#/definitions/messagedomain.MessageResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка экспорта
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Экспортировать сообщения чата
       tags:
-      - Messages
+      - Сообщения
   /chats/{id}/hide:
     post:
+      description: Скрывает указанный чат из основного списка чатов пользователя.
+        Чат можно восстановить через поиск.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2238,17 +2366,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Чат скрыт
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка скрытия чата
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Скрыть чат из списка
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/invite-links:
     get:
       parameters:
@@ -2334,8 +2463,10 @@ paths:
       - InviteLinks
   /chats/{id}/leave:
     post:
+      description: Позволяет аутентифицированному пользователю выйти из группового
+        чата.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2344,34 +2475,37 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Вы покинули группу
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка выхода из группы
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Покинуть групповой чат
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/media:
     get:
+      description: Возвращает постраничный список медиасообщений из чата. Можно фильтровать
+        по типу (photo, video, audio, document).
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Media type filter (photo, video, audio, document)
+      - description: Фильтр по типу медиа (photo, video, audio, document)
         in: query
         name: type
         type: string
-      - description: Max results (default 50)
+      - description: Максимум результатов (по умолчанию 50)
         in: query
         name: limit
         type: integer
-      - description: Pagination offset (default 0)
+      - description: Смещение пагинации (по умолчанию 0)
         in: query
         name: offset
         type: integer
@@ -2379,30 +2513,33 @@ paths:
       - application/json
       responses:
         "200":
-          description: Paginated media
+          description: Постраничный список медиа
           schema:
             $ref: '#/definitions/response.APIResponse'
         "400":
-          description: Bad Request
+          description: Ошибка получения медиа
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить медиафайлы чата
       tags:
-      - Messages
+      - Сообщения
   /chats/{id}/messages:
     get:
+      description: Возвращает постраничный список сообщений для указанного чата. Поддерживает
+        пагинацию через параметры limit и offset.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Messages per page (default 50)
+      - description: Сообщений на странице (по умолчанию 50)
         in: query
         name: limit
         type: integer
-      - description: Pagination offset (default 0)
+      - description: Смещение пагинации (по умолчанию 0)
         in: query
         name: offset
         type: integer
@@ -2410,27 +2547,32 @@ paths:
       - application/json
       responses:
         "200":
-          description: Paginated messages
+          description: Постраничный список сообщений
           schema:
             $ref: '#/definitions/response.APIResponse'
         "400":
-          description: Bad Request
+          description: Ошибка получения сообщений
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить сообщения чата
       tags:
-      - Messages
+      - Сообщения
     post:
       consumes:
       - application/json
+      description: Отправляет текстовое сообщение в указанный чат. Можно указать тип
+        сообщения, прикрепить ReplyToID для ответа на другое сообщение.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Message content
+      - description: 'Содержимое сообщения: content (текст сообщения, обязательно),
+          type (тип: text/location/..., опционально), reply_to_id (ID сообщения для
+          ответа, опционально)'
         in: body
         name: request
         required: true
@@ -2440,26 +2582,29 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Сообщение успешно отправлено
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Invalid input
+          description: Неверные входные данные
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отправить сообщение
       tags:
-      - Messages
+      - Сообщения
   /chats/{id}/messages/{msgId}/resend:
     post:
+      description: Повторно отправляет сообщение, которое не было доставлено. Создаёт
+        новое сообщение с тем же содержимым.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Message ID to resend
+      - description: ID сообщения для повторной отправки
         in: path
         name: msgId
         required: true
@@ -2468,33 +2613,36 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Сообщение повторно отправлено
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка повторной отправки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Повторно отправить сообщение
       tags:
-      - Messages
+      - Сообщения
   /chats/{id}/messages/file:
     post:
       consumes:
       - multipart/form-data
+      description: Загружает файл и отправляет его как вложение в чат. Поддерживаются
+        различные типы файлов. Можно указать ID сообщения для ответа.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: File to upload
+      - description: Файл для загрузки
         in: formData
         name: file
         required: true
         type: file
-      - description: Optional message ID to reply to
+      - description: ID сообщения для ответа (опционально)
         in: formData
         name: replyToId
         type: string
@@ -2502,21 +2650,22 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Файл загружен и отправлен как сообщение
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Missing file
+          description: Файл отсутствует
           schema:
             $ref: '#/definitions/response.ErrorResponse'
         "500":
-          description: Server error
+          description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Загрузить файл
       tags:
-      - Messages
+      - Сообщения
   /chats/{id}/messages/location:
     post:
       consumes:
@@ -2565,22 +2714,24 @@ paths:
       - Сообщения
   /chats/{id}/messages/search:
     get:
+      description: Ищет сообщения внутри указанного чата по текстовому запросу. Возвращает
+        постраничные результаты.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Search query
+      - description: Поисковый запрос
         in: query
         name: q
         required: true
         type: string
-      - description: Max results (default 50)
+      - description: Максимум результатов (по умолчанию 50)
         in: query
         name: limit
         type: integer
-      - description: Pagination offset (default 0)
+      - description: Смещение пагинации (по умолчанию 0)
         in: query
         name: offset
         type: integer
@@ -2588,17 +2739,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: Paginated results
+          description: Постраничные результаты поиска
           schema:
             $ref: '#/definitions/response.APIResponse'
         "400":
-          description: Missing query
+          description: Отсутствует поисковый запрос
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Искать сообщения в чате
       tags:
-      - Messages
+      - Сообщения
   /chats/{id}/messages/video-circle:
     post:
       consumes:
@@ -2642,13 +2794,15 @@ paths:
     post:
       consumes:
       - multipart/form-data
+      description: Загружает и отправляет голосовое сообщение (аудиозапись) в чат.
+        Поддерживается формат Opus/Ogg.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Voice recording (opus/ogg)
+      - description: Аудиозапись голосового сообщения (формат Opus/Ogg)
         in: formData
         name: voice
         required: true
@@ -2657,21 +2811,23 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Голосовое сообщение отправлено
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка загрузки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отправить голосовое сообщение
       tags:
-      - Messages
+      - Сообщения
   /chats/{id}/notifications:
     get:
+      description: Проверяет, отключён ли звук уведомлений для указанного чата.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2680,30 +2836,34 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 'Статус уведомлений: muted (true — звук отключён, false — включён)'
           schema:
             properties:
               muted:
                 type: boolean
             type: object
         "400":
-          description: Bad Request
+          description: Ошибка проверки статуса
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Проверить статус уведомлений чата
       tags:
-      - Users
+      - Профиль
     put:
       consumes:
       - application/json
+      description: Позволяет отключить или включить звук уведомлений для указанной
+        беседы.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Mute settings
+      - description: 'Настройки звука: muted (boolean, true — отключить звук, false
+          — включить, обязательно)'
         in: body
         name: request
         required: true
@@ -2713,21 +2873,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Настройки уведомлений обновлены
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка обновления настроек
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Включить или отключить звук уведомлений чата
       tags:
-      - Users
+      - Профиль
   /chats/{id}/online:
     get:
+      description: Возвращает список ID участников чата, которые в данный момент находятся
+        онлайн.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2736,7 +2899,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 'Список ID онлайн-участников: userIds (массив строк)'
           schema:
             properties:
               userIds:
@@ -2745,24 +2908,26 @@ paths:
                 type: array
             type: object
         "400":
-          description: Bad Request
+          description: Ошибка получения списка
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить онлайн-участников чата
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/participants:
     post:
       consumes:
       - application/json
+      description: Добавляет нового участника в групповой чат. Требуются права администратора.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: User ID to add
+      - description: 'Данные для добавления: user_id (ID пользователя, обязательно)'
         in: body
         name: request
         required: true
@@ -2772,26 +2937,29 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Участник добавлен
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка добавления участника
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Добавить участника в группу
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/participants/{userId}:
     delete:
+      description: Удаляет указанного участника из группового чата. Требуются права
+        администратора.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Target user ID
+      - description: ID пользователя для удаления
         in: path
         name: userId
         required: true
@@ -2800,33 +2968,36 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Участник удалён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка удаления участника
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить участника из группы
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/participants/{userId}/role:
     put:
       consumes:
       - application/json
+      description: 'Изменяет роль участника в групповом чате: admin (администратор)
+        или member (участник). Требуются права владельца.'
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Target user ID
+      - description: ID целевого пользователя
         in: path
         name: userId
         required: true
         type: string
-      - description: 'Role: admin or member'
+      - description: 'Новая роль: admin (администратор) или member (участник)'
         in: body
         name: request
         required: true
@@ -2839,33 +3010,39 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Роль участника обновлена
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка изменения роли
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Изменить роль участника
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/permissions:
     put:
       consumes:
       - application/json
+      description: 'Настраивает права участников группы: кто может отправлять сообщения
+        и добавлять участников. Доступно администраторам.'
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: 'Permissions: everyone, admins'
+      - description: 'Права доступа: who_can_send (кто может писать: everyone/admins,
+          обязательно), who_can_add (кто может добавлять: everyone/admins, обязательно)'
         in: body
         name: request
         required: true
         schema:
           properties:
+            whoCanAdd:
+              type: string
             whoCanSend:
               type: string
           type: object
@@ -2873,28 +3050,31 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Права обновлены
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка установки прав
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Установить права группы
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/photo:
     post:
       consumes:
       - multipart/form-data
+      description: Загружает новое изображение для аватара группового чата. Поддерживаются
+        форматы JPG, PNG и WEBP.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Chat photo image
+      - description: Файл изображения для аватара чата
         in: formData
         name: photo
         required: true
@@ -2903,21 +3083,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Фото чата обновлено
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка загрузки фото
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Загрузить фото чата
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/pin:
     delete:
+      description: Открепляет ранее закреплённый чат, возвращая его в обычный порядок
+        списка.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2926,20 +3109,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Чат откреплён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка открепления чата
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Открепить чат
       tags:
-      - Chats
+      - Чаты
     post:
+      description: Закрепляет чат в верхней части списка диалогов для быстрого доступа.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2948,21 +3133,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Чат закреплён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка закрепления чата
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Закрепить чат вверху списка
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/pinned:
     get:
+      description: Возвращает список всех закреплённых сообщений в указанном чате.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2971,23 +3158,25 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список закреплённых сообщений
           schema:
             items:
               $ref: '#/definitions/messagedomain.MessageResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения закреплённых сообщений
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить закреплённые сообщения
       tags:
-      - Messages
+      - Сообщения
   /chats/{id}/polls:
     get:
+      description: Возвращает все голосования, созданные в указанном чате.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -2996,29 +3185,33 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список голосований
           schema:
             items:
               $ref: '#/definitions/polldomain.PollWithResults'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения голосований
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить список голосований
       tags:
-      - Polls
+      - Голосований
     post:
       consumes:
       - application/json
+      description: Создаёт новое голосование в указанном чате. Можно задать вопрос
+        и несколько вариантов ответа.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Poll question and options
+      - description: 'Параметры голосования: question (вопрос, обязательно), options
+          (варианты ответа, обязательно), is_anonymous (анонимное, опционально)'
         in: body
         name: request
         required: true
@@ -3028,28 +3221,31 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Голосование создано
           schema:
             $ref: '#/definitions/polldomain.PollWithResults'
         "400":
-          description: Bad Request
+          description: Ошибка создания голосования
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Создать голосование
       tags:
-      - Polls
+      - Голосований
   /chats/{id}/promote:
     post:
       consumes:
       - application/json
+      description: Повышает участника группового чата до роли администратора. Доступно
+        только владельцу группы.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Target user ID
+      - description: 'ID целевого пользователя: userId (строка, обязательно)'
         in: body
         name: request
         required: true
@@ -3062,21 +3258,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Пользователь повышен до администратора
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка повышения
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Повысить до администратора
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/read:
     post:
+      description: Помечает все непрочитанные сообщения в чате как прочитанные для
+        текущего пользователя.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -3085,28 +3284,32 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Чат отмечен как прочитанный
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка отметки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отметить чат как прочитанный
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/slow-mode:
     put:
       consumes:
       - application/json
+      description: Устанавливает интервал медленного режима в групповом чате. Участники
+        смогут отправлять сообщения не чаще указанного интервала. 0 — отключить.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Slow mode interval in seconds (0-3600, 0=disabled)
+      - description: 'Интервал медленного режима в секундах (0-3600, 0 = отключено):
+          seconds (целое число, обязательно)'
         in: body
         name: request
         required: true
@@ -3119,28 +3322,31 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Медленный режим обновлён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Invalid value
+          description: Неверное значение интервала
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Установить медленный режим
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/transfer-ownership:
     post:
       consumes:
       - application/json
+      description: Передаёт права владельца группового чата другому участнику. Доступно
+        только текущему владельцу.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: New owner user ID
+      - description: 'ID нового владельца: userId (строка, ID пользователя, обязательно)'
         in: body
         name: request
         required: true
@@ -3153,21 +3359,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Права владельца переданы
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка передачи прав
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Передать права владельца группы
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/unarchive:
     post:
+      description: Возвращает архивированный чат обратно в основной список диалогов.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
@@ -3176,17 +3384,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Чат разархивирован
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка разархивации чата
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Разархивировать чат
       tags:
-      - Chats
+      - Чаты
   /chats/{id}/voice-chat:
     post:
       consumes:
@@ -3287,13 +3496,15 @@ paths:
     post:
       consumes:
       - multipart/form-data
+      description: Загружает и устанавливает фоновое изображение (обои) для указанного
+        чата.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: path
         name: id
         required: true
         type: string
-      - description: Wallpaper image
+      - description: Изображение для обоев чата
         in: formData
         name: wallpaper
         required: true
@@ -3302,36 +3513,39 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Обои чата установлены
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка загрузки обоев
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Установить обои чата
       tags:
-      - Chats
+      - Чаты
   /chats/archived:
     get:
+      description: Возвращает список архивированных чатов пользователя.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список архивированных чатов
           schema:
             items:
               $ref: '#/definitions/chatdomain.ChatResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения архивированных чатов
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить архивированные чаты
       tags:
-      - Chats
+      - Чаты
   /chats/join:
     post:
       consumes:
@@ -3360,8 +3574,9 @@ paths:
       - InviteLinks
   /chats/search:
     get:
+      description: Ищет чаты пользователя по названию или имени собеседника.
       parameters:
-      - description: Search query
+      - description: Поисковый запрос (название чата или имя участника)
         in: query
         name: q
         required: true
@@ -3370,23 +3585,26 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Найденные чаты
           schema:
             items:
               $ref: '#/definitions/chatdomain.ChatResponse'
             type: array
         "400":
-          description: Missing query
+          description: Отсутствует поисковый запрос
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Найти чаты по названию
       tags:
-      - Chats
+      - Чаты
   /chats/start/{userId}:
     post:
+      description: Находит существующий или создаёт новый личный чат с указанным пользователем.
+        Нельзя создать чат с самим собой.
       parameters:
-      - description: Target user ID to chat with
+      - description: ID пользователя для начала диалога
         in: path
         name: userId
         required: true
@@ -3395,50 +3613,56 @@ paths:
       - application/json
       responses:
         "200":
-          description: Existing private chat
+          description: Существующий личный чат
           schema:
             $ref: '#/definitions/chatdomain.ChatResponse'
         "201":
-          description: New private chat created
+          description: Новый личный чат создан
           schema:
             $ref: '#/definitions/chatdomain.ChatResponse'
         "400":
-          description: Invalid user ID
+          description: Неверный ID пользователя
           schema:
             $ref: '#/definitions/response.ErrorResponse'
         "404":
-          description: User not found
+          description: Пользователь не найден
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Начать личный чат с пользователем
       tags:
-      - Chats
+      - Чаты
   /contacts:
     get:
+      description: Возвращает все синхронизированные контакты пользователя с информацией
+        о регистрации на платформе.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список контактов пользователя
           schema:
             items:
               $ref: '#/definitions/contactdomain.ContactResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения контактов
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить список контактов
       tags:
-      - Contacts
+      - Контакты
   /contacts/photo:
     post:
       consumes:
       - application/json
+      description: Обновляет фотографию, связанную с контактом из телефонной книги.
       parameters:
-      - description: Phone and photo URL
+      - description: 'Данные для обновления: phone (номер телефона, обязательно),
+          photo_url (URL фотографии, обязательно)'
         in: body
         name: request
         required: true
@@ -3448,40 +3672,46 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Фото контакта обновлено
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка обновления фото
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Обновить фото контакта
       tags:
-      - Contacts
+      - Контакты
   /contacts/registered:
     get:
+      description: Проверяет, какие из контактов телефонной книги пользователя уже
+        зарегистрированы на платформе.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список зарегистрированных пользователей из контактов
           schema:
             items:
               $ref: '#/definitions/userdomain.UserResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка поиска
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Найти зарегистрированных пользователей среди контактов
       tags:
-      - Contacts
+      - Контакты
   /contacts/search:
     get:
+      description: Ищет контакты пользователя по номеру телефона. Поддерживает частичный
+        поиск.
       parameters:
-      - description: Phone number or partial to search
+      - description: Номер телефона или его часть для поиска
         in: query
         name: q
         required: true
@@ -3490,25 +3720,29 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Найденные контакты
           schema:
             items:
               $ref: '#/definitions/contactdomain.ContactResponse'
             type: array
         "400":
-          description: Missing query
+          description: Отсутствует поисковый запрос
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Найти контакты по номеру телефона
       tags:
-      - Contacts
+      - Контакты
   /contacts/sync:
     post:
       consumes:
       - application/json
+      description: Синхронизирует телефонную книгу пользователя с сервером. Позволяет
+        найти друзей, уже зарегистрированных в приложении.
       parameters:
-      - description: Contact list to sync
+      - description: 'Список контактов для синхронизации: contacts (массив объектов
+          с phone и name, обязательно)'
         in: body
         name: request
         required: true
@@ -3518,21 +3752,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Контакты успешно синхронизированы
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка синхронизации
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Синхронизировать контакты телефона
       tags:
-      - Contacts
+      - Контакты
   /drafts:
     get:
+      description: Возвращает сохранённый черновик сообщения для указанного чата.
       parameters:
-      - description: Chat ID
+      - description: ID чата
         in: query
         name: chatId
         required: true
@@ -3541,22 +3777,26 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Черновик сообщения
           schema:
             $ref: '#/definitions/draftdomain.Draft'
         "404":
-          description: No draft
+          description: Черновик не найден
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить черновик чата
       tags:
-      - Drafts
+      - Черновики
     post:
       consumes:
       - application/json
+      description: Сохраняет черновик сообщения для указанного чата. Черновик можно
+        будет позже восстановить и отредактировать.
       parameters:
-      - description: Chat ID and draft content
+      - description: 'Данные черновика: chat_id (ID чата, обязательно), content (текст
+          сообщения, обязательно), reply_to_id (ID сообщения для ответа, опционально)'
         in: body
         name: request
         required: true
@@ -3566,21 +3806,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Черновик сохранён
           schema:
             $ref: '#/definitions/draftdomain.Draft'
         "400":
-          description: Bad Request
+          description: Ошибка сохранения черновика
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Сохранить черновик сообщения
       tags:
-      - Drafts
+      - Черновики
   /drafts/{id}:
     delete:
+      description: Удаляет сохранённый черновик сообщения по его идентификатору.
       parameters:
-      - description: Draft ID
+      - description: ID черновика
         in: path
         name: id
         required: true
@@ -3589,17 +3831,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Черновик удалён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка удаления черновика
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить черновик
       tags:
-      - Drafts
+      - Черновики
   /emojis:
     get:
       description: Возвращает все кастомные эмодзи, загруженные всеми пользователями.
@@ -3709,8 +3952,9 @@ paths:
       - Кастомные эмодзи
   /files/{filename}:
     get:
+      description: Загружает ранее загруженный файл по его имени из директории uploads.
       parameters:
-      - description: Filename to download
+      - description: Имя файла для скачивания
         in: path
         name: filename
         required: true
@@ -3719,17 +3963,18 @@ paths:
       - application/octet-stream
       responses:
         "200":
-          description: OK
+          description: Файл успешно загружен
           schema:
             type: file
         "404":
-          description: File not found
+          description: Файл не найден
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Скачать файл
       tags:
-      - Messages
+      - Сообщения
   /folders:
     get:
       produces:
@@ -3831,8 +4076,9 @@ paths:
     delete:
       consumes:
       - application/json
+      description: Удаляет GIF-изображение из коллекции пользователя по его URL.
       parameters:
-      - description: GIF URL to remove
+      - description: 'Параметры: url (URL GIF для удаления, обязательно)'
         in: body
         name: request
         required: true
@@ -3845,40 +4091,45 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: GIF удалён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка удаления GIF
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить GIF из коллекции
       tags:
-      - Gifs
+      - GIF
     get:
+      description: Возвращает список URL всех GIF-изображений, сохранённых пользователем.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список URL сохранённых GIF
           schema:
             items:
               type: string
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения GIF
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить сохранённые GIF
       tags:
-      - Gifs
+      - GIF
     post:
       consumes:
       - application/json
+      description: Сохраняет URL GIF-изображения в коллекцию пользователя для быстрого
+        доступа при отправке.
       parameters:
-      - description: GIF URL
+      - description: 'Параметры: url (URL GIF-изображения, обязательно)'
         in: body
         name: request
         required: true
@@ -3891,21 +4142,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: GIF сохранён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка сохранения GIF
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Сохранить GIF
       tags:
-      - Gifs
+      - GIF
   /messages/{id}:
     delete:
+      description: Удаляет сообщение (мягкое удаление). Доступно только отправителю
+        сообщения.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
@@ -3914,20 +4168,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Сообщение удалено
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Not owner
+          description: Недостаточно прав для удаления
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить сообщение
       tags:
-      - Messages
+      - Сообщения
     get:
+      description: Возвращает одно сообщение по его уникальному идентификатору.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
@@ -3936,27 +4192,29 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Информация о сообщении
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка получения сообщения
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить сообщение по ID
       tags:
-      - Messages
+      - Сообщения
     put:
       consumes:
       - application/json
+      description: Редактирует текст сообщения. Доступно только отправителю сообщения.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
         type: string
-      - description: Updated content
+      - description: 'Обновлённое содержание: content (новый текст сообщения, обязательно)'
         in: body
         name: request
         required: true
@@ -3966,21 +4224,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Сообщение отредактировано
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Invalid input or not owner
+          description: Неверные данные или сообщение принадлежит другому пользователю
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Редактировать сообщение
       tags:
-      - Messages
+      - Сообщения
   /messages/{id}/for-me:
     delete:
+      description: Удаляет сообщение только для текущего пользователя. Остальные участники
+        чата по-прежнему видят сообщение.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
@@ -3989,21 +4250,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Сообщение удалено для вас
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка удаления
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить сообщение только для себя
       tags:
-      - Messages
+      - Сообщения
   /messages/{id}/history:
     get:
+      description: Возвращает историю редактирования сообщения, включая все предыдущие
+        версии текста.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
@@ -4012,28 +4276,32 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: История изменений сообщения
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка получения истории
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить историю изменений сообщения
       tags:
-      - Messages
+      - Сообщения
   /messages/{id}/pin:
     put:
       consumes:
       - application/json
+      description: Закрепляет или открепляет сообщение в чате. Закреплённые сообщения
+        отображаются в верхней части чата.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
         type: string
-      - description: 'pin: true to pin, false to unpin'
+      - description: 'Параметры: pin (boolean, true — закрепить, false — открепить,
+          обязательно)'
         in: body
         name: request
         required: true
@@ -4043,26 +4311,28 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Статус закрепления изменён
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка изменения статуса
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Закрепить или открепить сообщение
       tags:
-      - Messages
+      - Сообщения
   /messages/{id}/reactions:
     delete:
+      description: Удаляет ранее добавленную реакцию (эмодзи) с указанного сообщения.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
         type: string
-      - description: Emoji to remove
+      - description: Эмодзи для удаления
         in: query
         name: emoji
         required: true
@@ -4071,27 +4341,30 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Реакция удалена
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка удаления реакции
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить реакцию с сообщения
       tags:
-      - Messages
+      - Сообщения
     post:
       consumes:
       - application/json
+      description: Добавляет реакцию в виде эмодзи к указанному сообщению. Пользователь
+        может добавить только одну реакцию каждого типа.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
         type: string
-      - description: Emoji to add
+      - description: 'Эмодзи для реакции: emoji (строка с эмодзи, обязательно)'
         in: body
         name: request
         required: true
@@ -4101,21 +4374,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Реакция добавлена
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка добавления реакции
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Добавить реакцию к сообщению
       tags:
-      - Messages
+      - Сообщения
   /messages/{id}/read:
     post:
+      description: Помечает одно сообщение как прочитанное для текущего пользователя.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
@@ -4124,28 +4399,31 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Сообщение отмечено как прочитанное
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка отметки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отметить сообщение как прочитанное
       tags:
-      - Messages
+      - Сообщения
   /messages/{id}/report:
     post:
       consumes:
       - application/json
+      description: Отправляет жалобу на сообщение модераторам. Необходимо указать
+        причину жалобы.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
         type: string
-      - description: Report reason
+      - description: 'Причина жалобы: reason (строка, обязательно)'
         in: body
         name: request
         required: true
@@ -4158,17 +4436,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Жалоба отправлена
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка отправки жалобы
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Пожаловаться на сообщение
       tags:
-      - Messages
+      - Сообщения
   /messages/{id}/save:
     post:
       consumes:
@@ -4206,8 +4485,9 @@ paths:
       - Сохранённые сообщения
   /messages/{id}/star:
     delete:
+      description: Удаляет сообщение из списка избранных.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
@@ -4216,20 +4496,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Сообщение удалено из избранного
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка удаления
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить сообщение из избранного
       tags:
-      - Messages
+      - Сообщения
     post:
+      description: Добавляет сообщение в список избранных для быстрого доступа. Звёздочка
+        видна только пользователю.
       parameters:
-      - description: Message ID
+      - description: ID сообщения
         in: path
         name: id
         required: true
@@ -4238,23 +4521,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Сообщение добавлено в избранное
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка добавления
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Добавить сообщение в избранное
       tags:
-      - Messages
+      - Сообщения
   /messages/bulk:
     delete:
       consumes:
       - application/json
+      description: Удаляет несколько сообщений для текущего пользователя. Сообщения
+        удаляются только для отправителя.
       parameters:
-      - description: Message IDs to delete
+      - description: 'Параметры: messageIds (массив ID сообщений для удаления, обязательно,
+          мин. 1)'
         in: body
         name: request
         required: true
@@ -4269,23 +4556,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Сообщения удалены
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка удаления
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Массовое удаление сообщений
       tags:
-      - Messages
+      - Сообщения
   /messages/forward:
     post:
       consumes:
       - application/json
+      description: Пересылает сообщение из одного чата в другой. Исходное сообщение
+        остаётся без изменений.
       parameters:
-      - description: Forward details
+      - description: 'Детали пересылки: message_id (ID сообщения, обязательно), from_chat_id
+          (ID исходного чата, обязательно), to_chat_id (ID целевого чата, обязательно)'
         in: body
         name: request
         required: true
@@ -4295,23 +4586,27 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Сообщение переслано
           schema:
             $ref: '#/definitions/messagedomain.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка пересылки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Переслать сообщение
       tags:
-      - Messages
+      - Сообщения
   /messages/read/bulk:
     post:
       consumes:
       - application/json
+      description: Помечает несколько сообщений как прочитанные за один запрос. Принимает
+        массив ID сообщений и ID чата.
       parameters:
-      - description: Message IDs to mark as read
+      - description: 'Параметры: messageIds (массив ID сообщений, обязательно, мин.
+          1), chatId (ID чата, обязательно)'
         in: body
         name: request
         required: true
@@ -4328,17 +4623,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Сообщения отмечены как прочитанные
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка отметки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отметить несколько сообщений как прочитанные
       tags:
-      - Messages
+      - Сообщения
   /messages/schedule:
     post:
       consumes:
@@ -4409,17 +4705,19 @@ paths:
       - ScheduledMessages
   /messages/search:
     get:
+      description: Ищет сообщения по всем чатам пользователя. Возвращает постраничные
+        результаты с информацией о чате.
       parameters:
-      - description: Search query
+      - description: Поисковый запрос
         in: query
         name: q
         required: true
         type: string
-      - description: Max results (default 50)
+      - description: Максимум результатов (по умолчанию 50)
         in: query
         name: limit
         type: integer
-      - description: Pagination offset (default 0)
+      - description: Смещение пагинации (по умолчанию 0)
         in: query
         name: offset
         type: integer
@@ -4427,40 +4725,45 @@ paths:
       - application/json
       responses:
         "200":
-          description: Paginated results
+          description: Постраничные результаты поиска
           schema:
             $ref: '#/definitions/response.APIResponse'
         "400":
-          description: Missing query
+          description: Отсутствует поисковый запрос
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Искать сообщения по всем чатам
       tags:
-      - Messages
+      - Сообщения
   /messages/starred:
     get:
+      description: Возвращает все сообщения, добавленные пользователем в избранное.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список избранных сообщений
           schema:
             items:
               $ref: '#/definitions/chatdomain.StarredMessageResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения списка
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить избранные сообщения
       tags:
-      - Messages
+      - Сообщения
   /polls/{pollId}/close:
     post:
+      description: Закрывает голосование для дальнейшего голосования. Доступно только
+        создателю голосования.
       parameters:
-      - description: Poll ID
+      - description: ID голосования
         in: path
         name: pollId
         required: true
@@ -4469,28 +4772,30 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Голосование закрыто
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Not the creator
+          description: Недостаточно прав для закрытия
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Закрыть голосование
       tags:
-      - Polls
+      - Голосований
   /polls/{pollId}/vote:
     post:
       consumes:
       - application/json
+      description: Отдаёт голос за один из вариантов ответа в указанном голосовании.
       parameters:
-      - description: Poll ID
+      - description: ID голосования
         in: path
         name: pollId
         required: true
         type: string
-      - description: Selected option index
+      - description: 'Выбранный вариант: option_index (индекс варианта, обязательно)'
         in: body
         name: request
         required: true
@@ -4500,17 +4805,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Голос учтён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Already voted or invalid option
+          description: Уже голосовали или неверный вариант
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Проголосовать
       tags:
-      - Polls
+      - Голосований
   /saved-messages:
     get:
       description: Возвращает список сохранённых сообщений с пагинацией. Каждый элемент
@@ -4570,43 +4876,51 @@ paths:
       - Сохранённые сообщения
   /sessions:
     delete:
+      description: Завершает все активные сессии пользователя, кроме текущей. Полезно
+        при подозрении на несанкционированный доступ.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Все остальные сессии завершены
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка завершения сессий
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Завершить все сессии
       tags:
-      - Sessions
+      - Сессии
     get:
+      description: Возвращает список всех активных сессий аутентифицированного пользователя,
+        включая информацию об устройстве и времени входа.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список активных сессий
           schema:
             items:
               $ref: '#/definitions/sessiondomain.Session'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения сессий
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить активные сессии
       tags:
-      - Sessions
+      - Сессии
   /sessions/{id}:
     delete:
+      description: Завершает указанную активную сессию пользователя. Пользователь
+        будет вынужден авторизоваться заново на этом устройстве.
       parameters:
-      - description: Session ID
+      - description: ID сессии
         in: path
         name: id
         required: true
@@ -4615,41 +4929,47 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Сессия завершена
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка завершения сессии
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Завершить сессию
       tags:
-      - Sessions
+      - Сессии
   /stickers/library:
     get:
+      description: Возвращает список стикеров, добавленных пользователем в личную
+        библиотеку.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Библиотека стикеров
           schema:
             items:
               $ref: '#/definitions/stickerdomain.Sticker'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения библиотеки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить библиотеку стикеров
       tags:
-      - Stickers
+      - Стикеры
     post:
       consumes:
       - application/json
+      description: Добавляет стикер в личную библиотеку пользователя для быстрого
+        доступа.
       parameters:
-      - description: Sticker ID to add
+      - description: 'Параметры: stickerId (ID стикера, обязательно)'
         in: body
         name: request
         required: true
@@ -4662,41 +4982,46 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Стикер добавлен в библиотеку
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка добавления
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Добавить стикер в библиотеку
       tags:
-      - Stickers
+      - Стикеры
   /stickers/packs:
     get:
+      description: Возвращает список всех общедоступных наборов стикеров на платформе.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список публичных наборов стикеров
           schema:
             items:
               $ref: '#/definitions/stickerdomain.StickerPack'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения наборов
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить публичные наборы стикеров
       tags:
-      - Stickers
+      - Стикеры
     post:
       consumes:
       - application/json
+      description: Создаёт новый набор стикеров с указанным названием и списком стикеров.
       parameters:
-      - description: Pack name and stickers
+      - description: 'Данные набора: name (название, обязательно), stickers (массив
+          стикеров, обязательно)'
         in: body
         name: request
         required: true
@@ -4706,21 +5031,24 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Набор стикеров создан
           schema:
             $ref: '#/definitions/stickerdomain.StickerPack'
         "400":
-          description: Bad Request
+          description: Ошибка создания набора
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Создать набор стикеров
       tags:
-      - Stickers
+      - Стикеры
   /stickers/packs/{id}:
     delete:
+      description: Удаляет набор стикеров и все его содержимое. Доступно только владельцу
+        набора.
       parameters:
-      - description: Pack ID
+      - description: ID набора
         in: path
         name: id
         required: true
@@ -4729,20 +5057,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Набор стикеров удалён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: Ошибка удаления набора
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить набор стикеров
       tags:
-      - Stickers
+      - Стикеры
     get:
+      description: Возвращает информацию о наборе стикеров и его содержимом по идентификатору.
       parameters:
-      - description: Pack ID
+      - description: ID набора
         in: path
         name: id
         required: true
@@ -4751,28 +5081,32 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Информация о наборе стикеров
           schema:
             $ref: '#/definitions/stickerdomain.StickerPack'
         "404":
-          description: Not found
+          description: Набор не найден
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить набор стикеров по ID
       tags:
-      - Stickers
+      - Стикеры
   /stickers/packs/{id}/stickers:
     post:
       consumes:
       - application/json
+      description: Добавляет новый стикер в существующий набор стикеров. Доступно
+        только владельцу набора.
       parameters:
-      - description: Pack ID
+      - description: ID набора
         in: path
         name: id
         required: true
         type: string
-      - description: Sticker details
+      - description: 'Данные стикера: image_url (URL изображения, обязательно), emoji
+          (связанный эмодзи, опционально)'
         in: body
         name: request
         required: true
@@ -4782,36 +5116,39 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Стикер добавлен
           schema:
             $ref: '#/definitions/stickerdomain.Sticker'
         "400":
-          description: Bad Request
+          description: Ошибка добавления стикера
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Добавить стикер в набор
       tags:
-      - Stickers
+      - Стикеры
   /stickers/packs/my:
     get:
+      description: Возвращает наборы стикеров, созданные аутентифицированным пользователем.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список ваших наборов стикеров
           schema:
             items:
               $ref: '#/definitions/stickerdomain.StickerPack'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения наборов
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить мои наборы стикеров
       tags:
-      - Stickers
+      - Стикеры
   /stories:
     get:
       produces:
@@ -4947,8 +5284,9 @@ paths:
       - Stories
   /users/{id}:
     get:
+      description: Возвращает информацию о пользователе по его уникальному идентификатору.
       parameters:
-      - description: User ID
+      - description: ID пользователя
         in: path
         name: id
         required: true
@@ -4957,21 +5295,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Информация о пользователе
           schema:
             $ref: '#/definitions/userdomain.UserResponse'
         "404":
-          description: User not found
+          description: Пользователь не найден
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить пользователя по ID
       tags:
-      - Users
+      - Профиль
   /users/{id}/last-seen:
     get:
+      description: 'Возвращает информацию о последнем посещении пользователя: статус
+        онлайн и временную метку.'
       parameters:
-      - description: User ID
+      - description: ID пользователя
         in: path
         name: id
         required: true
@@ -4980,7 +5321,8 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 'Информация о последнем посещении: userId (ID), online (онлайн
+            ли), lastSeen (время последнего визита)'
           schema:
             properties:
               lastSeen:
@@ -4991,19 +5333,22 @@ paths:
                 type: string
             type: object
         "404":
-          description: User not found
+          description: Пользователь не найден
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить время последнего посещения
       tags:
-      - Users
+      - Профиль
   /users/avatar:
     post:
       consumes:
       - multipart/form-data
+      description: Загружает новое изображение аватара для профиля пользователя. Поддерживаются
+        изображения в форматах JPG, PNG и WEBP.
       parameters:
-      - description: Avatar image file
+      - description: Файл изображения аватара (JPG, PNG, WEBP)
         in: formData
         name: avatar
         required: true
@@ -5012,27 +5357,31 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Аватар успешно загружен и профиль обновлён
           schema:
             $ref: '#/definitions/userdomain.UserResponse'
         "400":
-          description: Missing or invalid file
+          description: Файл отсутствует или неверный формат
           schema:
             $ref: '#/definitions/response.ErrorResponse'
         "500":
-          description: Server error
+          description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Загрузить аватар
       tags:
-      - Users
+      - Профиль
   /users/block:
     post:
       consumes:
       - application/json
+      description: Блокирует указанного пользователя. Заблокированный пользователь
+        не сможет отправлять вам сообщения или звонить.
       parameters:
-      - description: User ID to block
+      - description: 'Данные для блокировки: blocked_id (ID пользователя для блокировки,
+          обязательно)'
         in: body
         name: request
         required: true
@@ -5042,21 +5391,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Пользователь заблокирован
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Block failed
+          description: Ошибка блокировки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Заблокировать пользователя
       tags:
-      - Users
+      - Профиль
   /users/block/{userId}:
     delete:
+      description: Снимает блокировку с указанного пользователя, восстанавливая возможность
+        общения.
       parameters:
-      - description: User ID to unblock
+      - description: ID пользователя для разблокировки
         in: path
         name: userId
         required: true
@@ -5065,42 +5417,48 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Пользователь разблокирован
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Unblock failed
+          description: Ошибка разблокировки
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Разблокировать пользователя
       tags:
-      - Users
+      - Профиль
   /users/blocked:
     get:
+      description: Возвращает список всех пользователей, заблокированных аутентифицированным
+        пользователем.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Список заблокированных пользователей
           schema:
             items:
               $ref: '#/definitions/userdomain.UserResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Ошибка получения списка
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить список заблокированных пользователей
       tags:
-      - Users
+      - Профиль
   /users/email:
     put:
       consumes:
       - application/json
+      description: Изменяет адрес электронной почты пользователя. Новый email должен
+        быть валидным и не занятым другим пользователем.
       parameters:
-      - description: New email
+      - description: Новый email (строка, валидный email, обязательно)
         in: body
         name: request
         required: true
@@ -5113,39 +5471,46 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Email успешно изменён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: 'Ошибка: неверный формат email или адрес уже занят'
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Изменить email
       tags:
-      - Users
+      - Профиль
   /users/profile:
     get:
+      description: Возвращает полную информацию о профиле аутентифицированного пользователя,
+        включая имя, email, аватар и настройки.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Профиль пользователя успешно получен
           schema:
             $ref: '#/definitions/userdomain.UserResponse'
         "404":
-          description: User not found
+          description: Пользователь не найден
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить профиль пользователя
       tags:
-      - Users
+      - Профиль
     put:
       consumes:
       - application/json
+      description: Обновляет поля профиля аутентифицированного пользователя. Можно
+        изменить отображаемое имя, биографию, аватар и другие настройки профиля.
       parameters:
-      - description: Profile fields to update
+      - description: 'Обновляемые поля профиля: display_name (отображаемое имя, опционально),
+          bio (биография, опционально), avatar_url (URL аватара, опционально)'
         in: body
         name: request
         required: true
@@ -5155,23 +5520,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Профиль успешно обновлён
           schema:
             $ref: '#/definitions/userdomain.UserResponse'
         "400":
-          description: Invalid input
+          description: Неверные входные данные
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Обновить профиль пользователя
       tags:
-      - Users
+      - Профиль
   /users/push-test:
     post:
       consumes:
       - application/json
+      description: Отправляет тестовое push-уведомление на устройство пользователя
+        для проверки настроек уведомлений.
       parameters:
-      - description: Push notification fields
+      - description: 'Параметры уведомления: title (заголовок, обязательно), body
+          (текст, обязательно)'
         in: body
         name: request
         required: true
@@ -5186,23 +5555,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Тестовое уведомление отправлено
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Invalid input
+          description: Неверные входные данные
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отправить тестовое push-уведомление
       tags:
-      - Users
+      - Профиль
   /users/push-token:
     put:
       consumes:
       - application/json
+      description: Обновляет токен push-уведомлений для устройства пользователя. Необходимо
+        для получения уведомлений на мобильные устройства.
       parameters:
-      - description: Push token details
+      - description: 'Данные push-токена: token (строка, токен устройства, обязательно),
+          provider (строка, провайдер: fcm/apns, обязательно)'
         in: body
         name: request
         required: true
@@ -5212,30 +5585,33 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Push-токен успешно обновлён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Invalid token
+          description: Неверный токен
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Обновить push-токен
       tags:
-      - Users
+      - Профиль
   /users/search:
     get:
+      description: Ищет пользователей по имени, username или email. Возвращает постраничный
+        список результатов.
       parameters:
-      - description: Search query
+      - description: Поисковый запрос (имя, username или email)
         in: query
         name: q
         required: true
         type: string
-      - description: Max results (default 50)
+      - description: Максимум результатов (по умолчанию 50)
         in: query
         name: limit
         type: integer
-      - description: Pagination offset (default 0)
+      - description: Смещение пагинации (по умолчанию 0)
         in: query
         name: offset
         type: integer
@@ -5243,23 +5619,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: Paginated user list
+          description: Постраничный список пользователей
           schema:
             $ref: '#/definitions/response.APIResponse'
         "400":
-          description: Missing query
+          description: Отсутствует поисковый запрос
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Найти пользователей
       tags:
-      - Users
+      - Профиль
   /users/status:
     put:
       consumes:
       - application/json
+      description: Изменяет статус активности пользователя (online, offline, busy,
+        away).
       parameters:
-      - description: New status
+      - description: 'Новый статус: status (строка, статус: online/offline/busy/away,
+          обязательно)'
         in: body
         name: request
         required: true
@@ -5269,23 +5649,26 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Статус успешно обновлён
           schema:
             $ref: '#/definitions/userdomain.UserResponse'
         "400":
-          description: Invalid status
+          description: Неверный статус
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Обновить статус пользователя
       tags:
-      - Users
+      - Профиль
   /users/username:
     put:
       consumes:
       - application/json
+      description: Изменяет имя пользователя (username). Длина username должна быть
+        от 3 до 32 символов.
       parameters:
-      - description: New username
+      - description: Новый username (строка, от 3 до 32 символов, обязательно)
         in: body
         name: request
         required: true
@@ -5298,21 +5681,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Username успешно изменён
           schema:
             $ref: '#/definitions/response.MessageResponse'
         "400":
-          description: Bad Request
+          description: 'Ошибка: неверный формат или username уже занят'
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Изменить username
       tags:
-      - Users
+      - Профиль
   /users/username/{username}:
     get:
+      description: Возвращает информацию о пользователе по его уникальному имени пользователя
+        (username).
       parameters:
-      - description: Username
+      - description: Username пользователя
         in: path
         name: username
         required: true
@@ -5321,17 +5707,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Информация о пользователе
           schema:
             $ref: '#/definitions/userdomain.UserResponse'
         "404":
-          description: User not found
+          description: Пользователь не найден
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить пользователя по username
       tags:
-      - Users
+      - Профиль
   /verification/email:
     post:
       consumes:

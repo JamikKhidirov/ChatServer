@@ -1,0 +1,56 @@
+:root {
+  --bg: #0d0d1a;
+  --accent: #e94560;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(58,58,90,0.8); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #e94560; }
+
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: #e8e8f0;
+  line-height: 1.6;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(233,69,96,0.03) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(52,152,219,0.03) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 80%, rgba(155,89,182,0.02) 0%, transparent 60%);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes toastIn {
+  from { transform: translateX(100%) scale(0.95); opacity: 0; }
+  to { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+.page-content {
+  animation: fadeIn 0.3s ease;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, #e8e8f0 0%, #9a9ab8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: #5a5a7a;
+  margin-bottom: 28px;
+}

@@ -17,12 +17,14 @@ func NewAuthHandler(authService service.AuthService) *AuthHandler {
 }
 
 // RegisterAdmin creates a new admin user account
-// @Tags Auth
+// @Tags Аутентификация
+// @Summary Зарегистрировать администратора
 // @Accept json
 // @Produce json
-// @Param request body authdomain.AdminRegisterRequest true "Admin registration details with secret key"
-// @Success 201 {object} authdomain.AuthResponse "Returns JWT token + user with isAdmin:true"
-// @Failure 400 {object} response.ErrorResponse "Invalid admin secret, email/username taken, or invalid input"
+// @Description Создаёт учётную запись администратора с повышенными правами. Требует указания секретного ключа администратора, а также email, username и password.
+// @Param request body authdomain.AdminRegisterRequest true "Данные для регистрации администратора: username (логин, обязательно), email (почта, обязательно), password (пароль, обязательно), secret (секретный ключ администратора, обязательно), display_name (отображаемое имя, опционально)"
+// @Success 201 {object} authdomain.AuthResponse "Администратор создан, возвращается JWT-токен и информация о пользователе с правами администратора"
+// @Failure 400 {object} response.ErrorResponse "Неверный секретный ключ, email или username уже заняты, или неверные входные данные"
 // @Router /auth/admin/register [post]
 func (h *AuthHandler) RegisterAdmin(c *gin.Context) {
 	var req authdomain.AdminRegisterRequest
@@ -41,12 +43,14 @@ func (h *AuthHandler) RegisterAdmin(c *gin.Context) {
 }
 
 // Register creates a new user account
-// @Tags Auth
+// @Tags Аутентификация
+// @Summary Зарегистрировать новый аккаунт
 // @Accept json
 // @Produce json
-// @Param request body authdomain.RegisterRequest true "Registration details (username, email, password, display_name)"
-// @Success 201 {object} authdomain.AuthResponse "Returns JWT token + user object"
-// @Failure 400 {object} response.ErrorResponse "Email or username already registered, or invalid input fields"
+// @Description Создаёт нового пользователя с указанными email, username и паролем. После успешной регистрации возвращается JWT-токен для авторизации.
+// @Param request body authdomain.RegisterRequest true "Данные для регистрации: username (логин, обязательно), email (почта, обязательно), password (пароль, обязательно), display_name (отображаемое имя, опционально)"
+// @Success 201 {object} authdomain.AuthResponse "Аккаунт создан, возвращается JWT-токен и информация о пользователе"
+// @Failure 400 {object} response.ErrorResponse "Email или username уже зарегистрированы, или неверные поля ввода"
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req authdomain.RegisterRequest
@@ -65,12 +69,14 @@ func (h *AuthHandler) Register(c *gin.Context) {
 }
 
 // Login authenticates user credentials
-// @Tags Auth
+// @Tags Аутентификация
+// @Summary Войти в аккаунт
 // @Accept json
 // @Produce json
-// @Param request body authdomain.LoginRequest true "Login credentials"
-// @Success 200 {object} authdomain.AuthResponse
-// @Failure 401 {object} response.ErrorResponse "Invalid credentials"
+// @Description Аутентифицирует пользователя по email и паролю. Возвращает JWT-токен для последующих запросов, а также информацию о пользователе.
+// @Param request body authdomain.LoginRequest true "Учётные данные: email (почта, обязательно) и password (пароль, обязательно)"
+// @Success 200 {object} authdomain.AuthResponse "Успешный вход, возвращается JWT-токен и данные пользователя"
+// @Failure 401 {object} response.ErrorResponse "Неверный email или пароль"
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req authdomain.LoginRequest
@@ -89,11 +95,13 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 // RefreshToken returns a new JWT token for the authenticated user
-// @Tags Auth
+// @Tags Аутентификация
+// @Summary Обновить JWT-токен
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {object} authdomain.RefreshTokenResponse
-// @Failure 401 {object} response.ErrorResponse "Invalid or expired token"
+// @Description Обновляет срок действия текущего JWT-токена для аутентифицированного пользователя. Требует действительный токен в заголовке Authorization.
+// @Success 200 {object} authdomain.RefreshTokenResponse "Новый JWT-токен успешно сгенерирован"
+// @Failure 401 {object} response.ErrorResponse "Недействительный или просроченный токен"
 // @Router /auth/refresh [get]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -108,13 +116,15 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 }
 
 // ChangePassword updates the authenticated user's password
-// @Tags Auth
+// @Tags Аутентификация
+// @Summary Изменить пароль
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body authdomain.ChangePasswordRequest true "Old and new passwords"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Invalid input or wrong password"
+// @Description Обновляет пароль аутентифицированного пользователя. Требуется указать старый пароль для проверки и новый пароль.
+// @Param request body authdomain.ChangePasswordRequest true "Параметры смены пароля: old_password (старый пароль, обязательно), new_password (новый пароль, обязательно)"
+// @Success 200 {object} response.MessageResponse "Пароль успешно изменён"
+// @Failure 400 {object} response.ErrorResponse "Неверные данные или неправильный старый пароль"
 // @Router /auth/change-password [put]
 func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	userID, _ := c.Get("userID")

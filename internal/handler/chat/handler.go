@@ -23,13 +23,15 @@ func NewChatHandler(chatService service.ChatService, hub *ws.Hub) *ChatHandler {
 }
 
 // CreateChat creates a new chat (private or group)
-// @Tags Chats
+// @Tags Чаты
+// @Summary Создать новый чат
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param request body chatdomain.CreateChatRequest true "Chat details"
-// @Success 201 {object} chatdomain.ChatResponse
-// @Failure 400 {object} response.ErrorResponse "Invalid input"
+// @Description Создаёт новый личный или групповой чат. Для личного чата укажите тип private и список участников. Для группового — тип group, название и участников.
+// @Param request body chatdomain.CreateChatRequest true "Данные для создания чата: type (тип: private/group/channel, обязательно), participant_ids (ID участников, обязательно), name (название для группы, опционально), description (описание группы, опционально)"
+// @Success 201 {object} chatdomain.ChatResponse "Чат успешно создан"
+// @Failure 400 {object} response.ErrorResponse "Неверные входные данные"
 // @Router /chats [post]
 func (h *ChatHandler) CreateChat(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -51,12 +53,14 @@ func (h *ChatHandler) CreateChat(c *gin.Context) {
 }
 
 // GetChat returns chat details
-// @Tags Chats
+// @Tags Чаты
+// @Summary Получить детали чата
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {object} chatdomain.ChatResponse
-// @Failure 404 {object} response.ErrorResponse "Chat not found"
+// @Description Возвращает полную информацию о чате, включая участников, настройки и последнее сообщение.
+// @Param id path string true "ID чата"
+// @Success 200 {object} chatdomain.ChatResponse "Детали чата"
+// @Failure 404 {object} response.ErrorResponse "Чат не найден"
 // @Router /chats/{id} [get]
 func (h *ChatHandler) GetChat(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -72,12 +76,14 @@ func (h *ChatHandler) GetChat(c *gin.Context) {
 }
 
 // SearchChats searches the user's chats by name
-// @Tags Chats
+// @Tags Чаты
+// @Summary Найти чаты по названию
 // @Security BearerAuth
 // @Produce json
-// @Param q query string true "Search query"
-// @Success 200 {array} chatdomain.ChatResponse
-// @Failure 400 {object} response.ErrorResponse "Missing query"
+// @Description Ищет чаты пользователя по названию или имени собеседника.
+// @Param q query string true "Поисковый запрос (название чата или имя участника)"
+// @Success 200 {array} chatdomain.ChatResponse "Найденные чаты"
+// @Failure 400 {object} response.ErrorResponse "Отсутствует поисковый запрос"
 // @Router /chats/search [get]
 func (h *ChatHandler) SearchChats(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -97,11 +103,13 @@ func (h *ChatHandler) SearchChats(c *gin.Context) {
 }
 
 // ListChats returns all chats for the authenticated user
-// @Tags Chats
+// @Tags Чаты
+// @Summary Получить список чатов
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} chatdomain.ChatResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает все чаты аутентифицированного пользователя, включая личные и групповые диалоги, отсортированные по времени последней активности.
+// @Success 200 {array} chatdomain.ChatResponse "Список чатов пользователя"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения списка чатов"
 // @Router /chats [get]
 func (h *ChatHandler) ListChats(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -116,12 +124,14 @@ func (h *ChatHandler) ListChats(c *gin.Context) {
 }
 
 // DeleteChat deletes a chat (owner only)
-// @Tags Chats
+// @Tags Чаты
+// @Summary Удалить чат
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Удаляет чат. Доступно только владельцу группы или канала. Личные чаты удаляются для всех участников.
+// @Param id path string true "ID чата"
+// @Success 200 {object} response.MessageResponse "Чат успешно удалён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка удаления чата"
 // @Router /chats/{id} [delete]
 func (h *ChatHandler) DeleteChat(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -136,14 +146,16 @@ func (h *ChatHandler) DeleteChat(c *gin.Context) {
 }
 
 // AddParticipant adds a user to a group chat
-// @Tags Chats
+// @Tags Чаты
+// @Summary Добавить участника в группу
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param request body chatdomain.AddParticipantRequest true "User ID to add"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Добавляет нового участника в групповой чат. Требуются права администратора.
+// @Param id path string true "ID чата"
+// @Param request body chatdomain.AddParticipantRequest true "Данные для добавления: user_id (ID пользователя, обязательно)"
+// @Success 200 {object} response.MessageResponse "Участник добавлен"
+// @Failure 400 {object} response.ErrorResponse "Ошибка добавления участника"
 // @Router /chats/{id}/participants [post]
 func (h *ChatHandler) AddParticipant(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -164,13 +176,15 @@ func (h *ChatHandler) AddParticipant(c *gin.Context) {
 }
 
 // RemoveParticipant removes a user from a group chat
-// @Tags Chats
+// @Tags Чаты
+// @Summary Удалить участника из группы
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param userId path string true "Target user ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Удаляет указанного участника из группового чата. Требуются права администратора.
+// @Param id path string true "ID чата"
+// @Param userId path string true "ID пользователя для удаления"
+// @Success 200 {object} response.MessageResponse "Участник удалён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка удаления участника"
 // @Router /chats/{id}/participants/{userId} [delete]
 func (h *ChatHandler) RemoveParticipant(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -186,12 +200,14 @@ func (h *ChatHandler) RemoveParticipant(c *gin.Context) {
 }
 
 // MarkAsRead marks all messages in a chat as read
-// @Tags Chats
+// @Tags Чаты
+// @Summary Отметить чат как прочитанный
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Помечает все непрочитанные сообщения в чате как прочитанные для текущего пользователя.
+// @Param id path string true "ID чата"
+// @Success 200 {object} response.MessageResponse "Чат отмечен как прочитанный"
+// @Failure 400 {object} response.ErrorResponse "Ошибка отметки"
 // @Router /chats/{id}/read [post]
 func (h *ChatHandler) MarkAsRead(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -206,15 +222,17 @@ func (h *ChatHandler) MarkAsRead(c *gin.Context) {
 }
 
 // SetRole changes a participant's role (admin/member)
-// @Tags Chats
+// @Tags Чаты
+// @Summary Изменить роль участника
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param userId path string true "Target user ID"
-// @Param request body object{role=string} true "Role: admin or member"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Изменяет роль участника в групповом чате: admin (администратор) или member (участник). Требуются права владельца.
+// @Param id path string true "ID чата"
+// @Param userId path string true "ID целевого пользователя"
+// @Param request body object{role=string} true "Новая роль: admin (администратор) или member (участник)"
+// @Success 200 {object} response.MessageResponse "Роль участника обновлена"
+// @Failure 400 {object} response.ErrorResponse "Ошибка изменения роли"
 // @Router /chats/{id}/participants/{userId}/role [put]
 func (h *ChatHandler) SetRole(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -238,12 +256,14 @@ func (h *ChatHandler) SetRole(c *gin.Context) {
 }
 
 // LeaveGroup removes the authenticated user from a group chat
-// @Tags Chats
+// @Tags Чаты
+// @Summary Покинуть групповой чат
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Позволяет аутентифицированному пользователю выйти из группового чата.
+// @Param id path string true "ID чата"
+// @Success 200 {object} response.MessageResponse "Вы покинули группу"
+// @Failure 400 {object} response.ErrorResponse "Ошибка выхода из группы"
 // @Router /chats/{id}/leave [post]
 func (h *ChatHandler) LeaveGroup(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -258,12 +278,14 @@ func (h *ChatHandler) LeaveGroup(c *gin.Context) {
 }
 
 // HideChat hides a chat from the user's chat list
-// @Tags Chats
+// @Tags Чаты
+// @Summary Скрыть чат из списка
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Скрывает указанный чат из основного списка чатов пользователя. Чат можно восстановить через поиск.
+// @Param id path string true "ID чата"
+// @Success 200 {object} response.MessageResponse "Чат скрыт"
+// @Failure 400 {object} response.ErrorResponse "Ошибка скрытия чата"
 // @Router /chats/{id}/hide [post]
 func (h *ChatHandler) HideChat(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -278,14 +300,16 @@ func (h *ChatHandler) HideChat(c *gin.Context) {
 }
 
 // UpdateGroup updates group chat name/description/photo
-// @Tags Chats
+// @Tags Чаты
+// @Summary Обновить групповой чат
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param request body chatdomain.UpdateGroupRequest true "Fields to update"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Обновляет название, описание или аватар группового чата. Требуются права администратора.
+// @Param id path string true "ID чата"
+// @Param request body chatdomain.UpdateGroupRequest true "Обновляемые поля: name (название, опционально), description (описание, опционально), avatar_url (URL аватара, опционально)"
+// @Success 200 {object} response.MessageResponse "Группа обновлена"
+// @Failure 400 {object} response.ErrorResponse "Ошибка обновления группы"
 // @Router /chats/{id} [put]
 func (h *ChatHandler) UpdateGroup(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -306,12 +330,14 @@ func (h *ChatHandler) UpdateGroup(c *gin.Context) {
 }
 
 // PinChat pins a chat to the top of the list
-// @Tags Chats
+// @Tags Чаты
+// @Summary Закрепить чат вверху списка
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Закрепляет чат в верхней части списка диалогов для быстрого доступа.
+// @Param id path string true "ID чата"
+// @Success 200 {object} response.MessageResponse "Чат закреплён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка закрепления чата"
 // @Router /chats/{id}/pin [post]
 func (h *ChatHandler) PinChat(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -326,12 +352,14 @@ func (h *ChatHandler) PinChat(c *gin.Context) {
 }
 
 // UnpinChat unpins a chat from the top of the list
-// @Tags Chats
+// @Tags Чаты
+// @Summary Открепить чат
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Открепляет ранее закреплённый чат, возвращая его в обычный порядок списка.
+// @Param id path string true "ID чата"
+// @Success 200 {object} response.MessageResponse "Чат откреплён"
+// @Failure 400 {object} response.ErrorResponse "Ошибка открепления чата"
 // @Router /chats/{id}/pin [delete]
 func (h *ChatHandler) UnpinChat(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -346,12 +374,14 @@ func (h *ChatHandler) UnpinChat(c *gin.Context) {
 }
 
 // ArchiveChat archives a chat
-// @Tags Chats
+// @Tags Чаты
+// @Summary Архивировать чат
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Перемещает чат в архив. Архивированные чаты не отображаются в основном списке, но сохраняют все сообщения.
+// @Param id path string true "ID чата"
+// @Success 200 {object} response.MessageResponse "Чат архивирован"
+// @Failure 400 {object} response.ErrorResponse "Ошибка архивации чата"
 // @Router /chats/{id}/archive [post]
 func (h *ChatHandler) ArchiveChat(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -366,12 +396,14 @@ func (h *ChatHandler) ArchiveChat(c *gin.Context) {
 }
 
 // UnarchiveChat unarchives a chat
-// @Tags Chats
+// @Tags Чаты
+// @Summary Разархивировать чат
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает архивированный чат обратно в основной список диалогов.
+// @Param id path string true "ID чата"
+// @Success 200 {object} response.MessageResponse "Чат разархивирован"
+// @Failure 400 {object} response.ErrorResponse "Ошибка разархивации чата"
 // @Router /chats/{id}/unarchive [post]
 func (h *ChatHandler) UnarchiveChat(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -386,11 +418,13 @@ func (h *ChatHandler) UnarchiveChat(c *gin.Context) {
 }
 
 // ListArchivedChats returns the user's archived chats
-// @Tags Chats
+// @Tags Чаты
+// @Summary Получить архивированные чаты
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} chatdomain.ChatResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает список архивированных чатов пользователя.
+// @Success 200 {array} chatdomain.ChatResponse "Список архивированных чатов"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения архивированных чатов"
 // @Router /chats/archived [get]
 func (h *ChatHandler) ListArchivedChats(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -405,14 +439,16 @@ func (h *ChatHandler) ListArchivedChats(c *gin.Context) {
 }
 
 // TransferOwnership transfers group ownership to another participant
-// @Tags Chats
+// @Tags Чаты
+// @Summary Передать права владельца группы
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param request body object{userId=string} true "New owner user ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Передаёт права владельца группового чата другому участнику. Доступно только текущему владельцу.
+// @Param id path string true "ID чата"
+// @Param request body object{userId=string} true "ID нового владельца: userId (строка, ID пользователя, обязательно)"
+// @Success 200 {object} response.MessageResponse "Права владельца переданы"
+// @Failure 400 {object} response.ErrorResponse "Ошибка передачи прав"
 // @Router /chats/{id}/transfer-ownership [post]
 func (h *ChatHandler) TransferOwnership(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -435,14 +471,16 @@ func (h *ChatHandler) TransferOwnership(c *gin.Context) {
 }
 
 // SetSlowMode sets slow mode interval for a group chat
-// @Tags Chats
+// @Tags Чаты
+// @Summary Установить медленный режим
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param request body object{seconds=integer} true "Slow mode interval in seconds (0-3600, 0=disabled)"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse "Invalid value"
+// @Description Устанавливает интервал медленного режима в групповом чате. Участники смогут отправлять сообщения не чаще указанного интервала. 0 — отключить.
+// @Param id path string true "ID чата"
+// @Param request body object{seconds=integer} true "Интервал медленного режима в секундах (0-3600, 0 = отключено): seconds (целое число, обязательно)"
+// @Success 200 {object} response.MessageResponse "Медленный режим обновлён"
+// @Failure 400 {object} response.ErrorResponse "Неверное значение интервала"
 // @Router /chats/{id}/slow-mode [put]
 func (h *ChatHandler) SetSlowMode(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -465,14 +503,16 @@ func (h *ChatHandler) SetSlowMode(c *gin.Context) {
 }
 
 // PromoteToAdmin promotes a participant to admin role
-// @Tags Chats
+// @Tags Чаты
+// @Summary Повысить до администратора
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param request body object{userId=string} true "Target user ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Повышает участника группового чата до роли администратора. Доступно только владельцу группы.
+// @Param id path string true "ID чата"
+// @Param request body object{userId=string} true "ID целевого пользователя: userId (строка, обязательно)"
+// @Success 200 {object} response.MessageResponse "Пользователь повышен до администратора"
+// @Failure 400 {object} response.ErrorResponse "Ошибка повышения"
 // @Router /chats/{id}/promote [post]
 func (h *ChatHandler) PromoteToAdmin(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -495,14 +535,16 @@ func (h *ChatHandler) PromoteToAdmin(c *gin.Context) {
 }
 
 // DemoteFromAdmin demotes a participant from admin to member
-// @Tags Chats
+// @Tags Чаты
+// @Summary Понизить с администратора до участника
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param request body object{userId=string} true "Target user ID"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Понижает администратора группового чата до обычного участника. Доступно только владельцу группы.
+// @Param id path string true "ID чата"
+// @Param request body object{userId=string} true "ID целевого пользователя: userId (строка, обязательно)"
+// @Success 200 {object} response.MessageResponse "Пользователь понижен до участника"
+// @Failure 400 {object} response.ErrorResponse "Ошибка понижения"
 // @Router /chats/{id}/demote [post]
 func (h *ChatHandler) DemoteFromAdmin(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -525,14 +567,16 @@ func (h *ChatHandler) DemoteFromAdmin(c *gin.Context) {
 }
 
 // UploadChatPhoto uploads a photo for a group chat
-// @Tags Chats
+// @Tags Чаты
+// @Summary Загрузить фото чата
 // @Security BearerAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param photo formData file true "Chat photo image"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Загружает новое изображение для аватара группового чата. Поддерживаются форматы JPG, PNG и WEBP.
+// @Param id path string true "ID чата"
+// @Param photo formData file true "Файл изображения для аватара чата"
+// @Success 200 {object} response.MessageResponse "Фото чата обновлено"
+// @Failure 400 {object} response.ErrorResponse "Ошибка загрузки фото"
 // @Router /chats/{id}/photo [post]
 func (h *ChatHandler) UploadChatPhoto(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -578,12 +622,14 @@ func (h *ChatHandler) UploadChatPhoto(c *gin.Context) {
 }
 
 // GetOnlineMembers returns online members of a chat
-// @Tags Chats
+// @Tags Чаты
+// @Summary Получить онлайн-участников чата
 // @Security BearerAuth
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Success 200 {object} object{userIds=[]string}
-// @Failure 400 {object} response.ErrorResponse
+// @Description Возвращает список ID участников чата, которые в данный момент находятся онлайн.
+// @Param id path string true "ID чата"
+// @Success 200 {object} object{userIds=[]string} "Список ID онлайн-участников: userIds (массив строк)"
+// @Failure 400 {object} response.ErrorResponse "Ошибка получения списка"
 // @Router /chats/{id}/online [get]
 func (h *ChatHandler) GetOnlineMembers(c *gin.Context) {
 	userID, _ := c.Get("userID")
@@ -606,14 +652,16 @@ func (h *ChatHandler) GetOnlineMembers(c *gin.Context) {
 }
 
 // SetChatPermissions sets group permissions (who can send messages, add members, etc.)
-// @Tags Chats
+// @Tags Чаты
+// @Summary Установить права группы
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param request body object{whoCanSend=string} true "Permissions: everyone, admins"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Настраивает права участников группы: кто может отправлять сообщения и добавлять участников. Доступно администраторам.
+// @Param id path string true "ID чата"
+// @Param request body object{whoCanSend=string,whoCanAdd=string} true "Права доступа: who_can_send (кто может писать: everyone/admins, обязательно), who_can_add (кто может добавлять: everyone/admins, обязательно)"
+// @Success 200 {object} response.MessageResponse "Права обновлены"
+// @Failure 400 {object} response.ErrorResponse "Ошибка установки прав"
 // @Router /chats/{id}/permissions [put]
 func (h *ChatHandler) SetChatPermissions(c *gin.Context) {
 	chatID := c.Param("id")
@@ -631,14 +679,16 @@ func (h *ChatHandler) SetChatPermissions(c *gin.Context) {
 }
 
 // SetChatWallpaper sets the wallpaper for a chat
-// @Tags Chats
+// @Tags Чаты
+// @Summary Установить обои чата
 // @Security BearerAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param id path string true "Chat ID"
-// @Param wallpaper formData file true "Wallpaper image"
-// @Success 200 {object} response.MessageResponse
-// @Failure 400 {object} response.ErrorResponse
+// @Description Загружает и устанавливает фоновое изображение (обои) для указанного чата.
+// @Param id path string true "ID чата"
+// @Param wallpaper formData file true "Изображение для обоев чата"
+// @Success 200 {object} response.MessageResponse "Обои чата установлены"
+// @Failure 400 {object} response.ErrorResponse "Ошибка загрузки обоев"
 // @Router /chats/{id}/wallpaper [post]
 func (h *ChatHandler) SetChatWallpaper(c *gin.Context) {
 	chatID := c.Param("id")
@@ -675,14 +725,16 @@ func (h *ChatHandler) SetChatWallpaper(c *gin.Context) {
 }
 
 // StartPrivateChat finds or creates a private chat with another user
-// @Tags Chats
+// @Tags Чаты
+// @Summary Начать личный чат с пользователем
 // @Security BearerAuth
 // @Produce json
-// @Param userId path string true "Target user ID to chat with"
-// @Success 200 {object} chatdomain.ChatResponse "Existing private chat"
-// @Success 201 {object} chatdomain.ChatResponse "New private chat created"
-// @Failure 400 {object} response.ErrorResponse "Invalid user ID"
-// @Failure 404 {object} response.ErrorResponse "User not found"
+// @Description Находит существующий или создаёт новый личный чат с указанным пользователем. Нельзя создать чат с самим собой.
+// @Param userId path string true "ID пользователя для начала диалога"
+// @Success 200 {object} chatdomain.ChatResponse "Существующий личный чат"
+// @Success 201 {object} chatdomain.ChatResponse "Новый личный чат создан"
+// @Failure 400 {object} response.ErrorResponse "Неверный ID пользователя"
+// @Failure 404 {object} response.ErrorResponse "Пользователь не найден"
 // @Router /chats/start/{userId} [post]
 func (h *ChatHandler) StartPrivateChat(c *gin.Context) {
 	userID, _ := c.Get("userID")
