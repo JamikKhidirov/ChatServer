@@ -7,7 +7,7 @@ uploads/
 *.exe~
 
 ChatServer.exe
-
+body.json
 
 ChatFrontend/
 
