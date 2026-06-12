@@ -528,12 +528,183 @@
       }
     }
   },
+    "InviteLink": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "example": "link-uuid" },
+        "chatId": { "type": "string", "example": "chat-uuid" },
+        "code": { "type": "string", "example": "abc123" },
+        "createdBy": { "type": "string", "example": "user-uuid" },
+        "expiresAt": { "type": "string", "format": "date-time", "nullable": true },
+        "usageLimit": { "type": "integer", "nullable": true },
+        "usageCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "CreateInviteLinkRequest": {
+      "type": "object",
+      "properties": {
+        "expiresInMins": { "type": "integer", "nullable": true },
+        "usageLimit": { "type": "integer", "nullable": true }
+      }
+    },
+    "JoinByInviteRequest": {
+      "type": "object",
+      "required": ["code"],
+      "properties": {
+        "code": { "type": "string", "description": "Invite code" }
+      }
+    },
+    "ChatFolder": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "example": "folder-uuid" },
+        "userId": { "type": "string" },
+        "name": { "type": "string", "example": "Work" },
+        "chatIds": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "CreateChatFolderRequest": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "description": "Folder name" },
+        "chatIds": { "type": "array", "items": { "type": "string" }, "description": "Initial chat IDs" }
+      }
+    },
+    "UpdateChatFolderRequest": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "chatIds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "SlowModeRequest": {
+      "type": "object",
+      "required": ["seconds"],
+      "properties": {
+        "seconds": { "type": "integer", "minimum": 0, "maximum": 3600, "description": "Slow mode interval (0=disabled)" }
+      }
+    },
+    "UpdateContactPhotoRequest": {
+      "type": "object",
+      "required": ["phone", "photoUrl"],
+      "properties": {
+        "phone": { "type": "string", "description": "Contact phone number" },
+        "photoUrl": { "type": "string", "description": "New photo URL" }
+      }
+    },
+    "Draft": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "chatId": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "SaveDraftRequest": {
+      "type": "object",
+      "required": ["chatId", "content"],
+      "properties": {
+        "chatId": { "type": "string" },
+        "content": { "type": "string" }
+      }
+    },
+    "GifResponse": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of saved GIF URLs"
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "boolean", "example": false },
+        "error": { "type": "string", "example": "Error description" },
+        "code": { "type": "string", "example": "ERROR_CODE" }
+      }
+    },
+    "MessageResponse": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "boolean", "example": true },
+        "data": {
+          "type": "object",
+          "properties": {
+            "message": { "type": "string", "example": "Operation completed" }
+          }
+        }
+      }
+    },
+    "SuccessResponse": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "boolean", "example": true }
+      }
+    },
+    "PaginatedResponse": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "boolean", "example": true },
+        "data": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "total": { "type": "integer", "example": 100 },
+            "offset": { "type": "integer", "example": 0 },
+            "limit": { "type": "integer", "example": 50 }
+          }
+        }
+      }
+    }
+  },
   "security": [
     {
       "BearerAuth": []
     }
   ],
   "paths": {
+    "/api/auth/admin/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Регистрация администратора",
+        "description": "Регистрирует нового пользователя с правами администратора. Требуется секретный ключ администратора.\n\n**Параметры запроса (JSON body):**\n- `username` (string, обязательный, 3-32 символа)\n- `email` (string, обязательный)\n- `password` (string, обязательный, минимум 6 символов)\n- `display_name` (string, обязательный, 1-64 символа)\n- `admin_secret` (string, обязательный) — Секретный ключ для регистрации админа\n\n**Пример запроса:**\n```json\n{\"username\":\"admin\",\"email\":\"admin@mail.com\",\"password\":\"admin123\",\"display_name\":\"Admin\",\"admin_secret\":\"your-admin-secret\"}\n```",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "✅ Администратор зарегистрирован — возвращает token + user (is_admin: true)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "❌ Неверный admin_secret, email/username уже занят, или невалидные поля",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/register": {
       "post": {
         "tags": [
@@ -555,10 +726,20 @@
         },
         "responses": {
           "201": {
-            "description": "✅ Успешная регистрация — возвращает token + user"
+            "description": "✅ Успешная регистрация — возвращает token + user",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponse" }
+              }
+            }
           },
           "400": {
-            "description": "❌ Ошибка: пользователь с таким email/username уже существует, или невалидные поля"
+            "description": "❌ Пользователь с таким email/username уже существует",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
           }
         }
       }
@@ -584,10 +765,20 @@
         },
         "responses": {
           "200": {
-            "description": "✅ Успешный вход — возвращает token + user"
+            "description": "✅ Успешный вход — возвращает token + user",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponse" }
+              }
+            }
           },
           "401": {
-            "description": "❌ Неверные email или пароль"
+            "description": "❌ Неверные email или пароль",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
           }
         }
       }
@@ -2341,7 +2532,81 @@
           "WebSocket"
         ],
         "summary": "WebSocket подключение для real-time обновлений",
-        "description": "---\n## Подключение\n\nws://localhost:8080/ws?token=JWT_TOKEN\n\nПосле подключения сервер:\n1. Устанавливает online=true для пользователя\n2. Рассылает событие **user:online** всем участникам общих чатов\n3. При отключении (закрытие вкладки, потеря сети) — **user:offline**\n\nСервер поддерживает соединение **ping/pong** (60s timeout).\n\n---\n## Формат всех сообщений\n\nОднотипный JSON:\n```json\n{\n  \"type\": \"событие\",\n  \"payload\": { ... }\n}\n```\n\n---\n## 1. События сервера → клиент (сервер отправляет)\n\n### 📩 Сообщения\n\n**message:new** — новое сообщение в чате\n```json\n{\n  \"type\": \"message:new\",\n  \"payload\": {\n    \"id\": \"msg-uuid\",\n    \"chatId\": \"chat-uuid\",\n    \"sender\": { \"id\": \"...\", \"displayName\": \"Alice\", \"avatarUrl\": \"...\" },\n    \"content\": \"Привет!\",\n    \"type\": \"text\",\n    \"replyTo\": null,\n    \"forwardFrom\": null,\n    \"fileName\": \"\",\n    \"fileSize\": 0,\n    \"fileUrl\": \"\",\n    \"reactions\": [],\n    \"pinned\": false,\n    \"readBy\": [{\"id\":\"...\",\"displayName\":\"Alice\"}],\n    \"createdAt\": \"2026-01-01T12:00:00Z\",\n    \"updatedAt\": \"2026-01-01T12:00:00Z\",\n    \"edited\": false,\n    \"deleted\": false\n  }\n}\n```\nТриггер: POST /api/chats/{id}/messages\n\n**message:edited** — сообщение изменено\n```json\n{\n  \"type\": \"message:edited\",\n  \"payload\": { /* MessageResponse с обновлённым content + edited:true */ }\n}\n```\nТриггер: PUT /api/messages/{id}\n\n**message:deleted** — сообщение удалено\n```json\n{\n  \"type\": \"message:deleted\",\n  \"payload\": { \"messageId\": \"msg-uuid\", \"chatId\": \"chat-uuid\" }\n}\n```\nТриггер: DELETE /api/messages/{id}\n\n**message:read** — отметка о прочтении\n```json\n{\n  \"type\": \"message:read\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/chats/{id}/read или POST /api/messages/{id}/read\n\n### 👤 Пользователи\n\n**user:typing** — пользователь печатает\n```json\n{\n  \"type\": \"user:typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\n\n**user:stop_typing** — перестал печатать\n```json\n{\n  \"type\": \"user:stop_typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\n\n**user:online** — пользователь появился в сети\n```json\n{\n  \"type\": \"user:online\",\n  \"payload\": { \"userId\": \"user-uuid\", \"online\": true }\n}\n```\nТриггер: Подключение к WebSocket\n\n**user:offline** — пользователь ушёл\n```json\n{\n  \"type\": \"user:offline\",\n  \"payload\": { \"userId\": \"user-uuid\", \"online\": false }\n}\n```\nТриггер: Отключение WebSocket\n\n### 💬 Чаты\n\n**chat:created** — создан новый чат\n```json\n{\n  \"type\": \"chat:created\",\n  \"payload\": { /* ChatResponse с participants, lastMessage, unreadCount */ }\n}\n```\nТриггер: POST /api/chats\n\n**chat:updated** — чат обновлён (название, описание, аватар)\n```json\n{\n  \"type\": \"chat:updated\",\n  \"payload\": { /* ChatResponse */ }\n}\n```\n\n**chat:deleted** — чат удалён\n```json\n{\n  \"type\": \"chat:deleted\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nТриггер: DELETE /api/chats/{id}\n\n### 📞 Звонки\n\n**call:offer** — входящий звонок (audio/video)\n```json\n{\n  \"type\": \"call:offer\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"callerId\": \"user-uuid\", \"type\": \"video\" }\n}\n```\nТриггер: POST /api/calls/initiate\n\n**call:accept** — звонок принят\n```json\n{\n  \"type\": \"call:accept\",\n  \"payload\": { \"callId\": \"call-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/calls/{id}/respond с action=accept\n\n**call:end** — звонок завершён\n```json\n{\n  \"type\": \"call:end\",\n  \"payload\": { \"callId\": \"call-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/calls/{id}/end\n\n---\n## 2. Команды клиента → сервер (клиент отправляет)\n\n### ✏️ Печатание\n\n```json\n{\n  \"type\": \"user:typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nСервер пересылает всем участникам чата (кроме отправителя) событие **user:typing** с полем userId.\n\n```json\n{\n  \"type\": \"user:stop_typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nСервер пересылает **user:stop_typing** всем участникам, кроме отправителя.\n\n### WebRTC (транзит, сервер не обрабатывает)\n\n```json\n{ \"type\": \"call:answer\", \"payload\": { \"callId\": \"...\", \"sdp\": \"...\" } }\n{ \"type\": \"call:ice\", \"payload\": { \"callId\": \"...\", \"candidate\": \"...\", \"sdpMLineIdx\": 0 } }\n{ \"type\": \"call:reject\", \"payload\": { \"callId\": \"...\" } }\n```\nЭти сообщения сервер принимает, но **не валидирует и не обрабатывает** — они зарезервированы для будущего прямого WebRTC peer-to-peer signalling.\n\n---\n## 3. Пример JavaScript\n\n```javascript\n// Подключение\nconst ws = new WebSocket('ws://localhost:8080/ws?token=' + token);\n\n// При получении сообщения\nws.onmessage = (event) => {\n  const msg = JSON.parse(event.data);\n  switch (msg.type) {\n    case 'message:new':\n      console.log('Новое сообщение:', msg.payload.content);\n      break;\n    case 'user:typing':\n      console.log('Пользователь печатает:', msg.payload.userId);\n      break;\n    case 'user:online':\n      console.log('Пользователь онлайн:', msg.payload.userId);\n      break;\n    case 'call:offer':\n      console.log('Входящий звонок от:', msg.payload.callerId);\n      break;\n  }\n};\n\n// Отправить событие печатания\nws.send(JSON.stringify({\n  type: 'user:typing',\n  payload: { chatId: 'chat-uuid' }\n}));\n\n// Перестать печатать\nws.send(JSON.stringify({\n  type: 'user:stop_typing',\n  payload: { chatId: 'chat-uuid' }\n}));\n```\n\n---\n## 4. Примечания\n\n- typing-события приходят **всем участникам чата, кроме отправителя**\n- Сервер автоматически шлёт **ping** каждые 54 секунды; клиент должен отвечать **pong**\n- Если от клиента нет pong в течение 60 секунд — соединение закрывается\n- При переподключении старый сокет автоматически заменяется новым\n- Формат всех сообщений: JSON { \"type\": \"string\", \"payload\": object }",
+        "description": "---\n## Подключение\n\nws://localhost:8080/ws?token=JWT_TOKEN\n\nПосле подключения сервер:\n1. Устанавливает online=true для пользователя\n2. Рассылает событие **user:online** всем участникам общих чатов\n3. При отключении (закрытие вкладки, потеря сети) — **user:offline**\n\nСервер поддерживает соединение **ping/pong** (60s timeout).\n\n---\n## Формат всех сообщений\n\nОднотипный JSON:\n```json\n{\n  \"type\": \"событие\",\n  \"payload\": { ... }\n}\n```\n\n---\n## 1. События сервера → клиент (сервер отправляет)\n\n### 📩 Сообщения\n\n**message:new** — новое сообщение в чате\n```json\n{\n  \"type\": \"message:new\",\n  \"payload\": {\n    \"id\": \"msg-uuid\",\n    \"chatId\": \"chat-uuid\",\n    \"sender\": { \"id\": \"...\", \"displayName\": \"Alice\", \"avatarUrl\": \"...\" },\n    \"content\": \"Привет!\",\n    \"type\": \"text\",\n    \"replyTo\": null,\n    \"forwardFrom\": null,\n    \"fileName\": \"\",\n    \"fileSize\": 0,\n    \"fileUrl\": \"\",\n    \"reactions\": [],\n    \"pinned\": false,\n    \"readBy\": [{\"id\":\"...\",\"displayName\":\"Alice\"}],\n    \"createdAt\": \"2026-01-01T12:00:00Z\",\n    \"updatedAt\": \"2026-01-01T12:00:00Z\",\n    \"edited\": false,\n    \"deleted\": false\n  }\n}\n```\nТриггер: POST /api/chats/{id}/messages\n\n**message:edited** — сообщение изменено\n```json\n{\n  \"type\": \"message:edited\",\n  \"payload\": { /* MessageResponse с обновлённым content + edited:true */ }\n}\n```\nТриггер: PUT /api/messages/{id}\n\n**message:deleted** — сообщение удалено\n```json\n{\n  \"type\": \"message:deleted\",\n  \"payload\": { \"messageId\": \"msg-uuid\", \"chatId\": \"chat-uuid\" }\n}\n```\nТриггер: DELETE /api/messages/{id}\n\n**message:read** — отметка о прочтении\n```json\n{\n  \"type\": \"message:read\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/chats/{id}/read или POST /api/messages/{id}/read\n\n### 👤 Пользователи\n\n**user:typing** — пользователь печатает\n```json\n{\n  \"type\": \"user:typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\n\n**user:stop_typing** — перестал печатать\n```json\n{\n  \"type\": \"user:stop_typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"userId\": \"user-uuid\" }\n}\n```\n\n**user:online** — пользователь появился в сети\n```json\n{\n  \"type\": \"user:online\",\n  \"payload\": { \"userId\": \"user-uuid\", \"online\": true }\n}\n```\nТриггер: Подключение к WebSocket\n\n**user:offline** — пользователь ушёл\n```json\n{\n  \"type\": \"user:offline\",\n  \"payload\": { \"userId\": \"user-uuid\", \"online\": false }\n}\n```\nТриггер: Отключение WebSocket\n\n### 💬 Чаты\n\n**chat:created** — создан новый чат\n```json\n{\n  \"type\": \"chat:created\",\n  \"payload\": { /* ChatResponse с participants, lastMessage, unreadCount */ }\n}\n```\nТриггер: POST /api/chats\n\n**chat:updated** — чат обновлён (название, описание, аватар)\n```json\n{\n  \"type\": \"chat:updated\",\n  \"payload\": { /* ChatResponse */ }\n}\n```\n\n**chat:deleted** — чат удалён\n```json\n{\n  \"type\": \"chat:deleted\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nТриггер: DELETE /api/chats/{id}\n\n### 📞 Звонки\n\n**call:offer** — входящий звонок (audio/video)\n```json\n{\n  \"type\": \"call:offer\",\n  \"payload\": { \"chatId\": \"chat-uuid\", \"callerId\": \"user-uuid\", \"type\": \"video\" }\n}\n```\nТриггер: POST /api/calls/initiate\n\n**call:accept** — звонок принят\n```json\n{\n  \"type\": \"call:accept\",\n  \"payload\": { \"callId\": \"call-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/calls/{id}/respond с action=accept\n\n**call:end** — звонок завершён\n```json\n{\n  \"type\": \"call:end\",\n  \"payload\": { \"callId\": \"call-uuid\", \"userId\": \"user-uuid\" }\n}\n```\nТриггер: POST /api/calls/{id}/end
+
+### 📌 Дополнительные события
+
+**message:pinned** — сообщение закреплено/откреплено
+```json
+{
+  "type": "message:pinned",
+  "payload": { "messageId": "msg-uuid", "chatId": "chat-uuid", "pinned": true }
+}
+```
+Триггер: PUT /api/messages/{id}/pin
+
+**message:starred** — сообщение добавлено в избранное
+```json
+{
+  "type": "message:starred",
+  "payload": { "messageId": "msg-uuid", "userId": "user-uuid" }
+}
+```
+Триггер: POST /api/messages/{id}/star
+
+**chat:slowmode** — изменён slow mode в чате
+```json
+{
+  "type": "chat:slowmode",
+  "payload": { "chatId": "chat-uuid", "slowModeSeconds": 30 }
+}
+```
+Триггер: PUT /api/chats/{id}/slow-mode
+
+**chat:role** — изменена роль участника
+```json
+{
+  "type": "chat:role",
+  "payload": { "chatId": "chat-uuid", "userId": "user-uuid", "role": "admin" }
+}
+```
+Триггер: PUT /api/chats/{id}/participants/{userId}/role
+
+**chat:ownership** — передача прав владельца
+```json
+{
+  "type": "chat:ownership",
+  "payload": { "chatId": "chat-uuid", "newOwnerId": "user-uuid" }
+}
+```
+Триггер: POST /api/chats/{id}/transfer-ownership
+
+**poll:created** — новый опрос в чате
+```json
+{
+  "type": "poll:created",
+  "payload": { "chatId": "chat-uuid", "poll": { ... } }
+}
+```
+Триггер: POST /api/chats/{id}/polls
+
+**poll:vote** — новый голос в опросе
+```json
+{
+  "type": "poll:vote",
+  "payload": { "pollId": "poll-uuid", "userId": "user-uuid", "optionIndex": 0 }
+}
+```
+Триггер: POST /api/polls/{pollId}/vote
+
+**poll:closed** — опрос закрыт
+```json
+{
+  "type": "poll:closed",
+  "payload": { "pollId": "poll-uuid" }
+}
+```
+Триггер: POST /api/polls/{pollId}/close\n\n---\n## 2. Команды клиента → сервер (клиент отправляет)\n\n### ✏️ Печатание\n\n```json\n{\n  \"type\": \"user:typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nСервер пересылает всем участникам чата (кроме отправителя) событие **user:typing** с полем userId.\n\n```json\n{\n  \"type\": \"user:stop_typing\",\n  \"payload\": { \"chatId\": \"chat-uuid\" }\n}\n```\nСервер пересылает **user:stop_typing** всем участникам, кроме отправителя.\n\n### WebRTC (транзит, сервер не обрабатывает)\n\n```json\n{ \"type\": \"call:answer\", \"payload\": { \"callId\": \"...\", \"sdp\": \"...\" } }\n{ \"type\": \"call:ice\", \"payload\": { \"callId\": \"...\", \"candidate\": \"...\", \"sdpMLineIdx\": 0 } }\n{ \"type\": \"call:reject\", \"payload\": { \"callId\": \"...\" } }\n```\nЭти сообщения сервер принимает, но **не валидирует и не обрабатывает** — они зарезервированы для будущего прямого WebRTC peer-to-peer signalling.\n\n---\n## 3. Пример JavaScript\n\n```javascript\n// Подключение\nconst ws = new WebSocket('ws://localhost:8080/ws?token=' + token);\n\n// При получении сообщения\nws.onmessage = (event) => {\n  const msg = JSON.parse(event.data);\n  switch (msg.type) {\n    case 'message:new':\n      console.log('Новое сообщение:', msg.payload.content);\n      break;\n    case 'user:typing':\n      console.log('Пользователь печатает:', msg.payload.userId);\n      break;\n    case 'user:online':\n      console.log('Пользователь онлайн:', msg.payload.userId);\n      break;\n    case 'call:offer':\n      console.log('Входящий звонок от:', msg.payload.callerId);\n      break;\n  }\n};\n\n// Отправить событие печатания\nws.send(JSON.stringify({\n  type: 'user:typing',\n  payload: { chatId: 'chat-uuid' }\n}));\n\n// Перестать печатать\nws.send(JSON.stringify({\n  type: 'user:stop_typing',\n  payload: { chatId: 'chat-uuid' }\n}));\n```\n\n---\n## 4. Примечания\n\n- typing-события приходят **всем участникам чата, кроме отправителя**\n- Сервер автоматически шлёт **ping** каждые 54 секунды; клиент должен отвечать **pong**\n- Если от клиента нет pong в течение 60 секунд — соединение закрывается\n- При переподключении старый сокет автоматически заменяется новым\n- Формат всех сообщений: JSON { \"type\": \"string\", \"payload\": object }",
         "parameters": [
           {
             "name": "token",
@@ -3208,6 +3473,280 @@
           "200": {
             "description": "✅ IP разблокирован"
           }
+        }
+      }
+    },
+    "/api/invite-links": {
+      "post": {
+        "tags": ["InviteLinks"],
+        "summary": "Create invite link",
+        "security": [{"BearerAuth":[]}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateInviteLinkRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "✅ Link created" },
+          "400": { "description": "❌ Bad request" }
+        }
+      }
+    },
+    "/api/invite-links/join": {
+      "post": {
+        "tags": ["InviteLinks"],
+        "summary": "Join chat by invite code",
+        "security": [{"BearerAuth":[]}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/JoinByInviteRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "✅ Joined" },
+          "400": { "description": "❌ Invalid or expired code" }
+        }
+      }
+    },
+    "/api/chats/{id}/invite-links": {
+      "get": {
+        "tags": ["InviteLinks"],
+        "summary": "Get chat invite links",
+        "security": [{"BearerAuth":[]}],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "✅ List of links" },
+          "400": { "description": "❌ Bad request" }
+        }
+      },
+      "post": {
+        "tags": ["InviteLinks"],
+        "summary": "Create invite link for chat",
+        "security": [{"BearerAuth":[]}],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateInviteLinkRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "✅ Link created" }
+        }
+      }
+    },
+    "/api/chats/{id}/invite-links/{linkId}": {
+      "delete": {
+        "tags": ["InviteLinks"],
+        "summary": "Delete invite link",
+        "security": [{"BearerAuth":[]}],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "linkId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "✅ Link deleted" }
+        }
+      }
+    },
+    "/api/folders": {
+      "get": {
+        "tags": ["Folders"],
+        "summary": "List chat folders",
+        "security": [{"BearerAuth":[]}],
+        "responses": {
+          "200": { "description": "✅ Folders list" }
+        }
+      },
+      "post": {
+        "tags": ["Folders"],
+        "summary": "Create chat folder",
+        "security": [{"BearerAuth":[]}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateChatFolderRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "✅ Folder created" }
+        }
+      }
+    },
+    "/api/folders/{id}": {
+      "put": {
+        "tags": ["Folders"],
+        "summary": "Update chat folder",
+        "security": [{"BearerAuth":[]}],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateChatFolderRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "✅ Folder updated" }
+        }
+      },
+      "delete": {
+        "tags": ["Folders"],
+        "summary": "Delete chat folder",
+        "security": [{"BearerAuth":[]}],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "✅ Folder deleted" }
+        }
+      }
+    },
+    "/api/chats/{id}/slow-mode": {
+      "put": {
+        "tags": ["Chats"],
+        "summary": "Set slow mode interval",
+        "security": [{"BearerAuth":[]}],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SlowModeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "✅ Slow mode updated" },
+          "400": { "description": "❌ Bad request" }
+        }
+      }
+    },
+    "/api/contacts/photo": {
+      "post": {
+        "tags": ["Contacts"],
+        "summary": "Update contact photo",
+        "security": [{"BearerAuth":[]}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateContactPhotoRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "✅ Photo updated" }
+        }
+      }
+    },
+    "/api/drafts": {
+      "get": {
+        "tags": ["Drafts"],
+        "summary": "Get draft for a chat",
+        "security": [{"BearerAuth":[]}],
+        "parameters": [
+          { "name": "chatId", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "✅ Draft content" },
+          "404": { "description": "❌ No draft" }
+        }
+      },
+      "post": {
+        "tags": ["Drafts"],
+        "summary": "Save a draft",
+        "security": [{"BearerAuth":[]}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SaveDraftRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "✅ Draft saved" }
+        }
+      }
+    },
+    "/api/drafts/{id}": {
+      "delete": {
+        "tags": ["Drafts"],
+        "summary": "Delete a draft",
+        "security": [{"BearerAuth":[]}],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "✅ Draft deleted" }
+        }
+      }
+    },
+    "/api/gifs": {
+      "get": {
+        "tags": ["Gifs"],
+        "summary": "Get saved GIFs",
+        "security": [{"BearerAuth":[]}],
+        "responses": {
+          "200": { "description": "✅ Saved GIFs list" }
+        }
+      },
+      "post": {
+        "tags": ["Gifs"],
+        "summary": "Save a GIF",
+        "security": [{"BearerAuth":[]}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "url": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "✅ GIF saved" }
+        }
+      },
+      "delete": {
+        "tags": ["Gifs"],
+        "summary": "Delete a saved GIF",
+        "security": [{"BearerAuth":[]}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "url": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "✅ GIF deleted" }
         }
       }
     },

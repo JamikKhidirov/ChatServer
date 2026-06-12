@@ -110,7 +110,37 @@ func (c *Client) writePump() {
 }
 
 func (c *Client) handleMessage(msg WsMessage) {
+	dispatch := func(handler MessageActionHandler) {
+		if handler != nil {
+			handler(c.UserID, msg.Payload, c.Hub)
+		}
+	}
+
 	switch msg.Type {
+	case MsgKeyboardOpened:
+		var payload struct {
+			ChatID string `json:"chatId"`
+		}
+		json.Unmarshal(msg.Payload, &payload)
+		if payload.ChatID != "" {
+			c.Hub.BroadcastToChatExcept([]string{c.UserID}, WSOutgoingMessage{
+				Type:    MsgKeyboardOpened,
+				Payload: map[string]string{"chatId": payload.ChatID, "userId": c.UserID},
+			})
+		}
+
+	case MsgKeyboardClosed:
+		var payload struct {
+			ChatID string `json:"chatId"`
+		}
+		json.Unmarshal(msg.Payload, &payload)
+		if payload.ChatID != "" {
+			c.Hub.BroadcastToChatExcept([]string{c.UserID}, WSOutgoingMessage{
+				Type:    MsgKeyboardClosed,
+				Payload: map[string]string{"chatId": payload.ChatID, "userId": c.UserID},
+			})
+		}
+
 	case MsgTyping:
 		var payload struct {
 			ChatID string `json:"chatId"`
@@ -155,6 +185,49 @@ func (c *Client) handleMessage(msg WsMessage) {
 				Payload: msg.Payload,
 			})
 		}
+
+	case MsgSendMessage:
+		dispatch(c.Hub.OnSendMessage)
+	case MsgEditMessageReq:
+		dispatch(c.Hub.OnEditMessage)
+	case MsgDeleteMessageReq:
+		dispatch(c.Hub.OnDeleteMessage)
+	case MsgReadMessageReq:
+		dispatch(c.Hub.OnReadMessage)
+	case MsgAddReaction:
+		dispatch(c.Hub.OnAddReaction)
+	case MsgRemoveReaction:
+		dispatch(c.Hub.OnRemoveReaction)
+	case MsgTogglePin:
+		dispatch(c.Hub.OnTogglePin)
+	case MsgStarMessage:
+		dispatch(c.Hub.OnStarMessage)
+	case MsgUnstarMessage:
+		dispatch(c.Hub.OnUnstarMessage)
+	case MsgForwardMessage:
+		dispatch(c.Hub.OnForwardMessage)
+	case MsgCreateChat:
+		dispatch(c.Hub.OnCreateChat)
+	case MsgUpdateChat:
+		dispatch(c.Hub.OnUpdateChat)
+	case MsgAddParticipant:
+		dispatch(c.Hub.OnAddParticipant)
+	case MsgRemoveParticipant:
+		dispatch(c.Hub.OnRemoveParticipant)
+	case MsgLeaveChat:
+		dispatch(c.Hub.OnLeaveChat)
+	case MsgPinChat:
+		dispatch(c.Hub.OnPinChat)
+	case MsgUnpinChat:
+		dispatch(c.Hub.OnUnpinChat)
+	case MsgArchiveChat:
+		dispatch(c.Hub.OnArchiveChat)
+	case MsgUnarchiveChat:
+		dispatch(c.Hub.OnUnarchiveChat)
+	case MsgBlockUser:
+		dispatch(c.Hub.OnBlockUser)
+	case MsgUnblockUser:
+		dispatch(c.Hub.OnUnblockUser)
 
 	case MsgCallReject:
 		var payload struct {

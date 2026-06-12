@@ -21,6 +21,7 @@ type Config struct {
 	TwilioAccountSID string
 	TwilioAuthToken  string
 	TwilioPhone      string
+	AdminSecret      string
 }
 
 func Load() *Config {
@@ -40,6 +41,7 @@ func Load() *Config {
 		TwilioAccountSID: getEnv("TWILIO_ACCOUNT_SID", ""),
 		TwilioAuthToken:  getEnv("TWILIO_AUTH_TOKEN", ""),
 		TwilioPhone:      getEnv("TWILIO_PHONE", ""),
+		AdminSecret:      getEnv("ADMIN_SECRET", "admin-secret-change-me"),
 	}
 }
 

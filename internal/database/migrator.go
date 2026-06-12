@@ -28,6 +28,13 @@ var migrations = []Migration{
 	{12, "add_edit_history_captcha_ip_blocks", addEditHistoryCaptchaIPBlocks},
 	{13, "add_admin_settings", addAdminSettings},
 	{14, "add_login_codes", addLoginCodes},
+	{15, "add_contact_photo", addContactPhoto},
+	{16, "add_message_fields", addMessageFields},
+	{17, "add_invite_links", addInviteLinks},
+	{18, "add_chat_folders", addChatFolders},
+	{19, "add_chat_slow_mode", addChatSlowMode},
+	{20, "add_chat_themes", addChatThemes},
+	{21, "add_is_admin_field", addIsAdminField},
 }
 
 func RunMigrations(db *sql.DB) error {
@@ -416,4 +423,73 @@ CREATE TABLE IF NOT EXISTS phone_login_codes (
 	id TEXT PRIMARY KEY, phone TEXT NOT NULL, code TEXT NOT NULL,
 	expires_at TEXT NOT NULL, verified INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+`
+const addContactPhoto = `
+ALTER TABLE contacts ADD COLUMN photo_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE contacts ADD COLUMN user_id_ref TEXT NOT NULL DEFAULT '';
+ALTER TABLE contacts ADD COLUMN updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP;
+CREATE INDEX IF NOT EXISTS idx_contacts_user_id_ref ON contacts(user_id_ref);
+`
+const addMessageFields = `
+ALTER TABLE messages ADD COLUMN caption TEXT NOT NULL DEFAULT '';
+ALTER TABLE messages ADD COLUMN mime_type TEXT NOT NULL DEFAULT '';
+ALTER TABLE messages ADD COLUMN duration INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE messages ADD COLUMN width INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE messages ADD COLUMN height INTEGER NOT NULL DEFAULT 0;
+`
+const addInviteLinks = `
+CREATE TABLE IF NOT EXISTS invite_links (
+	id TEXT PRIMARY KEY,
+	chat_id TEXT NOT NULL,
+	creator_id TEXT NOT NULL,
+	code TEXT UNIQUE NOT NULL,
+	expires_at TEXT,
+	usage_limit INTEGER NOT NULL DEFAULT 0,
+	usage_count INTEGER NOT NULL DEFAULT 0,
+	active INTEGER NOT NULL DEFAULT 1,
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (chat_id) REFERENCES chats(id),
+	FOREIGN KEY (creator_id) REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_invite_links_code ON invite_links(code);
+CREATE INDEX IF NOT EXISTS idx_invite_links_chat_id ON invite_links(chat_id);
+`
+const addChatFolders = `
+CREATE TABLE IF NOT EXISTS chat_folders (
+	id TEXT PRIMARY KEY,
+	user_id TEXT NOT NULL,
+	name TEXT NOT NULL,
+	emoji TEXT NOT NULL DEFAULT '',
+	folder_order INTEGER NOT NULL DEFAULT 0,
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS chat_folder_items (
+	folder_id TEXT NOT NULL,
+	chat_id TEXT NOT NULL,
+	added_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (folder_id, chat_id),
+	FOREIGN KEY (folder_id) REFERENCES chat_folders(id),
+	FOREIGN KEY (chat_id) REFERENCES chats(id)
+);
+CREATE INDEX IF NOT EXISTS idx_chat_folder_items_folder ON chat_folder_items(folder_id);
+`
+const addChatSlowMode = `
+ALTER TABLE chats ADD COLUMN slow_mode_seconds INTEGER NOT NULL DEFAULT 0;
+`
+const addChatThemes = `
+CREATE TABLE IF NOT EXISTS chat_themes (
+	chat_id TEXT NOT NULL,
+	user_id TEXT NOT NULL,
+	theme TEXT NOT NULL DEFAULT 'default',
+	background_url TEXT NOT NULL DEFAULT '',
+	updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (chat_id, user_id),
+	FOREIGN KEY (chat_id) REFERENCES chats(id),
+	FOREIGN KEY (user_id) REFERENCES users(id)
+);
+`
+
+const addIsAdminField = `
+ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;
 `

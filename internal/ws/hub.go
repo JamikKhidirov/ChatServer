@@ -9,24 +9,54 @@ import (
 type MessageType string
 
 const (
-	MsgNewMessage    MessageType = "message:new"
-	MsgEditMessage   MessageType = "message:edited"
-	MsgDeleteMessage MessageType = "message:deleted"
-	MsgReadMessage   MessageType = "message:read"
-	MsgTyping        MessageType = "user:typing"
-	MsgStopTyping    MessageType = "user:stop_typing"
-	MsgOnline        MessageType = "user:online"
-	MsgOffline       MessageType = "user:offline"
-	MsgChatCreated   MessageType = "chat:created"
-	MsgChatUpdated   MessageType = "chat:updated"
-	MsgChatDeleted   MessageType = "chat:deleted"
-	MsgCallOffer     MessageType = "call:offer"
-	MsgCallAnswer    MessageType = "call:answer"
-	MsgCallICE       MessageType = "call:ice"
-	MsgCallEnd       MessageType = "call:end"
-	MsgCallMissed    MessageType = "call:missed"
-	MsgCallReject    MessageType = "call:reject"
-	MsgCallAccept    MessageType = "call:accept"
+	// Outgoing events (server → client)
+	MsgNewMessage     MessageType = "message:new"
+	MsgEditMessage    MessageType = "message:edited"
+	MsgDeleteMessage  MessageType = "message:deleted"
+	MsgReadMessage    MessageType = "message:read"
+	MsgReaction       MessageType = "message:reaction"
+	MsgPinned         MessageType = "message:pinned"
+	MsgStarred        MessageType = "message:starred"
+	MsgForward        MessageType = "message:forward"
+	MsgOnline         MessageType = "user:online"
+	MsgOffline        MessageType = "user:offline"
+	MsgTyping         MessageType = "user:typing"
+	MsgStopTyping     MessageType = "user:stop_typing"
+	MsgKeyboardOpened MessageType = "user:keyboard_opened"
+	MsgKeyboardClosed MessageType = "user:keyboard_closed"
+	MsgChatCreated    MessageType = "chat:created"
+	MsgChatUpdated    MessageType = "chat:updated"
+	MsgChatDeleted    MessageType = "chat:deleted"
+	MsgCallOffer      MessageType = "call:offer"
+	MsgCallAnswer     MessageType = "call:answer"
+	MsgCallICE        MessageType = "call:ice"
+	MsgCallEnd        MessageType = "call:end"
+	MsgCallMissed     MessageType = "call:missed"
+	MsgCallReject     MessageType = "call:reject"
+	MsgCallAccept     MessageType = "call:accept"
+
+	// Incoming events (client → server)
+	MsgSendMessage      MessageType = "message:send"
+	MsgEditMessageReq   MessageType = "message:edit"
+	MsgDeleteMessageReq MessageType = "message:delete"
+	MsgReadMessageReq   MessageType = "message:read"
+	MsgAddReaction      MessageType = "message:react"
+	MsgRemoveReaction   MessageType = "message:unreact"
+	MsgTogglePin        MessageType = "message:pin"
+	MsgStarMessage      MessageType = "message:star"
+	MsgUnstarMessage    MessageType = "message:unstar"
+	MsgForwardMessage   MessageType = "message:forward"
+	MsgCreateChat       MessageType = "chat:create"
+	MsgUpdateChat       MessageType = "chat:update"
+	MsgAddParticipant   MessageType = "chat:add_participant"
+	MsgRemoveParticipant MessageType = "chat:remove_participant"
+	MsgLeaveChat        MessageType = "chat:leave"
+	MsgPinChat          MessageType = "chat:pin"
+	MsgUnpinChat        MessageType = "chat:unpin"
+	MsgArchiveChat      MessageType = "chat:archive"
+	MsgUnarchiveChat    MessageType = "chat:unarchive"
+	MsgBlockUser        MessageType = "user:block"
+	MsgUnblockUser      MessageType = "user:unblock"
 )
 
 type WSOutgoingMessage struct {
@@ -39,10 +69,34 @@ type WsMessage struct {
 	Payload json.RawMessage `json:"payload"`
 }
 
+type MessageActionHandler func(userID string, payload json.RawMessage, hub *Hub)
+
 type Hub struct {
 	mu       sync.RWMutex
 	clients  map[string]*Client
 	register chan *Client
+
+	OnSendMessage        MessageActionHandler
+	OnEditMessage        MessageActionHandler
+	OnDeleteMessage      MessageActionHandler
+	OnReadMessage        MessageActionHandler
+	OnAddReaction        MessageActionHandler
+	OnRemoveReaction     MessageActionHandler
+	OnTogglePin          MessageActionHandler
+	OnStarMessage        MessageActionHandler
+	OnUnstarMessage      MessageActionHandler
+	OnForwardMessage     MessageActionHandler
+	OnCreateChat         MessageActionHandler
+	OnUpdateChat         MessageActionHandler
+	OnAddParticipant     MessageActionHandler
+	OnRemoveParticipant  MessageActionHandler
+	OnLeaveChat          MessageActionHandler
+	OnPinChat            MessageActionHandler
+	OnUnpinChat          MessageActionHandler
+	OnArchiveChat        MessageActionHandler
+	OnUnarchiveChat      MessageActionHandler
+	OnBlockUser          MessageActionHandler
+	OnUnblockUser        MessageActionHandler
 }
 
 func NewHub() *Hub {

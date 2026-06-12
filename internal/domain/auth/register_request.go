@@ -1,0 +1,16 @@
+package authdomain
+
+type RegisterRequest struct {
+	Username    string `json:"username" binding:"required,min=3,max=32"`
+	Email       string `json:"email" binding:"required,email"`
+	Password    string `json:"password" binding:"required,min=6"`
+	DisplayName string `json:"display_name" binding:"required,min=1,max=64"`
+}
+
+type AdminRegisterRequest struct {
+	Username    string `json:"username" binding:"required,min=3,max=32"`
+	Email       string `json:"email" binding:"required,email"`
+	Password    string `json:"password" binding:"required,min=6"`
+	DisplayName string `json:"display_name" binding:"required,min=1,max=64"`
+	AdminSecret string `json:"admin_secret" binding:"required"`
+}

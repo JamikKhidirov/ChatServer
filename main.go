@@ -14,10 +14,61 @@ import (
 	_ "ChatServerGolang/docs"
 	"ChatServerGolang/internal/database"
 	"ChatServerGolang/internal/email"
-	"ChatServerGolang/internal/handler"
+	"ChatServerGolang/internal/handler/auth"
+	"ChatServerGolang/internal/handler/bot"
+	"ChatServerGolang/internal/handler/call"
+	"ChatServerGolang/internal/handler/chat"
+	"ChatServerGolang/internal/handler/contact"
+	"ChatServerGolang/internal/handler/draft"
+	"ChatServerGolang/internal/handler/folder"
+	"ChatServerGolang/internal/handler/gif"
+	"ChatServerGolang/internal/handler/link"
+	"ChatServerGolang/internal/handler/login"
+	"ChatServerGolang/internal/handler/message"
+	"ChatServerGolang/internal/handler/poll"
+	"ChatServerGolang/internal/handler/schedmsg"
+	"ChatServerGolang/internal/handler/session"
+	"ChatServerGolang/internal/handler/sticker"
+	"ChatServerGolang/internal/handler/user"
+	"ChatServerGolang/internal/handler/verification"
+	"ChatServerGolang/internal/handler/ws"
 	"ChatServerGolang/internal/middleware"
-	"ChatServerGolang/internal/repository"
-	"ChatServerGolang/internal/service"
+	"ChatServerGolang/internal/repository/account"
+	"ChatServerGolang/internal/repository/bot"
+	"ChatServerGolang/internal/repository/call"
+	"ChatServerGolang/internal/repository/chat"
+	"ChatServerGolang/internal/repository/contact"
+	"ChatServerGolang/internal/repository/draft"
+	"ChatServerGolang/internal/repository/folder"
+	"ChatServerGolang/internal/repository/gif"
+	"ChatServerGolang/internal/repository/link"
+	"ChatServerGolang/internal/repository/message"
+	"ChatServerGolang/internal/repository/poll"
+	"ChatServerGolang/internal/repository/schedmsg"
+	"ChatServerGolang/internal/repository/session"
+	"ChatServerGolang/internal/repository/sticker"
+	"ChatServerGolang/internal/repository/user"
+	"ChatServerGolang/internal/repository/verification"
+	"ChatServerGolang/internal/service/auth"
+	"ChatServerGolang/internal/service/bot"
+	"ChatServerGolang/internal/service/call"
+	"ChatServerGolang/internal/service/chat"
+	"ChatServerGolang/internal/service/contact"
+	"ChatServerGolang/internal/service/draft"
+	"ChatServerGolang/internal/service/folder"
+	"ChatServerGolang/internal/service/gif"
+	"ChatServerGolang/internal/service/link"
+	"ChatServerGolang/internal/service/mention"
+	"ChatServerGolang/internal/service/message"
+	"ChatServerGolang/internal/service/poll"
+	"ChatServerGolang/internal/service/push"
+	"ChatServerGolang/internal/service/schedmsg"
+	"ChatServerGolang/internal/service/session"
+	"ChatServerGolang/internal/service/sticker"
+	"ChatServerGolang/internal/service/systemmsg"
+	"ChatServerGolang/internal/service/typing"
+	"ChatServerGolang/internal/service/user"
+	"ChatServerGolang/internal/service/verification"
 	"ChatServerGolang/internal/sms"
 	"ChatServerGolang/internal/ws"
 
@@ -34,66 +85,68 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// Repositories
-	userRepo := repository.NewUserRepository(db)
-	chatRepo := repository.NewChatRepository(db)
-	messageRepo := repository.NewMessageRepository(db)
-	callRepo := repository.NewCallRepository(db)
-	accRepo := repository.NewAccountSettingRepository(db)
-	contactRepo := repository.NewContactRepository(db)
-	pollRepo := repository.NewPollRepository(db)
-	stickerRepo := repository.NewStickerRepository(db)
-	draftRepo := repository.NewDraftRepository(db)
-	schedMsgRepo := repository.NewScheduledMessageRepository(db)
-	sessionRepo := repository.NewSessionRepository(db)
-	botRepo := repository.NewBotRepository(db)
-	gifRepo := repository.NewSavedGifRepository(db)
-	verRepo := repository.NewVerificationRepository(db)
+	userRepo := userrepo.NewUserRepository(db)
+	chatRepo := chatrepo.NewChatRepository(db)
+	messageRepo := messagerepo.NewMessageRepository(db)
+	callRepo := callrepo.NewCallRepository(db)
+	accRepo := accountrepo.NewAccountSettingRepository(db)
+	contactRepo := contactrepo.NewContactRepository(db)
+	pollRepo := pollrepo.NewPollRepository(db)
+	stickerRepo := stickerrepo.NewStickerRepository(db)
+	draftRepo := draftrepo.NewDraftRepository(db)
+	schedMsgRepo := schedmsgrepo.NewScheduledMessageRepository(db)
+	sessionRepo := sessionrepo.NewSessionRepository(db)
+	botRepo := botrepo.NewBotRepository(db)
+	gifRepo := gifrepo.NewSavedGifRepository(db)
+	verRepo := verrepo.NewVerificationRepository(db)
+	linkRepo := linkrepo.NewInviteLinkRepository(db)
+	folderRepo := folderrepo.NewChatFolderRepository(db)
 
-	// WebSocket hub
 	hub := ws.NewHub()
 	go hub.Run()
 
-	// Services
-	authService := service.NewAuthService(userRepo, cfg)
-	userService := service.NewUserService(userRepo, chatRepo, accRepo)
-	callService := service.NewCallService(callRepo, chatRepo, userRepo, userService)
-	messageService := service.NewMessageService(messageRepo, chatRepo, userRepo, userService)
-	chatService := service.NewChatService(chatRepo, userRepo, messageRepo, userService)
-	pushService := service.NewPushService(userRepo, cfg)
-	contactService := service.NewContactService(contactRepo)
-	sysMsgService := service.NewSystemMessageService(messageRepo, chatRepo, hub)
-	_ = service.NewTypingService(hub)
-	_ = service.NewMentionService(userRepo, messageRepo)
-	pollService := service.NewPollService(pollRepo, chatRepo, messageRepo, sysMsgService)
-	stickerService := service.NewStickerService(stickerRepo)
-	draftService := service.NewDraftService(draftRepo)
-	schedMsgService := service.NewScheduledMessageService(schedMsgRepo, messageRepo, chatRepo)
-	sessionService := service.NewSessionService(sessionRepo)
-	botService := service.NewBotService(botRepo)
-	gifService := service.NewSavedGifService(gifRepo)
+	authService := authservice.NewAuthService(userRepo, cfg)
+	userService := userservice.NewUserService(userRepo, chatRepo, accRepo)
+	callService := callservice.NewCallService(callRepo, chatRepo, userRepo, userService)
+	messageService := messageservice.NewMessageService(messageRepo, chatRepo, userRepo, userService)
+	chatService := chatservice.NewChatService(chatRepo, userRepo, messageRepo, userService)
+	pushService := pushservice.NewPushService(userRepo, cfg)
+	contactService := contactservice.NewContactService(contactRepo)
+	sysMsgService := systemmsgservice.NewSystemMessageService(messageRepo, chatRepo, hub)
+	_ = typingservice.NewTypingService(hub)
+	_ = mentionservice.NewMentionService(userRepo, messageRepo)
+	pollService := pollservice.NewPollService(pollRepo, chatRepo, messageRepo, sysMsgService)
+	stickerService := stickerservice.NewStickerService(stickerRepo)
+	draftService := draftservice.NewDraftService(draftRepo)
+	schedMsgService := schedmsgservice.NewScheduledMessageService(schedMsgRepo, messageRepo, chatRepo)
+	sessionService := sessionservice.NewSessionService(sessionRepo)
+	botService := botservice.NewBotService(botRepo)
+	gifService := gifservice.NewSavedGifService(gifRepo)
+	linkService := linkservice.NewInviteLinkService(linkRepo, chatRepo)
+	folderService := folderservice.NewChatFolderService(folderRepo, chatRepo)
 	emailSender := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass, cfg.SMTPFrom)
 	smsSender := sms.NewSender(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioPhone)
-	verService := service.NewVerificationService(verRepo, userRepo, emailSender, smsSender)
+	verService := verservice.NewVerificationService(verRepo, userRepo, emailSender, smsSender)
 
-	// Handlers
-	loginCodeHandler := handler.NewLoginCodeHandler(verService, authService)
-	verHandler := handler.NewVerificationHandler(verService)
-	authHandler := handler.NewAuthHandler(authService)
-	userHandler := handler.NewUserHandler(userService, pushService)
-	chatHandler := handler.NewChatHandler(chatService)
-	messageHandler := handler.NewMessageHandler(messageService)
-	callHandler := handler.NewCallHandler(callService)
-	contactHandler := handler.NewContactHandler(contactService)
-	pollHandler := handler.NewPollHandler(pollService)
-	stickerHandler := handler.NewStickerHandler(stickerService)
-	draftHandler := handler.NewDraftHandler(draftService)
-	sessionHandler := handler.NewSessionHandler(sessionService)
-	botHandler := handler.NewBotHandler(botService)
-	gifHandler := handler.NewGifHandler(gifService)
-	schedMsgHandler := handler.NewScheduledMessageHandler(schedMsgService)
-	wsHandler := handler.NewWSHandler(hub, authService, userRepo, chatRepo)
-	wsEvents := handler.NewWebSocketEvents(hub, chatService, messageService, userService, pushService, callService)
+	loginCodeHandler := loginhandler.NewLoginCodeHandler(verService, authService)
+	verHandler := verhandler.NewVerificationHandler(verService)
+	authHandler := authhandler.NewAuthHandler(authService)
+	userHandler := userhandler.NewUserHandler(userService, pushService)
+	chatHandler := chathandler.NewChatHandler(chatService, hub)
+	messageHandler := messagehandler.NewMessageHandler(messageService)
+	callHandler := callhandler.NewCallHandler(callService)
+	contactHandler := contacthandler.NewContactHandler(contactService)
+	pollHandler := pollhandler.NewPollHandler(pollService)
+	stickerHandler := stickerhandler.NewStickerHandler(stickerService)
+	draftHandler := drafthandler.NewDraftHandler(draftService)
+	sessionHandler := sessionhandler.NewSessionHandler(sessionService)
+	botHandler := bothandler.NewBotHandler(botService)
+	gifHandler := gifhandler.NewGifHandler(gifService)
+	schedMsgHandler := schedmsghandler.NewScheduledMessageHandler(schedMsgService)
+	linkHandler := linkhandler.NewInviteLinkHandler(linkService)
+	folderHandler := folderhandler.NewChatFolderHandler(folderService)
+	wsHandler := wshandler.NewWSHandler(hub, authService, userRepo, chatRepo)
+	wsEvents := wshandler.NewWebSocketEvents(hub, chatService, messageService, userService, pushService, callService)
 
 	// Scheduler for delayed messages
 	go func() {
@@ -103,23 +156,20 @@ func main() {
 		}
 	}()
 
-	// Rate limiter
 	apiLimiter := middleware.NewRateLimiter(100, time.Minute)
 
-	// Gin engine
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware(cfg))
 
 	r.Static("/uploads", "./uploads")
 
-	// API routes with rate limiter applied early
 	api := r.Group("/api")
 	api.Use(apiLimiter)
 	{
-		// Auth (public)
 		auth := api.Group("/auth")
 		{
 			auth.POST("/register", authHandler.Register)
+			auth.POST("/admin/register", authHandler.RegisterAdmin)
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/login/email", loginCodeHandler.SendEmailCode)
 			auth.POST("/login/email/verify", loginCodeHandler.VerifyEmailCode)
@@ -127,17 +177,16 @@ func main() {
 			auth.POST("/login/phone/verify", loginCodeHandler.VerifyPhoneCode)
 		}
 
-		// Authorized routes
 		authorized := api.Group("")
 		authorized.Use(middleware.AuthMiddleware(authService))
 		{
-			// Auth (authenticated)
 			authorized.GET("/auth/refresh", authHandler.RefreshToken)
 			authorized.PUT("/auth/change-password", authHandler.ChangePassword)
 
-			// Users
 			authorized.GET("/users/profile", userHandler.GetProfile)
 			authorized.PUT("/users/profile", userHandler.UpdateProfile)
+			authorized.PUT("/users/username", userHandler.ChangeUsername)
+			authorized.PUT("/users/email", userHandler.ChangeEmail)
 			authorized.DELETE("/users/account", userHandler.DeleteAccount)
 			authorized.PUT("/users/push-token", userHandler.UpdatePushToken)
 			authorized.POST("/users/push-test", userHandler.TestPush)
@@ -145,28 +194,27 @@ func main() {
 			authorized.GET("/users/search", userHandler.SearchUsers)
 			authorized.GET("/users/:id", userHandler.GetUserByID)
 			authorized.GET("/users/username/:username", userHandler.GetUserByUsername)
+			authorized.GET("/users/:id/last-seen", userHandler.GetLastSeen)
 			authorized.POST("/users/block", userHandler.BlockUser)
 			authorized.DELETE("/users/block/:userId", userHandler.UnblockUser)
 			authorized.GET("/users/blocked", userHandler.GetBlockedUsers)
 
-			// Account settings
 			authorized.GET("/account/settings", userHandler.GetAccountSetting)
 			authorized.PUT("/account/settings", userHandler.UpdateAccountSetting)
 
-			// Contacts
 			authorized.POST("/contacts/sync", contactHandler.SyncContacts)
 			authorized.GET("/contacts", contactHandler.GetContacts)
 			authorized.GET("/contacts/search", contactHandler.SearchByPhone)
 			authorized.GET("/contacts/registered", contactHandler.FindRegistered)
+			authorized.POST("/contacts/photo", contactHandler.UpdateContactPhoto)
 
-			// Avatar upload
 			authorized.POST("/users/avatar", userHandler.UploadAvatar)
 
-			// Chats
 			authorized.GET("/chats", chatHandler.ListChats)
 			authorized.GET("/chats/search", chatHandler.SearchChats)
 			authorized.GET("/chats/archived", chatHandler.ListArchivedChats)
 			authorized.POST("/chats", wsEvents.WrapCreateChat(chatHandler.CreateChat))
+			authorized.POST("/chats/start/:userId", chatHandler.StartPrivateChat)
 			authorized.GET("/chats/:id", chatHandler.GetChat)
 			authorized.PUT("/chats/:id", chatHandler.UpdateGroup)
 			authorized.DELETE("/chats/:id", wsEvents.WrapDeleteChat(chatHandler.DeleteChat))
@@ -181,20 +229,41 @@ func main() {
 			authorized.POST("/chats/:id/unarchive", chatHandler.UnarchiveChat)
 			authorized.POST("/chats/:id/hide", chatHandler.HideChat)
 			authorized.POST("/chats/:id/transfer-ownership", chatHandler.TransferOwnership)
+			authorized.POST("/chats/:id/promote", chatHandler.PromoteToAdmin)
+			authorized.POST("/chats/:id/demote", chatHandler.DemoteFromAdmin)
+			authorized.POST("/chats/:id/photo", chatHandler.UploadChatPhoto)
+			authorized.POST("/chats/:id/wallpaper", chatHandler.SetChatWallpaper)
+			authorized.PUT("/chats/:id/permissions", chatHandler.SetChatPermissions)
+			authorized.GET("/chats/:id/online", chatHandler.GetOnlineMembers)
 			authorized.PUT("/chats/:id/notifications", userHandler.SetNotificationMuted)
 			authorized.GET("/chats/:id/notifications", userHandler.IsNotificationMuted)
+			authorized.PUT("/chats/:id/slow-mode", chatHandler.SetSlowMode)
 
-			// Messages
+			// Invite links
+			authorized.POST("/chats/:id/invite-links", linkHandler.CreateInviteLink)
+			authorized.GET("/chats/:id/invite-links", linkHandler.GetInviteLinks)
+			authorized.DELETE("/chats/:id/invite-links/:linkId", linkHandler.DeleteInviteLink)
+			authorized.POST("/chats/join", linkHandler.JoinByInviteLink)
+
+			// Chat folders
+			authorized.GET("/folders", folderHandler.ListFolders)
+			authorized.POST("/folders", folderHandler.CreateFolder)
+			authorized.PUT("/folders/:id", folderHandler.UpdateFolder)
+			authorized.DELETE("/folders/:id", folderHandler.DeleteFolder)
+
 			authorized.GET("/chats/:id/messages", messageHandler.GetMessages)
 			authorized.GET("/chats/:id/messages/search", messageHandler.SearchMessages)
 			authorized.GET("/chats/:id/media", messageHandler.GetChatMedia)
 			authorized.POST("/chats/:id/messages", wsEvents.WrapSendMessage(messageHandler.SendMessage))
 			authorized.POST("/chats/:id/messages/file", messageHandler.UploadFile)
+			authorized.POST("/chats/:id/messages/voice", messageHandler.UploadVoice)
 			authorized.POST("/chats/:id/messages/:msgId/resend", messageHandler.ResendMessage)
 			authorized.GET("/chats/:id/pinned", messageHandler.GetPinned)
 			authorized.GET("/chats/:id/export", messageHandler.ExportChat)
 			authorized.GET("/messages/search", messageHandler.SearchAllMessages)
 			authorized.GET("/messages/starred", messageHandler.GetStarredMessages)
+			authorized.POST("/messages/read/bulk", messageHandler.BulkMarkRead)
+			authorized.DELETE("/messages/bulk", messageHandler.BulkDeleteMessages)
 			authorized.POST("/messages/forward", messageHandler.ForwardMessage)
 			authorized.POST("/messages/schedule", schedMsgHandler.Schedule)
 			authorized.GET("/messages/scheduled", schedMsgHandler.GetScheduled)
@@ -209,15 +278,15 @@ func main() {
 			authorized.POST("/messages/:id/star", messageHandler.StarMessage)
 			authorized.DELETE("/messages/:id/star", messageHandler.UnstarMessage)
 			authorized.POST("/messages/:id/read", messageHandler.MarkMessageRead)
+			authorized.POST("/messages/:id/report", messageHandler.ReportMessage)
+			authorized.GET("/messages/:id/history", messageHandler.GetMessageHistory)
 			authorized.GET("/files/:filename", messageHandler.DownloadFile)
 
-			// Polls
 			authorized.POST("/chats/:id/polls", pollHandler.CreatePoll)
 			authorized.GET("/chats/:id/polls", pollHandler.GetPolls)
 			authorized.POST("/polls/:pollId/vote", pollHandler.Vote)
 			authorized.POST("/polls/:pollId/close", pollHandler.ClosePoll)
 
-			// Stickers
 			authorized.GET("/stickers/packs", stickerHandler.ListPacks)
 			authorized.GET("/stickers/packs/my", stickerHandler.GetMyPacks)
 			authorized.POST("/stickers/packs", stickerHandler.CreatePack)
@@ -227,36 +296,30 @@ func main() {
 			authorized.GET("/stickers/library", stickerHandler.GetLibrary)
 			authorized.POST("/stickers/library", stickerHandler.AddToLibrary)
 
-			// Drafts
 			authorized.POST("/drafts", draftHandler.SaveDraft)
 			authorized.GET("/drafts", draftHandler.GetDraft)
 			authorized.DELETE("/drafts/:id", draftHandler.DeleteDraft)
 
-			// Sessions
 			authorized.GET("/sessions", sessionHandler.GetSessions)
 			authorized.DELETE("/sessions/:id", sessionHandler.DeleteSession)
 			authorized.DELETE("/sessions", sessionHandler.DeleteAllSessions)
 
-			// Bots
 			authorized.POST("/bots", botHandler.CreateBot)
 			authorized.GET("/bots", botHandler.GetMyBots)
 			authorized.PUT("/bots/:id", botHandler.UpdateBot)
 			authorized.DELETE("/bots/:id", botHandler.DeleteBot)
 			authorized.POST("/bots/:id/regenerate-token", botHandler.RegenerateToken)
 
-			// Saved GIFs
 			authorized.POST("/gifs", gifHandler.SaveGif)
 			authorized.GET("/gifs", gifHandler.GetSavedGifs)
 			authorized.DELETE("/gifs", gifHandler.DeleteGif)
 
-			// Calls
 			authorized.POST("/calls/initiate", wsEvents.WrapInitiateCall(callHandler.InitiateCall))
 			authorized.POST("/calls/:id/respond", wsEvents.WrapRespondCall(callHandler.RespondCall))
 			authorized.POST("/calls/:id/end", wsEvents.WrapEndCall(callHandler.EndCall))
 			authorized.GET("/calls/:id", callHandler.GetCall)
 			authorized.GET("/calls/history/:chatId", callHandler.GetCallHistory)
 
-			// Verification
 			authorized.POST("/verification/email/send", verHandler.SendEmail)
 			authorized.POST("/verification/email/verify", verHandler.VerifyEmail)
 			authorized.POST("/verification/phone/send", verHandler.SendPhone)
@@ -264,27 +327,21 @@ func main() {
 		}
 	}
 
-	// WebSocket
 	r.GET("/ws", wsHandler.HandleWebSocket)
-
-	// Frontend static
 	r.Static("/app", "./frontend")
 	r.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/app/")
 	})
 
-	// Healthcheck
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
+		c.JSON(200, gin.H{"status": "ok", "version": "2.0.0"})
 	})
 
-	// Swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// Startup banner
 	fmt.Println()
 	fmt.Println("╔══════════════════════════════════════════════════════╗")
-	fmt.Println("║         CHAT MESSENGER SERVER                       ║")
+	fmt.Println("║         CHAT MESSENGER SERVER v2.0                  ║")
 	fmt.Println("╠══════════════════════════════════════════════════════╣")
 	fmt.Printf("║  Server:   http://localhost:%s                       \n", cfg.ServerPort)
 	fmt.Printf("║  Frontend: http://localhost:%s/app/                  \n", cfg.ServerPort)
@@ -293,7 +350,6 @@ func main() {
 	fmt.Println("╚══════════════════════════════════════════════════════╝")
 	fmt.Println()
 
-	// Graceful shutdown
 	srv := &http.Server{
 		Addr:    ":" + cfg.ServerPort,
 		Handler: r,
