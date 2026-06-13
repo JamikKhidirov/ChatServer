@@ -432,9 +432,12 @@ func main() {
 	}
 
 	r.GET("/ws", wsHandler.HandleWebSocket)
-	r.Static("/app", "./frontend/dist")
+	r.Static("/assets", "./frontend/dist/assets")
 	r.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/app/")
+		c.File("./frontend/dist/index.html")
+	})
+	r.GET("/app", func(c *gin.Context) {
+		c.File("./frontend/dist/index.html")
 	})
 
 	r.GET("/health", func(c *gin.Context) {
@@ -449,7 +452,7 @@ func main() {
 	fmt.Println("║                    CHAT MESSENGER SERVER v2.0                       ║")
 	fmt.Println("╠══════════════════════════════════════════════════════════════════════╣")
 	fmt.Printf("║  Server:   http://localhost:%s                                        \n", cfg.ServerPort)
-	fmt.Printf("║  Frontend: http://localhost:%s/app/                                   \n", cfg.ServerPort)
+	fmt.Printf("║  Frontend: http://localhost:%s/                                         \n", cfg.ServerPort)
 	fmt.Printf("║  Swagger:  http://localhost:%s/swagger/index.html                     \n", cfg.ServerPort)
 	fmt.Printf("║  Postman:  http://localhost:%s/postman                                \n", cfg.ServerPort)
 	fmt.Printf("║  WebSocket: ws://localhost:%s/ws?token={jwt}                          \n", cfg.ServerPort)
