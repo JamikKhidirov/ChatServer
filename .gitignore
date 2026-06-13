@@ -1,4 +1,5 @@
 chat-server.exe
+backend/ChatServer.exe
 chat.db
 swagger_served.json
 

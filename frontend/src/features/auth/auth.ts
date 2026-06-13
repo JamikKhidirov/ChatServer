@@ -9,13 +9,21 @@ function storeToken(token: string) {
 }
 
 export async function register(data: { username: string; email: string; password: string; displayName: string }) {
-  return apiCall('POST', '/api/auth/register', data)
+  const res = await apiCall('POST', '/api/auth/register', data)
+  if (!res.error && res.data) {
+    const d = res.data as any
+    const token = d?.data?.token || d?.token
+    if (token) storeToken(token)
+  }
+  return res
 }
 
 export async function login(data: { email: string; password: string }) {
   const res = await apiCall('POST', '/api/auth/login', data)
-  if (!res.error && res.data && typeof res.data === 'object' && 'token' in (res.data as any)) {
-    storeToken((res.data as any).token)
+  if (!res.error && res.data) {
+    const d = res.data as any
+    const token = d?.data?.token || d?.token
+    if (token) storeToken(token)
   }
   return res
 }
