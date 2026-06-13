@@ -93,6 +93,7 @@ type MessageService interface {
 	GetStarredMessages(userID string) ([]*chatdomain.StarredMessageResponse, error)
 	ExportChat(chatID, userID string) ([]*messagedomain.MessageResponse, error)
 	GetChatMedia(chatID, userID, mediaType string, limit, offset int) ([]*messagedomain.MessageResponse, int, error)
+	SetSelfDestruct(msgID, userID string, seconds int) error
 }
 
 type CallService interface {

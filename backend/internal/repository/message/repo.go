@@ -583,6 +583,12 @@ func scanMessage(row repository.MessageScanner) (*messagedomain.Message, error) 
 	return &msg, nil
 }
 
-
+func (r *messageRepository) SetSelfDestruct(msgID, chatID string, deleteAt time.Time) error {
+	_, err := r.db.Exec(
+		`INSERT OR REPLACE INTO message_self_destruct (message_id, chat_id, delete_at) VALUES (?, ?, ?)`,
+		msgID, chatID, deleteAt.Format(time.RFC3339),
+	)
+	return err
+}
 
 

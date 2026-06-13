@@ -420,6 +420,7 @@ func main() {
 			authorized.PUT("/messages/:id/pin", messageHandler.TogglePin)
 			authorized.POST("/messages/:id/star", messageHandler.StarMessage)
 			authorized.DELETE("/messages/:id/star", messageHandler.UnstarMessage)
+			authorized.POST("/messages/:id/self-destruct", messageHandler.SetSelfDestruct)
 			authorized.POST("/messages/:id/read", messageHandler.MarkMessageRead)
 			authorized.POST("/messages/:id/report", messageHandler.ReportMessage)
 			authorized.GET("/messages/:id/history", messageHandler.GetMessageHistory)

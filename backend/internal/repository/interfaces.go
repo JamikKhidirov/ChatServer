@@ -126,6 +126,7 @@ type MessageRepository interface {
 	SaveMention(messageID, userID, username string) error
 	GetMentionsByMessageID(messageID string) ([]*messagedomain.Mention, error)
 	FindMediaByChatID(chatID string, mediaType string, limit, offset int) ([]*messagedomain.Message, error)
+	SetSelfDestruct(msgID, chatID string, deleteAt time.Time) error
 }
 
 type PollRepository interface {

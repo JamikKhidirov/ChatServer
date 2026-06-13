@@ -877,6 +877,38 @@ func (h *MessageHandler) UploadVideoCircle(c *gin.Context) {
 // @Success 201 {object} messagedomain.MessageResponse "Сообщение с геолокацией успешно создано. В ответе возвращается полный объект MessageResponse с заполненными полями latitude, longitude, locationTitle."
 // @Failure 400 {object} response.ErrorResponse "Ошибка валидации: не указаны latitude/longitude, неверный формат данных или чат не найден."
 // @Router /chats/{id}/messages/location [post]
+// SetSelfDestruct sets a self-destruct timer on a message
+// @Tags Сообщения
+// @Summary Установить самоуничтожение сообщения
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Description Устанавливает таймер самоуничтожения для сообщения. После указанного количества секунд сообщение будет автоматически удалено.
+// @Param id path string true "ID сообщения"
+// @Param request body object true "{\"seconds\": 60}"
+// @Success 200 {object} response.MessageResponse "Таймер установлен"
+// @Failure 400 {object} response.ErrorResponse
+// @Router /messages/{id}/self-destruct [post]
+func (h *MessageHandler) SetSelfDestruct(c *gin.Context) {
+	msgID := c.Param("id")
+	userID, _ := c.Get("userID")
+
+	var req struct {
+		Seconds int `json:"seconds" binding:"required,min=1"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ValidationError(c, err.Error())
+		return
+	}
+
+	if err := h.messageService.SetSelfDestruct(msgID, userID.(string), req.Seconds); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.JSON(c, 200, gin.H{"message": "self-destruct timer set"})
+}
+
 func (h *MessageHandler) SendLocation(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	chatID := c.Param("id")

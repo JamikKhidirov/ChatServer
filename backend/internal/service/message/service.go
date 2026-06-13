@@ -726,5 +726,16 @@ func (s *messageService) buildSingleResponse(
 	return resp
 }
 
-
+func (s *messageService) SetSelfDestruct(msgID, userID string, seconds int) error {
+	msg, err := s.messageRepo.FindByID(msgID)
+	if err != nil {
+		return errors.New("message not found")
+	}
+	isParticipant, _ := s.chatRepo.IsParticipant(msg.ChatID, userID)
+	if !isParticipant && msg.SenderID != userID {
+		return errors.New("access denied")
+	}
+	deleteAt := time.Now().Add(time.Duration(seconds) * time.Second)
+	return s.messageRepo.SetSelfDestruct(msgID, msg.ChatID, deleteAt)
+}
 
