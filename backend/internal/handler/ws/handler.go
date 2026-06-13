@@ -32,70 +32,66 @@ func NewWSHandler(hub *ws.Hub, authService service.AuthService, userRepo reposit
 
 // HandleWebSocket WebSocket endpoint for real-time communication
 // @Summary WebSocket соединение
-// @Description Устанавливает WebSocket соединение для real-time коммуникации. Токен передаётся в query-параметре.
+// @Description Устанавливает WebSocket соединение для real-time коммуникации.
 // @Description 
-// @Description ## Формат сообщений
-// @Description Все сообщения — JSON: {"type": "событие", "payload": { ... }}
+// @Description Формат сообщений:
+// @Description   Все сообщения — JSON: {"type": "событие", "payload": { ... }}
 // @Description 
-// @Description ## Исходящие события (сервер → клиент)
-// @Description | Тип | Payload | Описание |
-// @Description |------|---------|---------|
-// @Description | `message:new` | `Message` | Новое сообщение (текст, изображение, файл и т.д.) |
-// @Description | `message:edited` | `Message` | Сообщение отредактировано |
-// @Description | `message:deleted` | `{messageId, chatId}` | Сообщение удалено |
-// @Description | `message:read` | `{messageId, userId, chatId}` | Сообщение прочитано |
-// @Description | `message:reaction` | `Message` | Добавлена/удалена реакция |
-// @Description | `message:pinned` | `Message` | Сообщение закреплено/откреплено |
-// @Description | `message:starred` | — | Сообщение добавлено в избранное |
-// @Description | `message:forward` | — | Сообщение переслано |
-// @Description | `user:online` | `{userId, online: true}` | Пользователь онлайн |
-// @Description | `user:offline` | `{userId, online: false}` | Пользователь офлайн |
-// @Description | `user:typing` | `{chatId, userId}` | Пользователь печатает |
-// @Description | `user:stop_typing` | `{chatId, userId}` | Пользователь перестал печатать |
-// @Description | `user:keyboard_opened` | `{chatId, userId}` | Клавиатура открыта |
-// @Description | `user:keyboard_closed` | `{chatId, userId}` | Клавиатура закрыта |
-// @Description | `chat:created` | `Chat` | Создан новый чат |
-// @Description | `chat:updated` | `Chat` | Чат обновлён |
-// @Description | `chat:deleted` | — | Чат удалён |
-// @Description | `call:offer` | `{chatId, callId, sdp}` | Входящий звонок |
-// @Description | `call:answer` | `{chatId, callId, sdp}` | Ответ на звонок |
-// @Description | `call:ice` | `{callId, candidate}` | ICE-кандидат для WebRTC |
-// @Description | `call:end` | `{callId, userId}` | Звонок завершён |
-// @Description | `call:missed` | — | Пропущенный звонок |
-// @Description | `call:accept` | — | Звонок принят |
-// @Description | `call:reject` | `{callId, userId}` | Звонок отклонён |
+// @Description Исходящие события (сервер → клиент):
+// @Description   message:new — Новое сообщение. Payload: Message
+// @Description   message:edited — Сообщение отредактировано. Payload: Message
+// @Description   message:deleted — Сообщение удалено. Payload: {messageId, chatId}
+// @Description   message:read — Сообщение прочитано. Payload: {messageId, userId, chatId}
+// @Description   message:reaction — Добавлена/удалена реакция. Payload: Message
+// @Description   message:pinned — Сообщение закреплено/откреплено. Payload: Message
+// @Description   message:starred — Сообщение добавлено в избранное
+// @Description   message:forward — Сообщение переслано
+// @Description   user:online — Пользователь онлайн. Payload: {userId, online: true}
+// @Description   user:offline — Пользователь офлайн. Payload: {userId, online: false}
+// @Description   user:typing — Пользователь печатает. Payload: {chatId, userId}
+// @Description   user:stop_typing — Пользователь перестал печатать. Payload: {chatId, userId}
+// @Description   user:keyboard_opened — Клавиатура открыта. Payload: {chatId, userId}
+// @Description   user:keyboard_closed — Клавиатура закрыта. Payload: {chatId, userId}
+// @Description   chat:created — Создан новый чат. Payload: Chat
+// @Description   chat:updated — Чат обновлён. Payload: Chat
+// @Description   chat:deleted — Чат удалён
+// @Description   call:offer — Входящий звонок. Payload: {chatId, callId, sdp}
+// @Description   call:answer — Ответ на звонок. Payload: {chatId, callId, sdp}
+// @Description   call:ice — ICE-кандидат для WebRTC. Payload: {callId, candidate}
+// @Description   call:end — Звонок завершён. Payload: {callId, userId}
+// @Description   call:missed — Пропущенный звонок
+// @Description   call:accept — Звонок принят
+// @Description   call:reject — Звонок отклонён. Payload: {callId, userId}
 // @Description 
-// @Description ## Входящие события (клиент → сервер)
-// @Description | Тип | Payload | Описание |
-// @Description |------|---------|---------|
-// @Description | `message:send` | `{chatId, content, type, replyToId?}` | Отправить сообщение |
-// @Description | `message:edit` | `{messageId, content}` | Редактировать сообщение |
-// @Description | `message:delete` | `{messageId, chatId}` | Удалить сообщение |
-// @Description | `message:read` | `{messageId, chatId}` | Отметить как прочитанное |
-// @Description | `message:react` | `{messageId, emoji}` | Добавить реакцию |
-// @Description | `message:unreact` | `{messageId, emoji}` | Удалить реакцию |
-// @Description | `message:pin` | `{messageId, pin: bool}` | Закрепить/открепить |
-// @Description | `message:star` | `{messageId}` | В избранное |
-// @Description | `message:unstar` | `{messageId}` | Из избранного |
-// @Description | `message:forward` | `{messageId, toChatId}` | Переслать |
-// @Description | `chat:create` | `{type, name?, participantIds, description?}` | Создать чат |
-// @Description | `chat:update` | `{chatId, name?, description?, avatarUrl?}` | Обновить чат |
-// @Description | `chat:add_participant` | `{chatId, userId}` | Добавить участника |
-// @Description | `chat:remove_participant` | `{chatId, userId}` | Удалить участника |
-// @Description | `chat:leave` | `{chatId}` | Покинуть чат |
-// @Description | `chat:pin` | `{chatId}` | Закрепить чат |
-// @Description | `chat:unpin` | `{chatId}` | Открепить чат |
-// @Description | `chat:archive` | `{chatId}` | Архивировать чат |
-// @Description | `chat:unarchive` | `{chatId}` | Разархивировать чат |
-// @Description | `user:typing` | `{chatId}` | Индикатор печатания |
-// @Description | `user:stop_typing` | `{chatId}` | Прекратил печатать |
-// @Description | `user:keyboard_opened` | `{chatId}` | Клавиатура открыта |
-// @Description | `user:keyboard_closed` | `{chatId}` | Клавиатура закрыта |
-// @Description | `user:block` | `{userId}` | Заблокировать пользователя |
-// @Description | `user:unblock` | `{userId}` | Разблокировать пользователя |
-// @Description | `call:offer` | `{chatId, callId, sdp}` | WebRTC offer |
-// @Description | `call:answer` | `{chatId, callId, sdp}` | WebRTC answer |
-// @Description | `call:ice` | `{callId, candidate}` | WebRTC ICE candidate |
+// @Description Входящие события (клиент → сервер):
+// @Description   message:send — Отправить сообщение. Payload: {chatId, content, type, replyToId?}
+// @Description   message:edit — Редактировать сообщение. Payload: {messageId, content}
+// @Description   message:delete — Удалить сообщение. Payload: {messageId, chatId}
+// @Description   message:read — Отметить как прочитанное. Payload: {messageId, chatId}
+// @Description   message:react — Добавить реакцию. Payload: {messageId, emoji}
+// @Description   message:unreact — Удалить реакцию. Payload: {messageId, emoji}
+// @Description   message:pin — Закрепить/открепить. Payload: {messageId, pin: bool}
+// @Description   message:star — В избранное. Payload: {messageId}
+// @Description   message:unstar — Из избранного. Payload: {messageId}
+// @Description   message:forward — Переслать сообщение. Payload: {messageId, toChatId}
+// @Description   chat:create — Создать чат. Payload: {type, name?, participantIds, description?}
+// @Description   chat:update — Обновить чат. Payload: {chatId, name?, description?, avatarUrl?}
+// @Description   chat:add_participant — Добавить участника. Payload: {chatId, userId}
+// @Description   chat:remove_participant — Удалить участника. Payload: {chatId, userId}
+// @Description   chat:leave — Покинуть чат. Payload: {chatId}
+// @Description   chat:pin — Закрепить чат. Payload: {chatId}
+// @Description   chat:unpin — Открепить чат. Payload: {chatId}
+// @Description   chat:archive — Архивировать чат. Payload: {chatId}
+// @Description   chat:unarchive — Разархивировать чат. Payload: {chatId}
+// @Description   user:typing — Индикатор печатания. Payload: {chatId}
+// @Description   user:stop_typing — Прекратил печатать. Payload: {chatId}
+// @Description   user:keyboard_opened — Клавиатура открыта. Payload: {chatId}
+// @Description   user:keyboard_closed — Клавиатура закрыта. Payload: {chatId}
+// @Description   user:block — Заблокировать пользователя. Payload: {userId}
+// @Description   user:unblock — Разблокировать пользователя. Payload: {userId}
+// @Description   call:offer — WebRTC offer. Payload: {chatId, callId, sdp}
+// @Description   call:answer — WebRTC answer. Payload: {chatId, callId, sdp}
+// @Description   call:ice — WebRTC ICE candidate. Payload: {callId, candidate}
 // @Tags WebSocket
 // @Accept json
 // @Produce json
