@@ -1,0 +1,3053 @@
+{
+  "info": {
+    "_postman_id": "c74dd1d1-9037-4276-8e90-fbf5d1a2bc48",
+    "name": "Chat Messenger API",
+    "description": "Сервер мессенджера на Go. Поддерживает: личные и групповые чаты, голосовые и видеозвонки, stories, голосовые комнаты, каналы, стикеры, опросы, ботов, геолокацию, кастомные эмодзи, эффекты сообщений, избранное и многое другое.\nWebSocket: ws://localhost:8080/ws?token={jwt_token}. После подключения клиент отправляет JSON-команды и получает события в реальном времени — сообщения, реакции, звонки, статус онлайна.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Зарегистрировать администратора",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/auth/admin/register",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"admin_secret\": \"string\",\n  \"display_name\": \"string\",\n  \"email\": \"string\",\n  \"password\": \"string\",\n  \"username\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Изменить пароль",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/auth/change-password",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"string\",\n  \"oldPassword\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Войти в аккаунт",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"string\",\n  \"password\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Отправить код на email",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/auth/login/email",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Подтвердить email-код",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/auth/login/email/verify",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"string\",\n  \"email\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Отправить SMS-код",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/auth/login/phone",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Подтвердить SMS-код",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/auth/login/phone/verify",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"string\",\n  \"phone\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Обновить JWT-токен",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/auth/refresh",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Зарегистрировать новый аккаунт",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/auth/register",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"string\",\n  \"email\": \"string\",\n  \"password\": \"string\",\n  \"username\": \"string\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Удалить аккаунт",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/account",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить настройки аккаунта",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/account/settings",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Обновить настройки аккаунта",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/account/settings",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Проверить статус уведомлений чата",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id/notifications",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Включить или отключить звук уведомлений чата",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/chats/:id/notifications",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Загрузить аватар",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/users/avatar",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Заблокировать пользователя",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/users/block",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"blockedId\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Разблокировать пользователя",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/users/block/:userId",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить список заблокированных пользователей",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/users/blocked",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Изменить email",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/users/email",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить профиль пользователя",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/users/profile",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Обновить профиль пользователя",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/users/profile",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Отправить тестовое push-уведомление",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/users/push-test",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Обновить push-токен",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/users/push-token",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"string\",\n  \"token\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Найти пользователей",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/users/search?q={{q}}&limit=&offset=",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Обновить статус пользователя",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/users/status",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Изменить username",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/users/username",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить пользователя по username",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/users/username/:username",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить пользователя по ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/users/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить время последнего посещения",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/users/:id/last-seen",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chats",
+      "item": [
+        {
+          "name": "Получить мои каналы",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/channels",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Подписаться на канал",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/channels/subscribe",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Отписаться от канала",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/channels/unsubscribe",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Проверить подписку на канал",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/channels/:id/subscribed",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить подписчиков канала",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/channels/:id/subscribers",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Изменить роль подписчика канала",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/channels/:id/subscribers/:userId/role",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить список чатов",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Создать новый чат",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"participantIds\": [],\n  \"type\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Получить архивированные чаты",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/archived",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Найти чаты по названию",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/search?q={{q}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Начать личный чат с пользователем",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/start/:userId",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить детали чата",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Обновить групповой чат",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/chats/:id",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Удалить чат",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/chats/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Архивировать чат",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/archive",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Понизить с администратора до участника",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/demote",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Скрыть чат из списка",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/hide",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Покинуть групповой чат",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/leave",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить онлайн-участников чата",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id/online",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Добавить участника в группу",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/participants",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Удалить участника из группы",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/chats/:id/participants/:userId",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Изменить роль участника",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/chats/:id/participants/:userId/role",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Установить права группы",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/chats/:id/permissions",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Загрузить фото чата",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/photo",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Закрепить чат вверху списка",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/pin",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Открепить чат",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/chats/:id/pin",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Повысить до администратора",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/promote",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Отметить чат как прочитанный",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/read",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Установить медленный режим",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/chats/:id/slow-mode",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Передать права владельца группы",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/transfer-ownership",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Разархивировать чат",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/unarchive",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Установить обои чата",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/wallpaper",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Экспортировать сообщения чата",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id/export",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить медиафайлы чата",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id/media?type=&limit=&offset=",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить сообщения чата",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id/messages?limit=&offset=",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Отправить сообщение",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/messages",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"string\",\n  \"type\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Загрузить файл",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/messages/file",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Отправить сообщение с геолокацией (координаты + опциональное название)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/messages/location",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 0,\n  \"longitude\": 0\n}"
+            }
+          }
+        },
+        {
+          "name": "Искать сообщения в чате",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id/messages/search?q={{q}}&limit=&offset=",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Отправить круговое видеосообщение (MP4)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/messages/video-circle",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Отправить голосовое сообщение",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/messages/voice",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Повторно отправить сообщение",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/messages/:msgId/resend",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить закреплённые сообщения",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id/pinned",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Скачать файл",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/files/:filename",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Массовое удаление сообщений",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/messages/bulk",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Переслать сообщение",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/messages/forward",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromChatId\": \"string\",\n  \"messageId\": \"string\",\n  \"toChatId\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Отметить несколько сообщений как прочитанные",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/messages/read/bulk",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Искать сообщения по всем чатам",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/messages/search?q={{q}}&limit=&offset=",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить избранные сообщения",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/messages/starred",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить сообщение по ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/messages/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Редактировать сообщение",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/messages/:id",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Удалить сообщение",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/messages/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Удалить сообщение только для себя",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/messages/:id/for-me",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить историю изменений сообщения",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/messages/:id/history",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Закрепить или открепить сообщение",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/messages/:id/pin",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Добавить реакцию к сообщению",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/messages/:id/reactions",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emoji\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Удалить реакцию с сообщения",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/messages/:id/reactions?emoji={{emoji}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Отметить сообщение как прочитанное",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/messages/:id/read",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Пожаловаться на сообщение",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/messages/:id/report",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Добавить сообщение в избранное",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/messages/:id/star",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Удалить сообщение из избранного",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/messages/:id/star",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contacts",
+      "item": [
+        {
+          "name": "Получить список контактов",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/contacts",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Обновить фото контакта",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/contacts/photo",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"string\",\n  \"photoUrl\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Найти зарегистрированных пользователей среди контактов",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/contacts/registered",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Найти контакты по номеру телефона",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/contacts/search?q={{q}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Синхронизировать контакты телефона",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/contacts/sync",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contacts\": []\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bots",
+      "item": [
+        {
+          "name": "Получить моих ботов",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/bots",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Создать бота",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/bots",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Обновить настройки бота",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/bots/:id",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Удалить бота",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/bots/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Перегенерировать токен бота",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/bots/:id/token",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Calls",
+      "item": [
+        {
+          "name": "Начать звонок",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/calls",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatId\": \"string\",\n  \"type\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Начать групповой звонок",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/calls/group/initiate",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatId\": \"string\",\n  \"type\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Присоединиться к групповому звонку",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/calls/group/respond",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"string\",\n  \"callId\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Получить детали группового звонка",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/calls/group/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Завершить групповой звонок",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/calls/group/:id/end",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить детали звонка",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/calls/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Завершить звонок",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/calls/:id/end",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Ответить на звонок",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/calls/:id/respond",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Получить активные групповые звонки",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:chatId/active-calls",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить историю звонков",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:chatId/calls",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Voice Chats",
+      "item": [
+        {
+          "name": "Создать голосовую комнату в группе",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/voice-chat",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить активные голосовые комнаты в чате",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id/voice-chats/active",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить историю всех голосовых комнат в чате",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id/voice-chats/history",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить информацию о голосовой комнате по ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/voice-chats/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Завершить голосовую комнату (создатель/админ)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/voice-chats/:id/end",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Присоединиться к голосовой комнате",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/voice-chats/:id/join",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Покинуть голосовую комнату",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/voice-chats/:id/leave",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Включить/выключить микрофон участника",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/voice-chats/:id/mute",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Polls",
+      "item": [
+        {
+          "name": "Получить список голосований",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id/polls",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Создать голосование",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/polls",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatId\": \"string\",\n  \"options\": [],\n  \"question\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Закрыть голосование",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/polls/:pollId/close",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Проголосовать",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/polls/:pollId/vote",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"optionIndex\": 0\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Drafts",
+      "item": [
+        {
+          "name": "Получить черновик чата",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/drafts?chatId={{chatId}}",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Сохранить черновик сообщения",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/drafts",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatId\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Удалить черновик",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/drafts/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Custom Emojis",
+      "item": [
+        {
+          "name": "Получить все кастомные эмодзи (общая галерея)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/emojis",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Загрузить новый кастомный эмодзи (файл + shortcode)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/emojis",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить мои загруженные эмодзи",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/emojis/my",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Удалить эмодзи по ID (только владелец)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/emojis/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GIF",
+      "item": [
+        {
+          "name": "Получить сохранённые GIF",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/gifs",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Сохранить GIF",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/gifs",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Удалить GIF из коллекции",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/gifs",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invite Links",
+      "item": [
+        {
+          "name": "Присоединиться по ссылке",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/join",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Список приглашений",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/chats/:id/invite-links",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Создать приглашение",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/chats/:id/invite-links",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Удалить приглашение",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/chats/:id/invite-links/:linkId",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Folders",
+      "item": [
+        {
+          "name": "Список папок",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/folders",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Создать папку",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/folders",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Обновить папку",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/api/folders/:id",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Удалить папку",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/folders/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scheduled Messages",
+      "item": [
+        {
+          "name": "Запланировать сообщение",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/messages/schedule",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatId\": \"string\",\n  \"content\": \"string\",\n  \"scheduledAt\": \"string\",\n  \"type\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Запланированные сообщения",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/messages/scheduled",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Отменить запланированное",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/messages/scheduled/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Saved Messages",
+      "item": [
+        {
+          "name": "Сохранить сообщение в избранное по его ID",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/messages/:id/save?chatId={{chatId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить список сохранённых сообщений с пагинацией",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/saved-messages?limit=&offset=",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Удалить сообщение из избранного по ID записи",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/saved-messages/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "Получить активные сессии",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/sessions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Завершить все сессии",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/sessions",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Завершить сессию",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/sessions/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stickers",
+      "item": [
+        {
+          "name": "Получить библиотеку стикеров",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/stickers/library",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Добавить стикер в библиотеку",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/stickers/library",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить публичные наборы стикеров",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/stickers/packs",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Создать набор стикеров",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/stickers/packs",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Получить мои наборы стикеров",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/stickers/packs/my",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить набор стикеров по ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/stickers/packs/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Удалить набор стикеров",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/stickers/packs/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Добавить стикер в набор",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/stickers/packs/:id/stickers",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emoji\": \"string\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stories",
+      "item": [
+        {
+          "name": "Истории контактов",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/stories",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Создать историю",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/stories",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Мои истории",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/stories/my",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Получить историю",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/stories/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Удалить историю",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/stories/:id",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Просмотры истории",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/stories/:id/views",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Отправить код верификации email",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/verification/email",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Подтвердить email",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/verification/email/verify",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Отправить код верификации телефона",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/verification/phone",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"string\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Подтвердить телефон",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/verification/phone/verify",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"string\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "WebSocket",
+      "item": [
+        {
+          "name": "WebSocket соединение",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/ws?token={{token}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

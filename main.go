@@ -432,7 +432,7 @@ func main() {
 	}
 
 	r.GET("/ws", wsHandler.HandleWebSocket)
-	r.Static("/app", "./frontend")
+	r.Static("/app", "./frontend/dist")
 	r.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/app/")
 	})
@@ -442,16 +442,22 @@ func main() {
 	})
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.StaticFile("/postman", "./docs/postman_collection.json")
 
 	fmt.Println()
-	fmt.Println("╔══════════════════════════════════════════════════════╗")
-	fmt.Println("║         CHAT MESSENGER SERVER v2.0                  ║")
-	fmt.Println("╠══════════════════════════════════════════════════════╣")
-	fmt.Printf("║  Server:   http://localhost:%s                       \n", cfg.ServerPort)
-	fmt.Printf("║  Frontend: http://localhost:%s/app/                  \n", cfg.ServerPort)
-	fmt.Printf("║  Swagger:  http://localhost:%s/swagger/index.html    \n", cfg.ServerPort)
-	fmt.Printf("║  Health:   http://localhost:%s/health                \n", cfg.ServerPort)
-	fmt.Println("╚══════════════════════════════════════════════════════╝")
+	fmt.Println("╔══════════════════════════════════════════════════════════════════════╗")
+	fmt.Println("║                    CHAT MESSENGER SERVER v2.0                       ║")
+	fmt.Println("╠══════════════════════════════════════════════════════════════════════╣")
+	fmt.Printf("║  Server:   http://localhost:%s                                        \n", cfg.ServerPort)
+	fmt.Printf("║  Frontend: http://localhost:%s/app/                                   \n", cfg.ServerPort)
+	fmt.Printf("║  Swagger:  http://localhost:%s/swagger/index.html                     \n", cfg.ServerPort)
+	fmt.Printf("║  Postman:  http://localhost:%s/postman                                \n", cfg.ServerPort)
+	fmt.Printf("║  WebSocket: ws://localhost:%s/ws?token={jwt}                          \n", cfg.ServerPort)
+	fmt.Printf("║  Health:   http://localhost:%s/health                                 \n", cfg.ServerPort)
+	fmt.Println("╠══════════════════════════════════════════════════════════════════════╣")
+	fmt.Println("║  Import Postman: Download from /postman, import into Postman        ║")
+	fmt.Println("║  Auth: Register or Login → copy token → paste as Bearer token       ║")
+	fmt.Println("╚══════════════════════════════════════════════════════════════════════╝")
 	fmt.Println()
 
 	srv := &http.Server{
