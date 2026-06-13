@@ -32,7 +32,70 @@ func NewWSHandler(hub *ws.Hub, authService service.AuthService, userRepo reposit
 
 // HandleWebSocket WebSocket endpoint for real-time communication
 // @Summary WebSocket соединение
-// @Description Устанавливает WebSocket соединение для получения событий в реальном времени. Токен передаётся в query-параметре. После подключения клиент отправляет JSON-команды. События: newMessage, editMessage, deleteMessage, reaction, readMessage, pinMessage, callOffer, callAccept, callEnd, onlineStatus.
+// @Description Устанавливает WebSocket соединение для real-time коммуникации. Токен передаётся в query-параметре.
+// @Description 
+// @Description ## Формат сообщений
+// @Description Все сообщения — JSON: {"type": "событие", "payload": { ... }}
+// @Description 
+// @Description ## Исходящие события (сервер → клиент)
+// @Description | Тип | Payload | Описание |
+// @Description |------|---------|---------|
+// @Description | `message:new` | `Message` | Новое сообщение (текст, изображение, файл и т.д.) |
+// @Description | `message:edited` | `Message` | Сообщение отредактировано |
+// @Description | `message:deleted` | `{messageId, chatId}` | Сообщение удалено |
+// @Description | `message:read` | `{messageId, userId, chatId}` | Сообщение прочитано |
+// @Description | `message:reaction` | `Message` | Добавлена/удалена реакция |
+// @Description | `message:pinned` | `Message` | Сообщение закреплено/откреплено |
+// @Description | `message:starred` | — | Сообщение добавлено в избранное |
+// @Description | `message:forward` | — | Сообщение переслано |
+// @Description | `user:online` | `{userId, online: true}` | Пользователь онлайн |
+// @Description | `user:offline` | `{userId, online: false}` | Пользователь офлайн |
+// @Description | `user:typing` | `{chatId, userId}` | Пользователь печатает |
+// @Description | `user:stop_typing` | `{chatId, userId}` | Пользователь перестал печатать |
+// @Description | `user:keyboard_opened` | `{chatId, userId}` | Клавиатура открыта |
+// @Description | `user:keyboard_closed` | `{chatId, userId}` | Клавиатура закрыта |
+// @Description | `chat:created` | `Chat` | Создан новый чат |
+// @Description | `chat:updated` | `Chat` | Чат обновлён |
+// @Description | `chat:deleted` | — | Чат удалён |
+// @Description | `call:offer` | `{chatId, callId, sdp}` | Входящий звонок |
+// @Description | `call:answer` | `{chatId, callId, sdp}` | Ответ на звонок |
+// @Description | `call:ice` | `{callId, candidate}` | ICE-кандидат для WebRTC |
+// @Description | `call:end` | `{callId, userId}` | Звонок завершён |
+// @Description | `call:missed` | — | Пропущенный звонок |
+// @Description | `call:accept` | — | Звонок принят |
+// @Description | `call:reject` | `{callId, userId}` | Звонок отклонён |
+// @Description 
+// @Description ## Входящие события (клиент → сервер)
+// @Description | Тип | Payload | Описание |
+// @Description |------|---------|---------|
+// @Description | `message:send` | `{chatId, content, type, replyToId?}` | Отправить сообщение |
+// @Description | `message:edit` | `{messageId, content}` | Редактировать сообщение |
+// @Description | `message:delete` | `{messageId, chatId}` | Удалить сообщение |
+// @Description | `message:read` | `{messageId, chatId}` | Отметить как прочитанное |
+// @Description | `message:react` | `{messageId, emoji}` | Добавить реакцию |
+// @Description | `message:unreact` | `{messageId, emoji}` | Удалить реакцию |
+// @Description | `message:pin` | `{messageId, pin: bool}` | Закрепить/открепить |
+// @Description | `message:star` | `{messageId}` | В избранное |
+// @Description | `message:unstar` | `{messageId}` | Из избранного |
+// @Description | `message:forward` | `{messageId, toChatId}` | Переслать |
+// @Description | `chat:create` | `{type, name?, participantIds, description?}` | Создать чат |
+// @Description | `chat:update` | `{chatId, name?, description?, avatarUrl?}` | Обновить чат |
+// @Description | `chat:add_participant` | `{chatId, userId}` | Добавить участника |
+// @Description | `chat:remove_participant` | `{chatId, userId}` | Удалить участника |
+// @Description | `chat:leave` | `{chatId}` | Покинуть чат |
+// @Description | `chat:pin` | `{chatId}` | Закрепить чат |
+// @Description | `chat:unpin` | `{chatId}` | Открепить чат |
+// @Description | `chat:archive` | `{chatId}` | Архивировать чат |
+// @Description | `chat:unarchive` | `{chatId}` | Разархивировать чат |
+// @Description | `user:typing` | `{chatId}` | Индикатор печатания |
+// @Description | `user:stop_typing` | `{chatId}` | Прекратил печатать |
+// @Description | `user:keyboard_opened` | `{chatId}` | Клавиатура открыта |
+// @Description | `user:keyboard_closed` | `{chatId}` | Клавиатура закрыта |
+// @Description | `user:block` | `{userId}` | Заблокировать пользователя |
+// @Description | `user:unblock` | `{userId}` | Разблокировать пользователя |
+// @Description | `call:offer` | `{chatId, callId, sdp}` | WebRTC offer |
+// @Description | `call:answer` | `{chatId, callId, sdp}` | WebRTC answer |
+// @Description | `call:ice` | `{callId, candidate}` | WebRTC ICE candidate |
 // @Tags WebSocket
 // @Accept json
 // @Produce json

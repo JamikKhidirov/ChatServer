@@ -6,9 +6,11 @@ interface Props {
   chatId: string | null
   chatInfo: any
   token: string
+  wsMessage?: any
+  onWsConsumed?: () => void
 }
 
-export default function MessageArea({ chatId, chatInfo }: Props) {
+export default function MessageArea({ chatId, chatInfo, wsMessage, onWsConsumed }: Props) {
   const [messages, setMessages] = useState<any[]>([])
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -23,6 +25,16 @@ export default function MessageArea({ chatId, chatInfo }: Props) {
       setChatName(others.map((p: any) => p.displayName || p.username).join(', ') || 'Chat')
     }
   }, [chatInfo])
+
+  useEffect(() => {
+    if (wsMessage && chatId === wsMessage.chatId) {
+      setMessages(prev => {
+        if (prev.some(m => (m.id || m.ID) === (wsMessage.id || wsMessage.ID))) return prev
+        return [...prev, wsMessage]
+      })
+      onWsConsumed?.()
+    }
+  }, [wsMessage])
 
   const loadMessages = useCallback(async () => {
     if (!chatId) return

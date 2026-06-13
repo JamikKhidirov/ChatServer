@@ -9,7 +9,7 @@ function storeToken(token: string) {
 }
 
 export async function register(data: { username: string; email: string; password: string; displayName: string }) {
-  const res = await apiCall('POST', '/api/auth/register', data)
+  const res = await apiCall('POST', '/api/auth/register', { username: data.username, email: data.email, password: data.password, display_name: data.displayName })
   if (!res.error && res.data) {
     const d = res.data as any
     const token = d?.data?.token || d?.token

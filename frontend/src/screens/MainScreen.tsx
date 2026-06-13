@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { api } from '../api/client'
 import ChatList from '../components/ChatList'
 import MessageArea from '../components/MessageArea'
+import useWebSocket from '../hooks/useWebSocket'
 import * as authApi from '../features/auth/auth'
 
 interface Props { onLogout: () => void }
@@ -9,13 +10,24 @@ interface Props { onLogout: () => void }
 export default function MainScreen({ onLogout }: Props) {
   const [chats, setChats] = useState<any[]>([])
   const [activeChat, setActiveChat] = useState<string | null>(null)
-  const [recipient, setRecipient] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [activeChatInfo, setActiveChatInfo] = useState<any>(null)
+  const [wsMessage, setWsMessage] = useState<any>(null)
 
   const token = api.getToken()
+  const chatRef = useRef(activeChat)
+  chatRef.current = activeChat
+
+  useWebSocket((msg: any) => {
+    if (msg.type === 'message:new' && msg.payload?.chatId === chatRef.current) {
+      setWsMessage(msg.payload)
+    }
+    if (msg.type === 'chat:created' || msg.type === 'chat:deleted') {
+      loadChats()
+    }
+  }, true)
 
   const loadChats = useCallback(async () => {
     const res = await api.call('GET', '/api/chats')
@@ -117,10 +129,12 @@ export default function MainScreen({ onLogout }: Props) {
         />
       </div>
 
-      <MessageArea
+        <MessageArea
         chatId={activeChat}
         chatInfo={activeChatInfo}
         token={token}
+        wsMessage={wsMessage}
+        onWsConsumed={() => setWsMessage(null)}
       />
     </div>
   )
