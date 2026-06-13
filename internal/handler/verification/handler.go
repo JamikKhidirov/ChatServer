@@ -19,6 +19,8 @@ func NewVerificationHandler(verService service.VerificationService) *Verificatio
 }
 
 // SendEmail sends email verification code
+// @Summary Отправить код верификации email
+// @Description Отправляет код подтверждения на email для верификации адреса электронной почты.
 // @Tags Users
 // @Security BearerAuth
 // @Accept json
@@ -42,6 +44,8 @@ func (h *VerificationHandler) SendEmail(c *gin.Context) {
 }
 
 // VerifyEmail verifies email with code
+// @Summary Подтвердить email
+// @Description Подтверждает email-адрес с помощью кода, отправленного на почту.
 // @Tags Users
 // @Security BearerAuth
 // @Accept json
@@ -65,6 +69,8 @@ func (h *VerificationHandler) VerifyEmail(c *gin.Context) {
 }
 
 // SendPhone sends phone verification SMS
+// @Summary Отправить код верификации телефона
+// @Description Отправляет SMS с кодом подтверждения на указанный номер телефона.
 // @Tags Users
 // @Security BearerAuth
 // @Accept json
@@ -88,6 +94,8 @@ func (h *VerificationHandler) SendPhone(c *gin.Context) {
 }
 
 // VerifyPhone verifies phone with code
+// @Summary Подтвердить телефон
+// @Description Подтверждает номер телефона с помощью кода из SMS.
 // @Tags Users
 // @Security BearerAuth
 // @Accept json

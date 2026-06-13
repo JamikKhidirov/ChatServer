@@ -1,6 +1,7 @@
 // @title Chat Messenger API
 // @version 2.0.0
 // @description Сервер мессенджера на Go. Поддерживает: личные и групповые чаты, голосовые и видеозвонки, stories, голосовые комнаты, каналы, стикеры, опросы, ботов, геолокацию, кастомные эмодзи, эффекты сообщений, избранное и многое другое.
+// @description WebSocket: ws://localhost:8080/ws?token={jwt_token}. После подключения клиент отправляет JSON-команды и получает события в реальном времени — сообщения, реакции, звонки, статус онлайна.
 // @termsOfService http://localhost:8080/terms
 // @contact.name API Support
 // @contact.url http://localhost:8080/support

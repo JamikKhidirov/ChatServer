@@ -256,6 +256,7 @@ const docTemplate = `{
         },
         "/auth/login/email": {
             "post": {
+                "description": "Отправляет одноразовый код подтверждения на указанный email для входа без пароля.",
                 "consumes": [
                     "application/json"
                 ],
@@ -265,6 +266,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
+                "summary": "Отправить код на email",
                 "parameters": [
                     {
                         "description": "Email address",
@@ -294,6 +296,7 @@ const docTemplate = `{
         },
         "/auth/login/email/verify": {
             "post": {
+                "description": "Проверяет одноразовый код, отправленный на email, и возвращает JWT токен для входа.",
                 "consumes": [
                     "application/json"
                 ],
@@ -303,6 +306,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
+                "summary": "Подтвердить email-код",
                 "parameters": [
                     {
                         "description": "Email and code",
@@ -337,6 +341,7 @@ const docTemplate = `{
         },
         "/auth/login/phone": {
             "post": {
+                "description": "Отправляет одноразовый код подтверждения на указанный номер телефона для входа без пароля.",
                 "consumes": [
                     "application/json"
                 ],
@@ -346,6 +351,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
+                "summary": "Отправить SMS-код",
                 "parameters": [
                     {
                         "description": "Phone number",
@@ -375,6 +381,7 @@ const docTemplate = `{
         },
         "/auth/login/phone/verify": {
             "post": {
+                "description": "Проверяет одноразовый код, отправленный на телефон, и возвращает JWT токен для входа.",
                 "consumes": [
                     "application/json"
                 ],
@@ -384,6 +391,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
+                "summary": "Подтвердить SMS-код",
                 "parameters": [
                     {
                         "description": "Phone and code",
@@ -1428,6 +1436,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Присоединяет пользователя к чату по пригласительному коду/ссылке.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1437,6 +1446,7 @@ const docTemplate = `{
                 "tags": [
                     "InviteLinks"
                 ],
+                "summary": "Присоединиться по ссылке",
                 "parameters": [
                     {
                         "description": "Invite code",
@@ -1960,12 +1970,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает все пригласительные ссылки для указанного чата.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "InviteLinks"
                 ],
+                "summary": "Список приглашений",
                 "parameters": [
                     {
                         "type": "string",
@@ -1999,6 +2011,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт пригласительную ссылку для чата с опциональным сроком действия и лимитом использования.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2008,6 +2021,7 @@ const docTemplate = `{
                 "tags": [
                     "InviteLinks"
                 ],
+                "summary": "Создать приглашение",
                 "parameters": [
                     {
                         "type": "string",
@@ -2049,12 +2063,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет пригласительную ссылку. Существующие участники, присоединившиеся по ней, остаются в чате.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "InviteLinks"
                 ],
+                "summary": "Удалить приглашение",
                 "parameters": [
                     {
                         "type": "string",
@@ -4209,12 +4225,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает все папки чатов текущего пользователя.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Folders"
                 ],
+                "summary": "Список папок",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -4239,6 +4257,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт новую папку для организации чатов (например, \"Работа\", \"Друзья\").",
                 "consumes": [
                     "application/json"
                 ],
@@ -4248,6 +4267,7 @@ const docTemplate = `{
                 "tags": [
                     "Folders"
                 ],
+                "summary": "Создать папку",
                 "parameters": [
                     {
                         "description": "Folder name and chat IDs",
@@ -4282,6 +4302,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Обновляет название папки или список чатов в ней.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4291,6 +4312,7 @@ const docTemplate = `{
                 "tags": [
                     "Folders"
                 ],
+                "summary": "Обновить папку",
                 "parameters": [
                     {
                         "type": "string",
@@ -4330,12 +4352,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет папку чатов. Чаты внутри папки не удаляются.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Folders"
                 ],
+                "summary": "Удалить папку",
                 "parameters": [
                     {
                         "type": "string",
@@ -4652,6 +4676,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Планирует отправку сообщения на указанное время. Сообщение будет доставлено автоматически.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4661,6 +4686,7 @@ const docTemplate = `{
                 "tags": [
                     "ScheduledMessages"
                 ],
+                "summary": "Запланировать сообщение",
                 "parameters": [
                     {
                         "description": "Chat, content, and send time",
@@ -4695,12 +4721,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список всех запланированных сообщений текущего пользователя.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "ScheduledMessages"
                 ],
+                "summary": "Запланированные сообщения",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -4727,12 +4755,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Отменяет запланированную отправку сообщения. Сообщение не будет доставлено.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "ScheduledMessages"
                 ],
+                "summary": "Отменить запланированное",
                 "parameters": [
                     {
                         "type": "string",
@@ -6036,12 +6066,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает истории от контактов и каналов, на которые подписан пользователь.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Истории контактов",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -6060,6 +6092,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт новую историю (фото или видео), которая автоматически исчезает через 24 часа. Загрузка файла через multipart/form-data.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -6069,6 +6102,7 @@ const docTemplate = `{
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Создать историю",
                 "parameters": [
                     {
                         "type": "string",
@@ -6114,12 +6148,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает все активные истории текущего пользователя, которые ещё не истекли (24 часа).",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Мои истории",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -6140,12 +6176,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает историю по ID и автоматически отмечает её как просмотренную текущим пользователем.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Получить историю",
                 "parameters": [
                     {
                         "type": "string",
@@ -6176,12 +6214,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет историю. Только автор истории может её удалить.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Удалить историю",
                 "parameters": [
                     {
                         "type": "string",
@@ -6214,12 +6254,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список пользователей, которые просмотрели историю. Только автор истории может получить эту информацию.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Просмотры истории",
                 "parameters": [
                     {
                         "type": "string",
@@ -6923,6 +6965,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Отправляет код подтверждения на email для верификации адреса электронной почты.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6932,6 +6975,7 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
+                "summary": "Отправить код верификации email",
                 "parameters": [
                     {
                         "description": "Email address",
@@ -6966,6 +7010,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Подтверждает email-адрес с помощью кода, отправленного на почту.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6975,6 +7020,7 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
+                "summary": "Подтвердить email",
                 "parameters": [
                     {
                         "description": "Verification code",
@@ -7009,6 +7055,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Отправляет SMS с кодом подтверждения на указанный номер телефона.",
                 "consumes": [
                     "application/json"
                 ],
@@ -7018,6 +7065,7 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
+                "summary": "Отправить код верификации телефона",
                 "parameters": [
                     {
                         "description": "Phone number",
@@ -7052,6 +7100,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Подтверждает номер телефона с помощью кода из SMS.",
                 "consumes": [
                     "application/json"
                 ],
@@ -7061,6 +7110,7 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
+                "summary": "Подтвердить телефон",
                 "parameters": [
                     {
                         "description": "Verification code",
@@ -7293,6 +7343,44 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Ошибка при изменении статуса",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ws": {
+            "get": {
+                "description": "Устанавливает WebSocket соединение для получения событий в реальном времени. Токен передаётся в query-параметре. После подключения клиент отправляет JSON-команды. События: newMessage, editMessage, deleteMessage, reaction, readMessage, pinMessage, callOffer, callAccept, callEnd, onlineStatus.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WebSocket"
+                ],
+                "summary": "WebSocket соединение",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "101": {
+                        "description": "Upgraded to WebSocket",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -9114,7 +9202,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api",
 	Schemes:          []string{"http", "https"},
 	Title:            "Chat Messenger API",
-	Description:      "Сервер мессенджера на Go. Поддерживает: личные и групповые чаты, голосовые и видеозвонки, stories, голосовые комнаты, каналы, стикеры, опросы, ботов, геолокацию, кастомные эмодзи, эффекты сообщений, избранное и многое другое.",
+	Description:      "Сервер мессенджера на Go. Поддерживает: личные и групповые чаты, голосовые и видеозвонки, stories, голосовые комнаты, каналы, стикеры, опросы, ботов, геолокацию, кастомные эмодзи, эффекты сообщений, избранное и многое другое.\nWebSocket: ws://localhost:8080/ws?token={jwt_token}. После подключения клиент отправляет JSON-команды и получает события в реальном времени — сообщения, реакции, звонки, статус онлайна.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

@@ -17,6 +17,8 @@ func NewInviteLinkHandler(linkService service.InviteLinkService) *InviteLinkHand
 }
 
 // CreateInviteLink creates a new invite link for a chat
+// @Summary Создать приглашение
+// @Description Создаёт пригласительную ссылку для чата с опциональным сроком действия и лимитом использования.
 // @Tags InviteLinks
 // @Security BearerAuth
 // @Accept json
@@ -46,6 +48,8 @@ func (h *InviteLinkHandler) CreateInviteLink(c *gin.Context) {
 }
 
 // GetInviteLinks returns all invite links for a chat
+// @Summary Список приглашений
+// @Description Возвращает все пригласительные ссылки для указанного чата.
 // @Tags InviteLinks
 // @Security BearerAuth
 // @Produce json
@@ -67,6 +71,8 @@ func (h *InviteLinkHandler) GetInviteLinks(c *gin.Context) {
 }
 
 // DeleteInviteLink deletes an invite link
+// @Summary Удалить приглашение
+// @Description Удаляет пригласительную ссылку. Существующие участники, присоединившиеся по ней, остаются в чате.
 // @Tags InviteLinks
 // @Security BearerAuth
 // @Produce json
@@ -88,6 +94,8 @@ func (h *InviteLinkHandler) DeleteInviteLink(c *gin.Context) {
 }
 
 // JoinByInviteLink joins a chat using an invite code
+// @Summary Присоединиться по ссылке
+// @Description Присоединяет пользователя к чату по пригласительному коду/ссылке.
 // @Tags InviteLinks
 // @Security BearerAuth
 // @Accept json

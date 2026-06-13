@@ -233,7 +233,7 @@ func (r *userRepository) FindByIDs(ids []string) (map[string]*userdomain.User, e
 		args[i] = id
 	}
 	query := `SELECT id, username, email, password_hash, display_name, avatar_url, bio, phone, gender, date_of_birth,
-		user_status, push_token, push_provider, online, deleted, last_seen, created_at, updated_at
+		user_status, push_token, push_provider, online, deleted, last_seen, created_at, updated_at, is_admin
 		FROM users WHERE id IN (` + strings.Join(placeholders, ",") + `) AND deleted = 0`
 	rows, err := r.db.Query(query, args...)
 	if err != nil {

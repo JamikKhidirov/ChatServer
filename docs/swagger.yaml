@@ -1212,9 +1212,9 @@ info:
     email: support@chatserver.local
     name: API Support
     url: http://localhost:8080/support
-  description: 'Сервер мессенджера на Go. Поддерживает: личные и групповые чаты, голосовые
-    и видеозвонки, stories, голосовые комнаты, каналы, стикеры, опросы, ботов, геолокацию,
-    кастомные эмодзи, эффекты сообщений, избранное и многое другое.'
+  description: |-
+    Сервер мессенджера на Go. Поддерживает: личные и групповые чаты, голосовые и видеозвонки, stories, голосовые комнаты, каналы, стикеры, опросы, ботов, геолокацию, кастомные эмодзи, эффекты сообщений, избранное и многое другое.
+    WebSocket: ws://localhost:8080/ws?token={jwt_token}. После подключения клиент отправляет JSON-команды и получает события в реальном времени — сообщения, реакции, звонки, статус онлайна.
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -1384,6 +1384,8 @@ paths:
     post:
       consumes:
       - application/json
+      description: Отправляет одноразовый код подтверждения на указанный email для
+        входа без пароля.
       parameters:
       - description: Email address
         in: body
@@ -1402,12 +1404,15 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/response.ErrorResponse'
+      summary: Отправить код на email
       tags:
       - Auth
   /auth/login/email/verify:
     post:
       consumes:
       - application/json
+      description: Проверяет одноразовый код, отправленный на email, и возвращает
+        JWT токен для входа.
       parameters:
       - description: Email and code
         in: body
@@ -1429,12 +1434,15 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/response.ErrorResponse'
+      summary: Подтвердить email-код
       tags:
       - Auth
   /auth/login/phone:
     post:
       consumes:
       - application/json
+      description: Отправляет одноразовый код подтверждения на указанный номер телефона
+        для входа без пароля.
       parameters:
       - description: Phone number
         in: body
@@ -1453,12 +1461,15 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/response.ErrorResponse'
+      summary: Отправить SMS-код
       tags:
       - Auth
   /auth/login/phone/verify:
     post:
       consumes:
       - application/json
+      description: Проверяет одноразовый код, отправленный на телефон, и возвращает
+        JWT токен для входа.
       parameters:
       - description: Phone and code
         in: body
@@ -1480,6 +1491,7 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/response.ErrorResponse'
+      summary: Подтвердить SMS-код
       tags:
       - Auth
   /auth/refresh:
@@ -2380,6 +2392,7 @@ paths:
       - Чаты
   /chats/{id}/invite-links:
     get:
+      description: Возвращает все пригласительные ссылки для указанного чата.
       parameters:
       - description: Chat ID
         in: path
@@ -2401,11 +2414,14 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Список приглашений
       tags:
       - InviteLinks
     post:
       consumes:
       - application/json
+      description: Создаёт пригласительную ссылку для чата с опциональным сроком действия
+        и лимитом использования.
       parameters:
       - description: Chat ID
         in: path
@@ -2431,10 +2447,13 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Создать приглашение
       tags:
       - InviteLinks
   /chats/{id}/invite-links/{linkId}:
     delete:
+      description: Удаляет пригласительную ссылку. Существующие участники, присоединившиеся
+        по ней, остаются в чате.
       parameters:
       - description: Chat ID
         in: path
@@ -2459,6 +2478,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить приглашение
       tags:
       - InviteLinks
   /chats/{id}/leave:
@@ -3550,6 +3570,7 @@ paths:
     post:
       consumes:
       - application/json
+      description: Присоединяет пользователя к чату по пригласительному коду/ссылке.
       parameters:
       - description: Invite code
         in: body
@@ -3570,6 +3591,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Присоединиться по ссылке
       tags:
       - InviteLinks
   /chats/search:
@@ -3977,6 +3999,7 @@ paths:
       - Сообщения
   /folders:
     get:
+      description: Возвращает все папки чатов текущего пользователя.
       produces:
       - application/json
       responses:
@@ -3992,11 +4015,14 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Список папок
       tags:
       - Folders
     post:
       consumes:
       - application/json
+      description: Создаёт новую папку для организации чатов (например, "Работа",
+        "Друзья").
       parameters:
       - description: Folder name and chat IDs
         in: body
@@ -4017,10 +4043,12 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Создать папку
       tags:
       - Folders
   /folders/{id}:
     delete:
+      description: Удаляет папку чатов. Чаты внутри папки не удаляются.
       parameters:
       - description: Folder ID
         in: path
@@ -4040,11 +4068,13 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить папку
       tags:
       - Folders
     put:
       consumes:
       - application/json
+      description: Обновляет название папки или список чатов в ней.
       parameters:
       - description: Folder ID
         in: path
@@ -4070,6 +4100,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Обновить папку
       tags:
       - Folders
   /gifs:
@@ -4639,6 +4670,8 @@ paths:
     post:
       consumes:
       - application/json
+      description: Планирует отправку сообщения на указанное время. Сообщение будет
+        доставлено автоматически.
       parameters:
       - description: Chat, content, and send time
         in: body
@@ -4659,10 +4692,12 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Запланировать сообщение
       tags:
       - ScheduledMessages
   /messages/scheduled:
     get:
+      description: Возвращает список всех запланированных сообщений текущего пользователя.
       produces:
       - application/json
       responses:
@@ -4678,10 +4713,13 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Запланированные сообщения
       tags:
       - ScheduledMessages
   /messages/scheduled/{id}:
     delete:
+      description: Отменяет запланированную отправку сообщения. Сообщение не будет
+        доставлено.
       parameters:
       - description: Scheduled message ID
         in: path
@@ -4701,6 +4739,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отменить запланированное
       tags:
       - ScheduledMessages
   /messages/search:
@@ -5151,6 +5190,8 @@ paths:
       - Стикеры
   /stories:
     get:
+      description: Возвращает истории от контактов и каналов, на которые подписан
+        пользователь.
       produces:
       - application/json
       responses:
@@ -5162,11 +5203,14 @@ paths:
             type: array
       security:
       - BearerAuth: []
+      summary: Истории контактов
       tags:
       - Stories
     post:
       consumes:
       - multipart/form-data
+      description: Создаёт новую историю (фото или видео), которая автоматически исчезает
+        через 24 часа. Загрузка файла через multipart/form-data.
       parameters:
       - description: Story type (photo/video)
         in: formData
@@ -5195,10 +5239,12 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Создать историю
       tags:
       - Stories
   /stories/{id}:
     delete:
+      description: Удаляет историю. Только автор истории может её удалить.
       parameters:
       - description: Story ID
         in: path
@@ -5218,9 +5264,12 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Удалить историю
       tags:
       - Stories
     get:
+      description: Возвращает историю по ID и автоматически отмечает её как просмотренную
+        текущим пользователем.
       parameters:
       - description: Story ID
         in: path
@@ -5240,10 +5289,13 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Получить историю
       tags:
       - Stories
   /stories/{id}/views:
     get:
+      description: Возвращает список пользователей, которые просмотрели историю. Только
+        автор истории может получить эту информацию.
       parameters:
       - description: Story ID
         in: path
@@ -5265,10 +5317,13 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Просмотры истории
       tags:
       - Stories
   /stories/my:
     get:
+      description: Возвращает все активные истории текущего пользователя, которые
+        ещё не истекли (24 часа).
       produces:
       - application/json
       responses:
@@ -5280,6 +5335,7 @@ paths:
             type: array
       security:
       - BearerAuth: []
+      summary: Мои истории
       tags:
       - Stories
   /users/{id}:
@@ -5723,6 +5779,8 @@ paths:
     post:
       consumes:
       - application/json
+      description: Отправляет код подтверждения на email для верификации адреса электронной
+        почты.
       parameters:
       - description: Email address
         in: body
@@ -5743,12 +5801,14 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отправить код верификации email
       tags:
       - Users
   /verification/email/verify:
     post:
       consumes:
       - application/json
+      description: Подтверждает email-адрес с помощью кода, отправленного на почту.
       parameters:
       - description: Verification code
         in: body
@@ -5769,12 +5829,14 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Подтвердить email
       tags:
       - Users
   /verification/phone:
     post:
       consumes:
       - application/json
+      description: Отправляет SMS с кодом подтверждения на указанный номер телефона.
       parameters:
       - description: Phone number
         in: body
@@ -5795,12 +5857,14 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Отправить код верификации телефона
       tags:
       - Users
   /verification/phone/verify:
     post:
       consumes:
       - application/json
+      description: Подтверждает номер телефона с помощью кода из SMS.
       parameters:
       - description: Verification code
         in: body
@@ -5821,6 +5885,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
+      summary: Подтвердить телефон
       tags:
       - Users
   /voice-chats/{id}:
@@ -5963,6 +6028,34 @@ paths:
       summary: Включить/выключить микрофон участника
       tags:
       - Голосовые чаты
+  /ws:
+    get:
+      consumes:
+      - application/json
+      description: 'Устанавливает WebSocket соединение для получения событий в реальном
+        времени. Токен передаётся в query-параметре. После подключения клиент отправляет
+        JSON-команды. События: newMessage, editMessage, deleteMessage, reaction, readMessage,
+        pinMessage, callOffer, callAccept, callEnd, onlineStatus.'
+      parameters:
+      - description: JWT token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Upgraded to WebSocket
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: WebSocket соединение
+      tags:
+      - WebSocket
 schemes:
 - http
 - https

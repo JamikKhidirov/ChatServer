@@ -5,7 +5,7 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "Сервер мессенджера на Go. Поддерживает: личные и групповые чаты, голосовые и видеозвонки, stories, голосовые комнаты, каналы, стикеры, опросы, ботов, геолокацию, кастомные эмодзи, эффекты сообщений, избранное и многое другое.",
+        "description": "Сервер мессенджера на Go. Поддерживает: личные и групповые чаты, голосовые и видеозвонки, stories, голосовые комнаты, каналы, стикеры, опросы, ботов, геолокацию, кастомные эмодзи, эффекты сообщений, избранное и многое другое.\nWebSocket: ws://localhost:8080/ws?token={jwt_token}. После подключения клиент отправляет JSON-команды и получает события в реальном времени — сообщения, реакции, звонки, статус онлайна.",
         "title": "Chat Messenger API",
         "termsOfService": "http://localhost:8080/terms",
         "contact": {
@@ -254,6 +254,7 @@
         },
         "/auth/login/email": {
             "post": {
+                "description": "Отправляет одноразовый код подтверждения на указанный email для входа без пароля.",
                 "consumes": [
                     "application/json"
                 ],
@@ -263,6 +264,7 @@
                 "tags": [
                     "Auth"
                 ],
+                "summary": "Отправить код на email",
                 "parameters": [
                     {
                         "description": "Email address",
@@ -292,6 +294,7 @@
         },
         "/auth/login/email/verify": {
             "post": {
+                "description": "Проверяет одноразовый код, отправленный на email, и возвращает JWT токен для входа.",
                 "consumes": [
                     "application/json"
                 ],
@@ -301,6 +304,7 @@
                 "tags": [
                     "Auth"
                 ],
+                "summary": "Подтвердить email-код",
                 "parameters": [
                     {
                         "description": "Email and code",
@@ -335,6 +339,7 @@
         },
         "/auth/login/phone": {
             "post": {
+                "description": "Отправляет одноразовый код подтверждения на указанный номер телефона для входа без пароля.",
                 "consumes": [
                     "application/json"
                 ],
@@ -344,6 +349,7 @@
                 "tags": [
                     "Auth"
                 ],
+                "summary": "Отправить SMS-код",
                 "parameters": [
                     {
                         "description": "Phone number",
@@ -373,6 +379,7 @@
         },
         "/auth/login/phone/verify": {
             "post": {
+                "description": "Проверяет одноразовый код, отправленный на телефон, и возвращает JWT токен для входа.",
                 "consumes": [
                     "application/json"
                 ],
@@ -382,6 +389,7 @@
                 "tags": [
                     "Auth"
                 ],
+                "summary": "Подтвердить SMS-код",
                 "parameters": [
                     {
                         "description": "Phone and code",
@@ -1426,6 +1434,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Присоединяет пользователя к чату по пригласительному коду/ссылке.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1435,6 +1444,7 @@
                 "tags": [
                     "InviteLinks"
                 ],
+                "summary": "Присоединиться по ссылке",
                 "parameters": [
                     {
                         "description": "Invite code",
@@ -1958,12 +1968,14 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает все пригласительные ссылки для указанного чата.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "InviteLinks"
                 ],
+                "summary": "Список приглашений",
                 "parameters": [
                     {
                         "type": "string",
@@ -1997,6 +2009,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт пригласительную ссылку для чата с опциональным сроком действия и лимитом использования.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2006,6 +2019,7 @@
                 "tags": [
                     "InviteLinks"
                 ],
+                "summary": "Создать приглашение",
                 "parameters": [
                     {
                         "type": "string",
@@ -2047,12 +2061,14 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет пригласительную ссылку. Существующие участники, присоединившиеся по ней, остаются в чате.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "InviteLinks"
                 ],
+                "summary": "Удалить приглашение",
                 "parameters": [
                     {
                         "type": "string",
@@ -4207,12 +4223,14 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает все папки чатов текущего пользователя.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Folders"
                 ],
+                "summary": "Список папок",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -4237,6 +4255,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт новую папку для организации чатов (например, \"Работа\", \"Друзья\").",
                 "consumes": [
                     "application/json"
                 ],
@@ -4246,6 +4265,7 @@
                 "tags": [
                     "Folders"
                 ],
+                "summary": "Создать папку",
                 "parameters": [
                     {
                         "description": "Folder name and chat IDs",
@@ -4280,6 +4300,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Обновляет название папки или список чатов в ней.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4289,6 +4310,7 @@
                 "tags": [
                     "Folders"
                 ],
+                "summary": "Обновить папку",
                 "parameters": [
                     {
                         "type": "string",
@@ -4328,12 +4350,14 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет папку чатов. Чаты внутри папки не удаляются.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Folders"
                 ],
+                "summary": "Удалить папку",
                 "parameters": [
                     {
                         "type": "string",
@@ -4650,6 +4674,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Планирует отправку сообщения на указанное время. Сообщение будет доставлено автоматически.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4659,6 +4684,7 @@
                 "tags": [
                     "ScheduledMessages"
                 ],
+                "summary": "Запланировать сообщение",
                 "parameters": [
                     {
                         "description": "Chat, content, and send time",
@@ -4693,12 +4719,14 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список всех запланированных сообщений текущего пользователя.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "ScheduledMessages"
                 ],
+                "summary": "Запланированные сообщения",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -4725,12 +4753,14 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Отменяет запланированную отправку сообщения. Сообщение не будет доставлено.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "ScheduledMessages"
                 ],
+                "summary": "Отменить запланированное",
                 "parameters": [
                     {
                         "type": "string",
@@ -6034,12 +6064,14 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает истории от контактов и каналов, на которые подписан пользователь.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Истории контактов",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -6058,6 +6090,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт новую историю (фото или видео), которая автоматически исчезает через 24 часа. Загрузка файла через multipart/form-data.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -6067,6 +6100,7 @@
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Создать историю",
                 "parameters": [
                     {
                         "type": "string",
@@ -6112,12 +6146,14 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает все активные истории текущего пользователя, которые ещё не истекли (24 часа).",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Мои истории",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -6138,12 +6174,14 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает историю по ID и автоматически отмечает её как просмотренную текущим пользователем.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Получить историю",
                 "parameters": [
                     {
                         "type": "string",
@@ -6174,12 +6212,14 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет историю. Только автор истории может её удалить.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Удалить историю",
                 "parameters": [
                     {
                         "type": "string",
@@ -6212,12 +6252,14 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список пользователей, которые просмотрели историю. Только автор истории может получить эту информацию.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Stories"
                 ],
+                "summary": "Просмотры истории",
                 "parameters": [
                     {
                         "type": "string",
@@ -6921,6 +6963,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Отправляет код подтверждения на email для верификации адреса электронной почты.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6930,6 +6973,7 @@
                 "tags": [
                     "Users"
                 ],
+                "summary": "Отправить код верификации email",
                 "parameters": [
                     {
                         "description": "Email address",
@@ -6964,6 +7008,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Подтверждает email-адрес с помощью кода, отправленного на почту.",
                 "consumes": [
                     "application/json"
                 ],
@@ -6973,6 +7018,7 @@
                 "tags": [
                     "Users"
                 ],
+                "summary": "Подтвердить email",
                 "parameters": [
                     {
                         "description": "Verification code",
@@ -7007,6 +7053,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Отправляет SMS с кодом подтверждения на указанный номер телефона.",
                 "consumes": [
                     "application/json"
                 ],
@@ -7016,6 +7063,7 @@
                 "tags": [
                     "Users"
                 ],
+                "summary": "Отправить код верификации телефона",
                 "parameters": [
                     {
                         "description": "Phone number",
@@ -7050,6 +7098,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Подтверждает номер телефона с помощью кода из SMS.",
                 "consumes": [
                     "application/json"
                 ],
@@ -7059,6 +7108,7 @@
                 "tags": [
                     "Users"
                 ],
+                "summary": "Подтвердить телефон",
                 "parameters": [
                     {
                         "description": "Verification code",
@@ -7291,6 +7341,44 @@
                     },
                     "400": {
                         "description": "Ошибка при изменении статуса",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ws": {
+            "get": {
+                "description": "Устанавливает WebSocket соединение для получения событий в реальном времени. Токен передаётся в query-параметре. После подключения клиент отправляет JSON-команды. События: newMessage, editMessage, deleteMessage, reaction, readMessage, pinMessage, callOffer, callAccept, callEnd, onlineStatus.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WebSocket"
+                ],
+                "summary": "WebSocket соединение",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "101": {
+                        "description": "Upgraded to WebSocket",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }

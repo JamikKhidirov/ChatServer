@@ -17,6 +17,8 @@ func NewScheduledMessageHandler(schedService service.ScheduledMessageService) *S
 }
 
 // Schedule schedules a message for later delivery
+// @Summary Запланировать сообщение
+// @Description Планирует отправку сообщения на указанное время. Сообщение будет доставлено автоматически.
 // @Tags ScheduledMessages
 // @Security BearerAuth
 // @Accept json
@@ -41,6 +43,8 @@ func (h *ScheduledMessageHandler) Schedule(c *gin.Context) {
 }
 
 // GetScheduled returns all scheduled messages for the user
+// @Summary Запланированные сообщения
+// @Description Возвращает список всех запланированных сообщений текущего пользователя.
 // @Tags ScheduledMessages
 // @Security BearerAuth
 // @Produce json
@@ -58,6 +62,8 @@ func (h *ScheduledMessageHandler) GetScheduled(c *gin.Context) {
 }
 
 // CancelScheduled cancels a scheduled message
+// @Summary Отменить запланированное
+// @Description Отменяет запланированную отправку сообщения. Сообщение не будет доставлено.
 // @Tags ScheduledMessages
 // @Security BearerAuth
 // @Produce json

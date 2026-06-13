@@ -22,6 +22,8 @@ func NewStoryHandler(storyService service.StoryService) *StoryHandler {
 }
 
 // CreateStory creates a new story (photo/video that disappears after 24h)
+// @Summary Создать историю
+// @Description Создаёт новую историю (фото или видео), которая автоматически исчезает через 24 часа. Загрузка файла через multipart/form-data.
 // @Tags Stories
 // @Security BearerAuth
 // @Accept multipart/form-data
@@ -83,6 +85,8 @@ func (h *StoryHandler) CreateStory(c *gin.Context) {
 }
 
 // GetMyStories returns current user's active stories
+// @Summary Мои истории
+// @Description Возвращает все активные истории текущего пользователя, которые ещё не истекли (24 часа).
 // @Tags Stories
 // @Security BearerAuth
 // @Produce json
@@ -101,6 +105,8 @@ func (h *StoryHandler) GetMyStories(c *gin.Context) {
 }
 
 // GetFollowingStories returns stories from contacts and channels
+// @Summary Истории контактов
+// @Description Возвращает истории от контактов и каналов, на которые подписан пользователь.
 // @Tags Stories
 // @Security BearerAuth
 // @Produce json
@@ -119,6 +125,8 @@ func (h *StoryHandler) GetFollowingStories(c *gin.Context) {
 }
 
 // GetStoryByID returns a story by ID and marks it as viewed
+// @Summary Получить историю
+// @Description Возвращает историю по ID и автоматически отмечает её как просмотренную текущим пользователем.
 // @Tags Stories
 // @Security BearerAuth
 // @Produce json
@@ -140,6 +148,8 @@ func (h *StoryHandler) GetStoryByID(c *gin.Context) {
 }
 
 // DeleteStory deletes a story (owner only)
+// @Summary Удалить историю
+// @Description Удаляет историю. Только автор истории может её удалить.
 // @Tags Stories
 // @Security BearerAuth
 // @Produce json
@@ -160,6 +170,8 @@ func (h *StoryHandler) DeleteStory(c *gin.Context) {
 }
 
 // GetStoryViews returns viewers of a story (owner only)
+// @Summary Просмотры истории
+// @Description Возвращает список пользователей, которые просмотрели историю. Только автор истории может получить эту информацию.
 // @Tags Stories
 // @Security BearerAuth
 // @Produce json

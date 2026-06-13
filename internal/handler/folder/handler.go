@@ -17,6 +17,8 @@ func NewChatFolderHandler(folderService service.ChatFolderService) *ChatFolderHa
 }
 
 // CreateFolder creates a new chat folder
+// @Summary Создать папку
+// @Description Создаёт новую папку для организации чатов (например, "Работа", "Друзья").
 // @Tags Folders
 // @Security BearerAuth
 // @Accept json
@@ -44,6 +46,8 @@ func (h *ChatFolderHandler) CreateFolder(c *gin.Context) {
 }
 
 // ListFolders returns all chat folders for the user
+// @Summary Список папок
+// @Description Возвращает все папки чатов текущего пользователя.
 // @Tags Folders
 // @Security BearerAuth
 // @Produce json
@@ -63,6 +67,8 @@ func (h *ChatFolderHandler) ListFolders(c *gin.Context) {
 }
 
 // UpdateFolder updates a chat folder's name or chat list
+// @Summary Обновить папку
+// @Description Обновляет название папки или список чатов в ней.
 // @Tags Folders
 // @Security BearerAuth
 // @Accept json
@@ -92,6 +98,8 @@ func (h *ChatFolderHandler) UpdateFolder(c *gin.Context) {
 }
 
 // DeleteFolder deletes a chat folder
+// @Summary Удалить папку
+// @Description Удаляет папку чатов. Чаты внутри папки не удаляются.
 // @Tags Folders
 // @Security BearerAuth
 // @Produce json

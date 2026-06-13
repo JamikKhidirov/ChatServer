@@ -18,6 +18,8 @@ func NewLoginCodeHandler(verService service.VerificationService, authService ser
 }
 
 // SendEmailCode sends login code to email
+// @Summary Отправить код на email
+// @Description Отправляет одноразовый код подтверждения на указанный email для входа без пароля.
 // @Tags Auth
 // @Accept json
 // @Produce json
@@ -39,6 +41,8 @@ func (h *LoginCodeHandler) SendEmailCode(c *gin.Context) {
 }
 
 // VerifyEmailCode verifies email login code and returns token
+// @Summary Подтвердить email-код
+// @Description Проверяет одноразовый код, отправленный на email, и возвращает JWT токен для входа.
 // @Tags Auth
 // @Accept json
 // @Produce json
@@ -66,6 +70,8 @@ func (h *LoginCodeHandler) VerifyEmailCode(c *gin.Context) {
 }
 
 // SendPhoneCode sends login code via SMS
+// @Summary Отправить SMS-код
+// @Description Отправляет одноразовый код подтверждения на указанный номер телефона для входа без пароля.
 // @Tags Auth
 // @Accept json
 // @Produce json
@@ -87,6 +93,8 @@ func (h *LoginCodeHandler) SendPhoneCode(c *gin.Context) {
 }
 
 // VerifyPhoneCode verifies phone login code and returns token
+// @Summary Подтвердить SMS-код
+// @Description Проверяет одноразовый код, отправленный на телефон, и возвращает JWT токен для входа.
 // @Tags Auth
 // @Accept json
 // @Produce json

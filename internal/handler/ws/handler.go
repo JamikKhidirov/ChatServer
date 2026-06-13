@@ -30,6 +30,16 @@ func NewWSHandler(hub *ws.Hub, authService service.AuthService, userRepo reposit
 	return &WSHandler{hub: hub, authService: authService, userRepo: userRepo, chatRepo: chatRepo}
 }
 
+// HandleWebSocket WebSocket endpoint for real-time communication
+// @Summary WebSocket соединение
+// @Description Устанавливает WebSocket соединение для получения событий в реальном времени. Токен передаётся в query-параметре. После подключения клиент отправляет JSON-команды. События: newMessage, editMessage, deleteMessage, reaction, readMessage, pinMessage, callOffer, callAccept, callEnd, onlineStatus.
+// @Tags WebSocket
+// @Accept json
+// @Produce json
+// @Param token query string true "JWT token"
+// @Success 101 {string} string "Upgraded to WebSocket"
+// @Failure 401 {object} response.ErrorResponse
+// @Router /ws [get]
 func (h *WSHandler) HandleWebSocket(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
