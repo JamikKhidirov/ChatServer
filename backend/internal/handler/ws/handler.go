@@ -32,66 +32,185 @@ func NewWSHandler(hub *ws.Hub, authService service.AuthService, userRepo reposit
 
 // HandleWebSocket WebSocket endpoint for real-time communication
 // @Summary WebSocket соединение
-// @Description Устанавливает WebSocket соединение для real-time коммуникации.
+// @Description ## Подключение
+// @Description ws://localhost:8080/ws?token={JWT_TOKEN}
+// @Description Токен можно получить через POST /api/auth/register или POST /api/auth/login.
 // @Description 
-// @Description Формат сообщений:
-// @Description   Все сообщения — JSON: {"type": "событие", "payload": { ... }}
+// @Description ## Формат сообщений
+// @Description ```json
+// @Description { "type": "название_события", "payload": { ... поля ... } }
+// @Description ```
+// @Description type — строка, указывающая тип события. payload — объект с данными события.
 // @Description 
-// @Description Исходящие события (сервер → клиент):
-// @Description   message:new — Новое сообщение. Payload: Message
-// @Description   message:edited — Сообщение отредактировано. Payload: Message
-// @Description   message:deleted — Сообщение удалено. Payload: {messageId, chatId}
-// @Description   message:read — Сообщение прочитано. Payload: {messageId, userId, chatId}
-// @Description   message:reaction — Добавлена/удалена реакция. Payload: Message
-// @Description   message:pinned — Сообщение закреплено/откреплено. Payload: Message
-// @Description   message:starred — Сообщение добавлено в избранное
-// @Description   message:forward — Сообщение переслано
-// @Description   user:online — Пользователь онлайн. Payload: {userId, online: true}
-// @Description   user:offline — Пользователь офлайн. Payload: {userId, online: false}
-// @Description   user:typing — Пользователь печатает. Payload: {chatId, userId}
-// @Description   user:stop_typing — Пользователь перестал печатать. Payload: {chatId, userId}
-// @Description   user:keyboard_opened — Клавиатура открыта. Payload: {chatId, userId}
-// @Description   user:keyboard_closed — Клавиатура закрыта. Payload: {chatId, userId}
-// @Description   chat:created — Создан новый чат. Payload: Chat
-// @Description   chat:updated — Чат обновлён. Payload: Chat
-// @Description   chat:deleted — Чат удалён
-// @Description   call:offer — Входящий звонок. Payload: {chatId, callId, sdp}
-// @Description   call:answer — Ответ на звонок. Payload: {chatId, callId, sdp}
-// @Description   call:ice — ICE-кандидат для WebRTC. Payload: {callId, candidate}
-// @Description   call:end — Звонок завершён. Payload: {callId, userId}
-// @Description   call:missed — Пропущенный звонок
-// @Description   call:accept — Звонок принят
-// @Description   call:reject — Звонок отклонён. Payload: {callId, userId}
+// @Description ## Направление: Сервер → Клиент
+// @Description Сервер автоматически отправляет эти события всем подключённым участникам чата.
 // @Description 
-// @Description Входящие события (клиент → сервер):
-// @Description   message:send — Отправить сообщение. Payload: {chatId, content, type, replyToId?}
-// @Description   message:edit — Редактировать сообщение. Payload: {messageId, content}
-// @Description   message:delete — Удалить сообщение. Payload: {messageId, chatId}
-// @Description   message:read — Отметить как прочитанное. Payload: {messageId, chatId}
-// @Description   message:react — Добавить реакцию. Payload: {messageId, emoji}
-// @Description   message:unreact — Удалить реакцию. Payload: {messageId, emoji}
-// @Description   message:pin — Закрепить/открепить. Payload: {messageId, pin: bool}
-// @Description   message:star — В избранное. Payload: {messageId}
-// @Description   message:unstar — Из избранного. Payload: {messageId}
-// @Description   message:forward — Переслать сообщение. Payload: {messageId, toChatId}
-// @Description   chat:create — Создать чат. Payload: {type, name?, participantIds, description?}
-// @Description   chat:update — Обновить чат. Payload: {chatId, name?, description?, avatarUrl?}
-// @Description   chat:add_participant — Добавить участника. Payload: {chatId, userId}
-// @Description   chat:remove_participant — Удалить участника. Payload: {chatId, userId}
-// @Description   chat:leave — Покинуть чат. Payload: {chatId}
-// @Description   chat:pin — Закрепить чат. Payload: {chatId}
-// @Description   chat:unpin — Открепить чат. Payload: {chatId}
-// @Description   chat:archive — Архивировать чат. Payload: {chatId}
-// @Description   chat:unarchive — Разархивировать чат. Payload: {chatId}
-// @Description   user:typing — Индикатор печатания. Payload: {chatId}
-// @Description   user:stop_typing — Прекратил печатать. Payload: {chatId}
-// @Description   user:keyboard_opened — Клавиатура открыта. Payload: {chatId}
-// @Description   user:keyboard_closed — Клавиатура закрыта. Payload: {chatId}
-// @Description   user:block — Заблокировать пользователя. Payload: {userId}
-// @Description   user:unblock — Разблокировать пользователя. Payload: {userId}
-// @Description   call:offer — WebRTC offer. Payload: {chatId, callId, sdp}
-// @Description   call:answer — WebRTC answer. Payload: {chatId, callId, sdp}
-// @Description   call:ice — WebRTC ICE candidate. Payload: {callId, candidate}
+// @Description ### Сообщения (типы)
+// @Description **`message:new`** — Новое сообщение отправлено в чат.
+// @Description ```json
+// @Description { "type": "message:new", "payload": { "id": "uuid", "chatId": "uuid", "senderId": "uuid", "content": "Привет!", "type": "text", "createdAt": "2026-01-01T00:00:00Z" } }
+// @Description ```
+// @Description 
+// @Description **`message:edited`** — Сообщение отредактировано. Payload: объект Message.
+// @Description 
+// @Description **`message:deleted`** — Сообщение удалено.
+// @Description ```json
+// @Description { "type": "message:deleted", "payload": { "messageId": "uuid", "chatId": "uuid" } }
+// @Description ```
+// @Description 
+// @Description **`message:read`** — Сообщение прочитано.
+// @Description ```json
+// @Description { "type": "message:read", "payload": { "messageId": "uuid", "userId": "uuid", "chatId": "uuid" } }
+// @Description ```
+// @Description 
+// @Description **`message:reaction`** — Добавлена/удалена реакция. Payload: обновлённый объект Message с полем reactions.
+// @Description 
+// @Description **`message:pinned`** — Сообщение закреплено/откреплено. Payload: Message.
+// @Description 
+// @Description ### Пользователи (типы user:*)
+// @Description **`user:online`** — Пользователь стал онлайн.
+// @Description ```json
+// @Description { "type": "user:online", "payload": { "userId": "uuid", "online": true } }
+// @Description ```
+// @Description 
+// @Description **`user:offline`** — Пользователь стал офлайн.
+// @Description ```json
+// @Description { "type": "user:offline", "payload": { "userId": "uuid", "online": false } }
+// @Description ```
+// @Description 
+// @Description **`user:typing`** — Пользователь печатает.
+// @Description ```json
+// @Description { "type": "user:typing", "payload": { "chatId": "uuid", "userId": "uuid" } }
+// @Description ```
+// @Description 
+// @Description **`user:stop_typing`** — Перестал печатать.
+// @Description ```json
+// @Description { "type": "user:stop_typing", "payload": { "chatId": "uuid", "userId": "uuid" } }
+// @Description ```
+// @Description 
+// @Description **`user:keyboard_opened`** — Клавиатура открыта (мобильные устройства).
+// @Description **`user:keyboard_closed`** — Клавиатура закрыта.
+// @Description 
+// @Description ### Чаты (типы chat:*)
+// @Description **`chat:created`** — Создан новый чат. Payload: объект Chat (id, name, type, participants и т.д.).
+// @Description **`chat:updated`** — Чат обновлён. Payload: Chat.
+// @Description **`chat:deleted`** — Чат удалён.
+// @Description 
+// @Description ### Звонки (типы call:*)
+// @Description **`call:offer`** — Входящий WebRTC звонок.
+// @Description ```json
+// @Description { "type": "call:offer", "payload": { "chatId": "uuid", "callId": "uuid", "sdp": "offer_sdp_string" } }
+// @Description ```
+// @Description 
+// @Description **`call:answer`** — Ответ на звонок.
+// @Description ```json
+// @Description { "type": "call:answer", "payload": { "chatId": "uuid", "callId": "uuid", "sdp": "answer_sdp_string" } }
+// @Description ```
+// @Description 
+// @Description **`call:ice`** — ICE-кандидат для WebRTC.
+// @Description ```json
+// @Description { "type": "call:ice", "payload": { "callId": "uuid", "candidate": "ice_candidate_string" } }
+// @Description ```
+// @Description 
+// @Description **`call:end`** — Звонок завершён.
+// @Description ```json
+// @Description { "type": "call:end", "payload": { "callId": "uuid", "userId": "uuid" } }
+// @Description ```
+// @Description 
+// @Description **`call:reject`** — Звонок отклонён.
+// @Description ```json
+// @Description { "type": "call:reject", "payload": { "callId": "uuid", "userId": "uuid" } }
+// @Description ```
+// @Description 
+// @Description **`call:missed`** — Пропущенный звонок. **`call:accept`** — Звонок принят.
+// @Description 
+// @Description ## Направление: Клиент → Сервер
+// @Description Клиент отправляет эти события, чтобы выполнить действие на сервере.
+// @Description 
+// @Description ### Отправка и управление сообщениями
+// @Description **`message:send`** — Отправить сообщение в чат.
+// @Description ```json
+// @Description { "type": "message:send", "payload": { "chatId": "uuid", "content": "Привет!", "type": "text", "replyToId": "uuid" } }
+// @Description ```
+// @Description Поля: chatId (обяз.), content (обяз.), type (обяз.): text|image|file|gif|voice|video|audio|location|system, replyToId (опц.) — ID сообщения, на который отвечаем.
+// @Description 
+// @Description **`message:edit`** — Редактировать сообщение.
+// @Description ```json
+// @Description { "type": "message:edit", "payload": { "messageId": "uuid", "content": "Новый текст" } }
+// @Description ```
+// @Description 
+// @Description **`message:delete`** — Удалить сообщение.
+// @Description ```json
+// @Description { "type": "message:delete", "payload": { "messageId": "uuid", "chatId": "uuid" } }
+// @Description ```
+// @Description 
+// @Description **`message:read`** — Отметить сообщение как прочитанное.
+// @Description ```json
+// @Description { "type": "message:read", "payload": { "messageId": "uuid", "chatId": "uuid" } }
+// @Description ```
+// @Description 
+// @Description **`message:react`** — Добавить реакцию.
+// @Description ```json
+// @Description { "type": "message:react", "payload": { "messageId": "uuid", "emoji": "👍" } }
+// @Description ```
+// @Description emoji: "👍", "❤️", "😆", "😮", "😢", "🙏"
+// @Description 
+// @Description **`message:unreact`** — Удалить реакцию.
+// @Description ```json
+// @Description { "type": "message:unreact", "payload": { "messageId": "uuid", "emoji": "👍" } }
+// @Description ```
+// @Description 
+// @Description **`message:pin`** — Закрепить/открепить сообщение.
+// @Description ```json
+// @Description { "type": "message:pin", "payload": { "messageId": "uuid", "pin": true } }
+// @Description ```
+// @Description pin: true — закрепить, false — открепить.
+// @Description 
+// @Description **`message:star`** — Добавить в избранное. Payload: { "messageId": "uuid" }
+// @Description **`message:unstar`** — Удалить из избранного. Payload: { "messageId": "uuid" }
+// @Description **`message:forward`** — Переслать сообщение. Payload: { "messageId": "uuid", "toChatId": "uuid" }
+// @Description 
+// @Description ### Управление чатами (клиент → сервер)
+// @Description **`chat:create`** — Создать новый чат.
+// @Description ```json
+// @Description { "type": "chat:create", "payload": { "type": "group", "name": "Friends", "participantIds": ["uuid1","uuid2"], "description": "Чат для друзей" } }
+// @Description ```
+// @Description type: "private" | "group" | "channel". participantIds — список ID участников (обяз.). name — название (опц. для private).
+// @Description 
+// @Description **`chat:update`** — Обновить название/аватар/описание чата.
+// @Description ```json
+// @Description { "type": "chat:update", "payload": { "chatId": "uuid", "name": "Новое название", "description": "Описание", "avatarUrl": "https://..." } }
+// @Description ```
+// @Description 
+// @Description **`chat:add_participant`** — Добавить участника. Payload: { "chatId": "uuid", "userId": "uuid" }
+// @Description **`chat:remove_participant`** — Удалить участника. Payload: { "chatId": "uuid", "userId": "uuid" }
+// @Description **`chat:leave`** — Покинуть чат. Payload: { "chatId": "uuid" }
+// @Description **`chat:pin`** / **`chat:unpin`** — Закрепить/открепить чат в списке. Payload: { "chatId": "uuid" }
+// @Description **`chat:archive`** / **`chat:unarchive`** — Архивировать/разархивировать чат. Payload: { "chatId": "uuid" }
+// @Description 
+// @Description ### Статус пользователя (клиент → сервер)
+// @Description **`user:typing`** — Отправить индикатор печатания.
+// @Description ```json
+// @Description { "type": "user:typing", "payload": { "chatId": "uuid" } }
+// @Description ```
+// @Description **`user:stop_typing`** — Остановить индикатор.
+// @Description ```json
+// @Description { "type": "user:stop_typing", "payload": { "chatId": "uuid" } }
+// @Description ```
+// @Description **`user:keyboard_opened`** / **`user:keyboard_closed`** — Клавиатура открыта/закрыта. Payload: { "chatId": "uuid" }
+// @Description **`user:block`** — Заблокировать пользователя. Payload: { "userId": "uuid" }
+// @Description **`user:unblock`** — Разблокировать пользователя. Payload: { "userId": "uuid" }
+// @Description 
+// @Description ### WebRTC звонки (клиент → сервер)
+// @Description **`call:offer`** — Отправить WebRTC offer. Payload: { "chatId": "uuid", "callId": "uuid", "sdp": "..." }
+// @Description **`call:answer`** — WebRTC answer. Payload: { "chatId": "uuid", "callId": "uuid", "sdp": "..." }
+// @Description **`call:ice`** — ICE candidate. Payload: { "callId": "uuid", "candidate": "..." }
+// @Description 
+// @Description ## Пример обмена сообщениями
+// @Description 1. Клиент А отправляет: { "type": "message:send", "payload": { "chatId": "123", "content": "Привет!", "type": "text" } }
+// @Description 2. Сервер принимает сообщение, сохраняет в БД, рассылает всем участникам чата:
+// @Description    { "type": "message:new", "payload": { "id": "msg-uuid", "chatId": "123", "senderId": "userA-uuid", "content": "Привет!", "type": "text", "createdAt": "..." } }
+// @Description 3. Клиент Б получает `message:new` и отображает сообщение в реальном времени.
 // @Tags WebSocket
 // @Accept json
 // @Produce json
