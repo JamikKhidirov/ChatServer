@@ -9,16 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://localhost:8080/terms",
-        "contact": {
-            "name": "API Support",
-            "url": "http://localhost:8080/support",
-            "email": "support@chatserver.local"
-        },
-        "license": {
-            "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -2370,19 +2361,25 @@ const docTemplate = `{
                 "security": [
                     {
                         "BearerAuth": []
+                    },
+                    {
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Создаёт и отправляет в чат сообщение с геолокацией (тип \"location\"). Позволяет пользователям делиться своим местоположением на карте. В теле запроса обязательно нужно передать широту (latitude) и долготу (longitude) места. Опционально можно добавить название места (title), указать ID сообщения для ответа (replyToId) и выбрать эффект анимации (effect). После успешной отправки возвращается полный объект сообщения с координатами.",
+                "description": "Создаёт и отправляет в чат сообщение с геолокацией (тип \"location\"). Позволяет пользователям делиться своим местоположением на карте. В теле запроса обязательно нужно передать широту (latitude) и долготу (longitude) места. Опционально можно добавить название места (title), указать ID сообщения для ответа (replyToId) и выбрать эффект анимации (effect). После успешной отправки возвращается полный объект сообщения с координатами.\nУстанавливает таймер самоуничтожения для сообщения. После указанного количества секунд сообщение будет автоматически удалено.",
                 "consumes": [
+                    "application/json",
                     "application/json"
                 ],
                 "produces": [
+                    "application/json",
                     "application/json"
                 ],
                 "tags": [
+                    "Сообщения",
                     "Сообщения"
                 ],
-                "summary": "Отправить сообщение с геолокацией (координаты + опциональное название)",
+                "summary": "Установить самоуничтожение сообщения",
                 "parameters": [
                     {
                         "type": "string",
@@ -2399,9 +2396,31 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/messagedomain.SendLocationRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID сообщения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "{\\",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
                     }
                 ],
                 "responses": {
+                    "200": {
+                        "description": "Таймер установлен",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageResponse"
+                        }
+                    },
                     "201": {
                         "description": "Сообщение с геолокацией успешно создано. В ответе возвращается полный объект MessageResponse с заполненными полями latitude, longitude, locationTitle.",
                         "schema": {
@@ -2409,7 +2428,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Ошибка валидации: не указаны latitude/longitude, неверный формат данных или чат не найден.",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -5378,6 +5397,86 @@ const docTemplate = `{
                 }
             }
         },
+        "/messages/{id}/self-destruct": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создаёт и отправляет в чат сообщение с геолокацией (тип \"location\"). Позволяет пользователям делиться своим местоположением на карте. В теле запроса обязательно нужно передать широту (latitude) и долготу (longitude) места. Опционально можно добавить название места (title), указать ID сообщения для ответа (replyToId) и выбрать эффект анимации (effect). После успешной отправки возвращается полный объект сообщения с координатами.\nУстанавливает таймер самоуничтожения для сообщения. После указанного количества секунд сообщение будет автоматически удалено.",
+                "consumes": [
+                    "application/json",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "Сообщения",
+                    "Сообщения"
+                ],
+                "summary": "Установить самоуничтожение сообщения",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID чата (группы или личного диалога), в который отправляется сообщение с геолокацией",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Параметры геолокации: latitude (число, широта, обязательно), longitude (число, долгота, обязательно), title (строка, название места, опционально), replyToId (строка, ID сообщения для ответа, опционально), effect (строка, эффект анимации: confetti/fireworks/hearts/balloons/stars, опционально)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/messagedomain.SendLocationRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID сообщения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "{\\",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Таймер установлен",
+                        "schema": {
+                            "$ref": "#/definitions/response.MessageResponse"
+                        }
+                    },
+                    "201": {
+                        "description": "Сообщение с геолокацией успешно создано. В ответе возвращается полный объект MessageResponse с заполненными полями latitude, longitude, locationTitle.",
+                        "schema": {
+                            "$ref": "#/definitions/messagedomain.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/messages/{id}/star": {
             "post": {
                 "security": [
@@ -7352,7 +7451,7 @@ const docTemplate = `{
         },
         "/ws": {
             "get": {
-                "description": "## Подключение\nws://localhost:8080/ws?token={JWT_TOKEN}\nТокен можно получить через POST /api/auth/register или POST /api/auth/login.\n\n## Формат сообщений\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"название_события\", \"payload\": { ... поля ... } }\n` + "`" + `` + "`" + `` + "`" + `\ntype — строка, указывающая тип события. payload — объект с данными события.\n\n## Направление: Сервер → Клиент\nСервер автоматически отправляет эти события всем подключённым участникам чата.\n\n### Сообщения (типы)\n**` + "`" + `message:new` + "`" + `** — Новое сообщение отправлено в чат.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:new\", \"payload\": { \"id\": \"uuid\", \"chatId\": \"uuid\", \"senderId\": \"uuid\", \"content\": \"Привет!\", \"type\": \"text\", \"createdAt\": \"2026-01-01T00:00:00Z\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:edited` + "`" + `** — Сообщение отредактировано. Payload: объект Message.\n\n**` + "`" + `message:deleted` + "`" + `** — Сообщение удалено.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:deleted\", \"payload\": { \"messageId\": \"uuid\", \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:read` + "`" + `** — Сообщение прочитано.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:read\", \"payload\": { \"messageId\": \"uuid\", \"userId\": \"uuid\", \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:reaction` + "`" + `** — Добавлена/удалена реакция. Payload: обновлённый объект Message с полем reactions.\n\n**` + "`" + `message:pinned` + "`" + `** — Сообщение закреплено/откреплено. Payload: Message.\n\n### Пользователи (типы user:*)\n**` + "`" + `user:online` + "`" + `** — Пользователь стал онлайн.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:online\", \"payload\": { \"userId\": \"uuid\", \"online\": true } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `user:offline` + "`" + `** — Пользователь стал офлайн.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:offline\", \"payload\": { \"userId\": \"uuid\", \"online\": false } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `user:typing` + "`" + `** — Пользователь печатает.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:typing\", \"payload\": { \"chatId\": \"uuid\", \"userId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `user:stop_typing` + "`" + `** — Перестал печатать.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:stop_typing\", \"payload\": { \"chatId\": \"uuid\", \"userId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `user:keyboard_opened` + "`" + `** — Клавиатура открыта (мобильные устройства).\n**` + "`" + `user:keyboard_closed` + "`" + `** — Клавиатура закрыта.\n\n### Чаты (типы chat:*)\n**` + "`" + `chat:created` + "`" + `** — Создан новый чат. Payload: объект Chat (id, name, type, participants и т.д.).\n**` + "`" + `chat:updated` + "`" + `** — Чат обновлён. Payload: Chat.\n**` + "`" + `chat:deleted` + "`" + `** — Чат удалён.\n\n### Звонки (типы call:*)\n**` + "`" + `call:offer` + "`" + `** — Входящий WebRTC звонок.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"call:offer\", \"payload\": { \"chatId\": \"uuid\", \"callId\": \"uuid\", \"sdp\": \"offer_sdp_string\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `call:answer` + "`" + `** — Ответ на звонок.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"call:answer\", \"payload\": { \"chatId\": \"uuid\", \"callId\": \"uuid\", \"sdp\": \"answer_sdp_string\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `call:ice` + "`" + `** — ICE-кандидат для WebRTC.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"call:ice\", \"payload\": { \"callId\": \"uuid\", \"candidate\": \"ice_candidate_string\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `call:end` + "`" + `** — Звонок завершён.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"call:end\", \"payload\": { \"callId\": \"uuid\", \"userId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `call:reject` + "`" + `** — Звонок отклонён.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"call:reject\", \"payload\": { \"callId\": \"uuid\", \"userId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `call:missed` + "`" + `** — Пропущенный звонок. **` + "`" + `call:accept` + "`" + `** — Звонок принят.\n\n## Направление: Клиент → Сервер\nКлиент отправляет эти события, чтобы выполнить действие на сервере.\n\n### Отправка и управление сообщениями\n**` + "`" + `message:send` + "`" + `** — Отправить сообщение в чат.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:send\", \"payload\": { \"chatId\": \"uuid\", \"content\": \"Привет!\", \"type\": \"text\", \"replyToId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\nПоля: chatId (обяз.), content (обяз.), type (обяз.): text|image|file|gif|voice|video|audio|location|system, replyToId (опц.) — ID сообщения, на который отвечаем.\n\n**` + "`" + `message:edit` + "`" + `** — Редактировать сообщение.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:edit\", \"payload\": { \"messageId\": \"uuid\", \"content\": \"Новый текст\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:delete` + "`" + `** — Удалить сообщение.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:delete\", \"payload\": { \"messageId\": \"uuid\", \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:read` + "`" + `** — Отметить сообщение как прочитанное.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:read\", \"payload\": { \"messageId\": \"uuid\", \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:react` + "`" + `** — Добавить реакцию.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:react\", \"payload\": { \"messageId\": \"uuid\", \"emoji\": \"👍\" } }\n` + "`" + `` + "`" + `` + "`" + `\nemoji: \"👍\", \"❤️\", \"😆\", \"😮\", \"😢\", \"🙏\"\n\n**` + "`" + `message:unreact` + "`" + `** — Удалить реакцию.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:unreact\", \"payload\": { \"messageId\": \"uuid\", \"emoji\": \"👍\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:pin` + "`" + `** — Закрепить/открепить сообщение.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:pin\", \"payload\": { \"messageId\": \"uuid\", \"pin\": true } }\n` + "`" + `` + "`" + `` + "`" + `\npin: true — закрепить, false — открепить.\n\n**` + "`" + `message:star` + "`" + `** — Добавить в избранное. Payload: { \"messageId\": \"uuid\" }\n**` + "`" + `message:unstar` + "`" + `** — Удалить из избранного. Payload: { \"messageId\": \"uuid\" }\n**` + "`" + `message:forward` + "`" + `** — Переслать сообщение. Payload: { \"messageId\": \"uuid\", \"toChatId\": \"uuid\" }\n\n### Управление чатами (клиент → сервер)\n**` + "`" + `chat:create` + "`" + `** — Создать новый чат.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:create\", \"payload\": { \"type\": \"group\", \"name\": \"Friends\", \"participantIds\": [\"uuid1\",\"uuid2\"], \"description\": \"Чат для друзей\" } }\n` + "`" + `` + "`" + `` + "`" + `\ntype: \"private\" | \"group\" | \"channel\". participantIds — список ID участников (обяз.). name — название (опц. для private).\n\n**` + "`" + `chat:update` + "`" + `** — Обновить название/аватар/описание чата.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:update\", \"payload\": { \"chatId\": \"uuid\", \"name\": \"Новое название\", \"description\": \"Описание\", \"avatarUrl\": \"https://...\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `chat:add_participant` + "`" + `** — Добавить участника. Payload: { \"chatId\": \"uuid\", \"userId\": \"uuid\" }\n**` + "`" + `chat:remove_participant` + "`" + `** — Удалить участника. Payload: { \"chatId\": \"uuid\", \"userId\": \"uuid\" }\n**` + "`" + `chat:leave` + "`" + `** — Покинуть чат. Payload: { \"chatId\": \"uuid\" }\n**` + "`" + `chat:pin` + "`" + `** / **` + "`" + `chat:unpin` + "`" + `** — Закрепить/открепить чат в списке. Payload: { \"chatId\": \"uuid\" }\n**` + "`" + `chat:archive` + "`" + `** / **` + "`" + `chat:unarchive` + "`" + `** — Архивировать/разархивировать чат. Payload: { \"chatId\": \"uuid\" }\n\n### Статус пользователя (клиент → сервер)\n**` + "`" + `user:typing` + "`" + `** — Отправить индикатор печатания.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:typing\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n**` + "`" + `user:stop_typing` + "`" + `** — Остановить индикатор.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:stop_typing\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n**` + "`" + `user:keyboard_opened` + "`" + `** / **` + "`" + `user:keyboard_closed` + "`" + `** — Клавиатура открыта/закрыта. Payload: { \"chatId\": \"uuid\" }\n**` + "`" + `user:block` + "`" + `** — Заблокировать пользователя. Payload: { \"userId\": \"uuid\" }\n**` + "`" + `user:unblock` + "`" + `** — Разблокировать пользователя. Payload: { \"userId\": \"uuid\" }\n\n### WebRTC звонки (клиент → сервер)\n**` + "`" + `call:offer` + "`" + `** — Отправить WebRTC offer. Payload: { \"chatId\": \"uuid\", \"callId\": \"uuid\", \"sdp\": \"...\" }\n**` + "`" + `call:answer` + "`" + `** — WebRTC answer. Payload: { \"chatId\": \"uuid\", \"callId\": \"uuid\", \"sdp\": \"...\" }\n**` + "`" + `call:ice` + "`" + `** — ICE candidate. Payload: { \"callId\": \"uuid\", \"candidate\": \"...\" }\n\n## Пример обмена сообщениями\n1. Клиент А отправляет: { \"type\": \"message:send\", \"payload\": { \"chatId\": \"123\", \"content\": \"Привет!\", \"type\": \"text\" } }\n2. Сервер принимает сообщение, сохраняет в БД, рассылает всем участникам чата:\n{ \"type\": \"message:new\", \"payload\": { \"id\": \"msg-uuid\", \"chatId\": \"123\", \"senderId\": \"userA-uuid\", \"content\": \"Привет!\", \"type\": \"text\", \"createdAt\": \"...\" } }\n3. Клиент Б получает ` + "`" + `message:new` + "`" + ` и отображает сообщение в реальном времени.",
+                "description": "# WebSocket API\n\n## Быстрый старт\n1. Зарегистрируйся: ` + "`" + `POST /api/auth/register` + "`" + ` → получи JWT token\n2. Подключись: ` + "`" + `ws://localhost:8080/ws?token={JWT_TOKEN}` + "`" + `\n3. Отправляй и получай события в формате ` + "`" + `{ \"type\": \"...\", \"payload\": {...} }` + "`" + `\n\n- **Пинг/Pong**: сервер шлёт ping каждые 54с, клиент отвечает pong (встроено в ws-библиотеку)\n- **Таймаут**: если pong не получен 60с — соединение закрывается\n- **Макс. размер сообщения**: 64 КБ\n- **Ограничение**: 100 запросов/мин на API (REST + WebSocket суммарно)\n- **Реконнект**: при обрыве клиент должен переподключаться с тем же токеном\n\n---\n\n## 1. Сервер → Клиент (входящие события)\nСервер автоматически рассылает эти события участникам чата в реальном времени.\n\n### 1.1 Сообщения\n\n**` + "`" + `message:new` + "`" + `** — Новое сообщение.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:new\", \"payload\": { \"id\": \"uuid\", \"chatId\": \"uuid\", \"senderId\": \"uuid\", \"content\": \"Привет!\", \"type\": \"text\", \"createdAt\": \"2026-01-01T00:00:00Z\" } }\n` + "`" + `` + "`" + `` + "`" + `\nПоля payload: id, chatId, senderId, content, type (text|image|file|gif|voice|video|audio|location), createdAt, replyTo (если ответ), forwardedFrom (если переслано).\n\n**` + "`" + `message:edited` + "`" + `** — Сообщение отредактировано. Payload: полный объект Message с обновлённым content + editHistory.\n\n**` + "`" + `message:deleted` + "`" + `** — Сообщение удалено.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:deleted\", \"payload\": { \"messageId\": \"uuid\", \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:read` + "`" + `** — Сообщение прочитано другим участником.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:read\", \"payload\": { \"messageId\": \"uuid\", \"userId\": \"uuid\", \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:reaction` + "`" + `** — Изменение реакций. Payload: полный объект Message с обновлённым полем ` + "`" + `reactions` + "`" + `.\n\n**` + "`" + `message:pinned` + "`" + `** — Сообщение закреплено/откреплено. Payload: полный объект Message.\n\n**` + "`" + `message:starred` + "`" + `** — Сообщение добавлено в избранное. Payload: { \"messageId\", \"userId\" }\n\n**` + "`" + `message:forward` + "`" + `** — Сообщение переслано. Payload: полный объект Message.\n\n### 1.2 Пользователи\n\n| Тип | Описание | Payload |\n|-----|----------|---------|\n| ` + "`" + `user:online` + "`" + ` | Пользователь стал онлайн | ` + "`" + `{ \"userId\": \"uuid\", \"online\": true }` + "`" + ` |\n| ` + "`" + `user:offline` + "`" + ` | Пользователь стал офлайн | ` + "`" + `{ \"userId\": \"uuid\", \"online\": false }` + "`" + ` |\n| ` + "`" + `user:typing` + "`" + ` | Пользователь печатает | ` + "`" + `{ \"chatId\": \"uuid\", \"userId\": \"uuid\" }` + "`" + ` |\n| ` + "`" + `user:stop_typing` + "`" + ` | Перестал печатать | ` + "`" + `{ \"chatId\": \"uuid\", \"userId\": \"uuid\" }` + "`" + ` |\n| ` + "`" + `user:keyboard_opened` + "`" + ` | Клавиатура открыта (моб.) | ` + "`" + `{ \"chatId\": \"uuid\", \"userId\": \"uuid\" }` + "`" + ` |\n| ` + "`" + `user:keyboard_closed` + "`" + ` | Клавиатура закрыта | ` + "`" + `{ \"chatId\": \"uuid\", \"userId\": \"uuid\" }` + "`" + ` |\n\n### 1.3 Чаты\n\n**` + "`" + `chat:created` + "`" + `** — Создан новый чат. Payload: полный объект Chat (id, name, type, participants, avatarUrl, description).\n\n**` + "`" + `chat:updated` + "`" + `** — Чат обновлён (название, аватар, участники). Payload: полный объект Chat.\n\n**` + "`" + `chat:deleted` + "`" + `** — Чат удалён.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:deleted\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n### 1.4 Звонки (WebRTC)\n\n| Тип | Описание | Payload |\n|-----|----------|---------|\n| ` + "`" + `call:offer` + "`" + ` | Входящий звонок (WebRTC offer) | ` + "`" + `{ \"chatId\", \"callId\", \"callerId\", \"type\" }` + "`" + ` |\n| ` + "`" + `call:answer` + "`" + ` | Ответ на звонок | ` + "`" + `{ \"callId\", \"userId\" }` + "`" + ` |\n| ` + "`" + `call:ice` + "`" + ` | ICE-кандидат | ` + "`" + `{ \"callId\", \"candidate\" }` + "`" + ` |\n| ` + "`" + `call:end` + "`" + ` | Звонок завершён | ` + "`" + `{ \"callId\", \"userId\" }` + "`" + ` |\n| ` + "`" + `call:reject` + "`" + ` | Звонок отклонён | ` + "`" + `{ \"callId\", \"userId\" }` + "`" + ` |\n| ` + "`" + `call:accept` + "`" + ` | Звонок принят | ` + "`" + `{ \"callId\", \"userId\" }` + "`" + ` |\n| ` + "`" + `call:missed` + "`" + ` | Пропущенный звонок | ` + "`" + `{ \"callId\", \"userId\" }` + "`" + ` |\n\n---\n\n## 2. Клиент → Сервер (исходящие события)\nОтправляй эти события через WebSocket, чтобы выполнить действия.\n\n### 2.1 Отправка и управление сообщениями\n\n**` + "`" + `message:send` + "`" + `** — Отправить сообщение в чат.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:send\", \"payload\": { \"chatId\": \"uuid\", \"content\": \"Привет!\", \"type\": \"text\", \"replyToId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n| Поле | Обязательное | Описание |\n|------|-------------|----------|\n| chatId | ✅ | ID чата |\n| content | ✅ | Текст / URL файла / base64 |\n| type | ✅ | text, image, file, gif, voice, video, audio, location |\n| replyToId | ❌ | ID сообщения, на которое отвечаем |\n\n**` + "`" + `message:edit` + "`" + `** — Редактировать сообщение.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:edit\", \"payload\": { \"messageId\": \"uuid\", \"content\": \"Новый текст\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:delete` + "`" + `** — Удалить сообщение.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:delete\", \"payload\": { \"messageId\": \"uuid\", \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:read` + "`" + `** — Отметить сообщение как прочитанное.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:read\", \"payload\": { \"messageId\": \"uuid\", \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:react` + "`" + `** — Добавить реакцию. emoji: \"👍\", \"❤️\", \"😆\", \"😮\", \"😢\", \"🙏\"\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:react\", \"payload\": { \"messageId\": \"uuid\", \"emoji\": \"👍\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:unreact` + "`" + `** — Удалить реакцию.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:unreact\", \"payload\": { \"messageId\": \"uuid\", \"emoji\": \"👍\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:pin` + "`" + `** — Закрепить (pin: true) / открепить (pin: false) сообщение.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:pin\", \"payload\": { \"messageId\": \"uuid\", \"pin\": true } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:star` + "`" + `** — Добавить в избранное.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:star\", \"payload\": { \"messageId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:unstar` + "`" + `** — Удалить из избранного.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:unstar\", \"payload\": { \"messageId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `message:forward` + "`" + `** — Переслать сообщение в другой чат.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:forward\", \"payload\": { \"messageId\": \"uuid\", \"toChatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n### 2.2 Управление чатами\n\n**` + "`" + `chat:create` + "`" + `** — Создать новый чат.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:create\", \"payload\": { \"type\": \"group\", \"name\": \"Friends\", \"participantIds\": [\"uuid1\",\"uuid2\"], \"description\": \"Чат для друзей\" } }\n` + "`" + `` + "`" + `` + "`" + `\n| Поле | Обязательное | Описание |\n|------|-------------|----------|\n| type | ✅ | \"private\", \"group\", \"channel\" |\n| participantIds | ✅ | Список ID участников |\n| name | ❌ | Название (обяз. для group/channel) |\n| description | ❌ | Описание чата |\n| avatarUrl | ❌ | Ссылка на аватарку |\n\n**` + "`" + `chat:update` + "`" + `** — Обновить название/аватар/описание чата.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:update\", \"payload\": { \"chatId\": \"uuid\", \"name\": \"Новое название\", \"description\": \"Описание\", \"avatarUrl\": \"https://...\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `chat:add_participant` + "`" + `** — Добавить участника.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:add_participant\", \"payload\": { \"chatId\": \"uuid\", \"userId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `chat:remove_participant` + "`" + `** — Удалить участника.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:remove_participant\", \"payload\": { \"chatId\": \"uuid\", \"userId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `chat:leave` + "`" + `** — Покинуть чат.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:leave\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `chat:pin` + "`" + `** — Закрепить чат в списке.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:pin\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `chat:unpin` + "`" + `** — Открепить чат.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:unpin\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `chat:archive` + "`" + `** — Архивировать чат.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:archive\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `chat:unarchive` + "`" + `** — Разархивировать чат.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"chat:unarchive\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n### 2.3 Статус пользователя\n\n**` + "`" + `user:typing` + "`" + `** — Индикатор печатания.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:typing\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `user:stop_typing` + "`" + `** — Остановить индикатор.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:stop_typing\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `user:keyboard_opened` + "`" + `** — Клавиатура открыта (моб.).\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:keyboard_opened\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `user:keyboard_closed` + "`" + `** — Клавиатура закрыта.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:keyboard_closed\", \"payload\": { \"chatId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `user:block` + "`" + `** — Заблокировать пользователя.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:block\", \"payload\": { \"userId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `user:unblock` + "`" + `** — Разблокировать пользователя.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"user:unblock\", \"payload\": { \"userId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n### 2.4 WebRTC звонки (сигналинг)\n\n**` + "`" + `call:offer` + "`" + `** — Отправить WebRTC offer.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"call:offer\", \"payload\": { \"chatId\": \"uuid\", \"callId\": \"uuid\", \"sdp\": \"offer_sdp_string\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `call:answer` + "`" + `** — Ответить на звонок (WebRTC answer).\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"call:answer\", \"payload\": { \"chatId\": \"uuid\", \"callId\": \"uuid\", \"sdp\": \"answer_sdp_string\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `call:ice` + "`" + `** — Отправить ICE-кандидат.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"call:ice\", \"payload\": { \"callId\": \"uuid\", \"candidate\": \"ice_candidate_string\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n**` + "`" + `call:reject` + "`" + `** — Отклонить звонок.\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"call:reject\", \"payload\": { \"callId\": \"uuid\" } }\n` + "`" + `` + "`" + `` + "`" + `\n\n---\n\n## 3. Полный пример: отправка сообщения\n\n1. Клиент А отправляет через WebSocket:\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:send\", \"payload\": { \"chatId\": \"123\", \"content\": \"Привет!\", \"type\": \"text\" } }\n` + "`" + `` + "`" + `` + "`" + `\n2. Сервер сохраняет в БД и рассылает всем участникам чата:\n` + "`" + `` + "`" + `` + "`" + `json\n{ \"type\": \"message:new\", \"payload\": { \"id\": \"msg-uuid\", \"chatId\": \"123\", \"senderId\": \"userA-uuid\", \"content\": \"Привет!\", \"type\": \"text\", \"createdAt\": \"2026-01-01T00:00:00Z\" } }\n` + "`" + `` + "`" + `` + "`" + `\n3. Клиент Б получает ` + "`" + `message:new` + "`" + ` и отображает сообщение в реальном времени.\n\n## 4. Полный пример: звонок\n\n1. Клиент А отправляет ` + "`" + `call:offer` + "`" + ` → сервер шлёт ` + "`" + `call:offer` + "`" + ` всем участникам чата\n2. Клиент Б отвечает ` + "`" + `call:answer` + "`" + ` → сервер шлёт ` + "`" + `call:accept` + "`" + ` всем\n3. Клиенты обмениваются ` + "`" + `call:ice` + "`" + ` (ICE candidates) через сервер\n4. Любая сторона шлёт ` + "`" + `call:end` + "`" + ` → сервер шлёт ` + "`" + `call:end` + "`" + ` всем\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -7366,7 +7465,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "JWT token",
+                        "description": "JWT token (получить через POST /api/auth/login)",
                         "name": "token",
                         "in": "query",
                         "required": true
@@ -9184,25 +9283,17 @@ const docTemplate = `{
                 "VoiceChatEnded"
             ]
         }
-    },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "description": "Введите JWT токен в формате: Bearer \u003ctoken\u003e",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "2.0.0",
-	Host:             "localhost:8080",
-	BasePath:         "/api",
-	Schemes:          []string{"http", "https"},
-	Title:            "Chat Messenger API",
-	Description:      "Сервер мессенджера на Go. Поддерживает: личные и групповые чаты, голосовые и видеозвонки, stories, голосовые комнаты, каналы, стикеры, опросы, ботов, геолокацию, кастомные эмодзи, эффекты сообщений, избранное и многое другое.\nWebSocket: ws://localhost:8080/ws?token={jwt_token}\n\n===================== ДОКУМЕНТАЦИЯ WEB-SOCKET =====================\n\nКлиент подключается по URL: ws://localhost:8080/ws?token={JWT_TOKEN}\nПосле подключения сервер и клиент обмениваются JSON-сообщениями.\n\nФормат ВСЕХ сообщений (как от клиента, так и от сервера):\n{ \"type\": \"название_события\", \"payload\": { ... поля ... } }\n\n----------------------------------------------------------------\nСОБЫТИЯ ОТ СЕРВЕРА К КЛИЕНТУ (сервер отправляет автоматически):\n----------------------------------------------------------------\n\n=== Сообщения ===\nmessage:new — Новое сообщение. Payload: полный объект Message (id, chatId, senderId, content, type, createdAt и т.д.)\nmessage:edited — Сообщение отредактировано. Payload: Message\nmessage:deleted — Сообщение удалено. Payload: { messageId, chatId }\nmessage:read — Сообщение прочитано. Payload: { messageId, userId, chatId }\nmessage:reaction — Добавлена/удалена реакция. Payload: Message (обновлённый объект с reactions)\nmessage:pinned — Сообщение закреплено/откреплено. Payload: Message\nmessage:starred — Сообщение добавлено в избранное (без payload)\nmessage:forward — Сообщение переслано (без payload)\n\n=== Пользователи ===\nuser:online — Пользователь стал онлайн. Payload: { userId, online: true }\nuser:offline — Пользователь стал офлайн. Payload: { userId, online: false }\nuser:typing — Пользователь печатает. Payload: { chatId, userId }\nuser:stop_typing — Пользователь перестал печатать. Payload: { chatId, userId }\nuser:keyboard_opened — Клавиатура открыта (мобильные). Payload: { chatId, userId }\nuser:keyboard_closed — Клавиатура закрыта. Payload: { chatId, userId }\n\n=== Чаты ===\nchat:created — Создан новый чат. Payload: полный объект Chat\nchat:updated — Чат обновлён (название, аватар, участники). Payload: Chat\nchat:deleted — Чат удалён (без payload)\n\n=== Звонки (WebRTC) ===\ncall:offer — Входящий звонок. Payload: { chatId, callId, sdp }\ncall:answer — Ответ на звонок. Payload: { chatId, callId, sdp }\ncall:ice — ICE-кандидат. Payload: { callId, candidate }\ncall:end — Звонок завершён. Payload: { callId, userId }\ncall:missed — Пропущенный звонок (без payload)\ncall:accept — Звонок принят (без payload)\ncall:reject — Звонок отклонён. Payload: { callId, userId }\n\n----------------------------------------------------------------\nСОБЫТИЯ ОТ КЛИЕНТА К СЕРВЕРУ (клиент отправляет, чтобы что-то сделать):\n----------------------------------------------------------------\n\n=== Работа с сообщениями ===\nmessage:send — Отправить сообщение. Payload: { chatId, content, type, replyToId? }\ntype: \"text\" | \"image\" | \"file\" | \"gif\" | \"voice\" | \"video\" | \"audio\" | \"location\" | \"system\"\nПример: { \"type\": \"message:send\", \"payload\": { \"chatId\": \"123\", \"content\": \"Привет!\", \"type\": \"text\" } }\n\nmessage:edit — Редактировать сообщение. Payload: { messageId, content }\nmessage:delete — Удалить сообщение. Payload: { messageId, chatId }\nmessage:read — Отметить как прочитанное. Payload: { messageId, chatId }\nmessage:react — Добавить реакцию. Payload: { messageId, emoji } (emoji: \"👍\", \"❤️\", \"😆\", \"😮\", \"😢\", \"🙏\")\nmessage:unreact — Удалить реакцию. Payload: { messageId, emoji }\nmessage:pin — Закрепить/открепить. Payload: { messageId, pin: true/false }\nmessage:star — В избранное. Payload: { messageId }\nmessage:unstar — Из избранного. Payload: { messageId }\nmessage:forward — Переслать сообщение. Payload: { messageId, toChatId }\n\n=== Управление чатами ===\nchat:create — Создать чат. Payload: { type, name?, participantIds, description? }\ntype: \"private\" | \"group\" | \"channel\". Пример: { \"type\": \"chat:create\", \"payload\": { \"type\": \"group\", \"name\": \"Friends\", \"participantIds\": [\"user1\",\"user2\"] } }\nchat:update — Обновить чат. Payload: { chatId, name?, description?, avatarUrl? }\nchat:add_participant — Добавить участника. Payload: { chatId, userId }\nchat:remove_participant — Удалить участника. Payload: { chatId, userId }\nchat:leave — Покинуть чат. Payload: { chatId }\nchat:pin — Закрепить чат в списке. Payload: { chatId }\nchat:unpin — Открепить чат. Payload: { chatId }\nchat:archive — Архивировать чат. Payload: { chatId }\nchat:unarchive — Разархивировать чат. Payload: { chatId }\n\n=== Статус пользователя ===\nuser:typing — Отправить индикатор печатания. Payload: { chatId }\nuser:stop_typing — Прекратить индикатор. Payload: { chatId }\nuser:keyboard_opened — Клавиатура открыта. Payload: { chatId }\nuser:keyboard_closed — Клавиатура закрыта. Payload: { chatId }\nuser:block — Заблокировать пользователя. Payload: { userId }\nuser:unblock — Разблокировать пользователя. Payload: { userId }\n\n=== WebRTC звонки ===\ncall:offer — Отправить WebRTC offer. Payload: { chatId, callId, sdp }\ncall:answer — WebRTC answer. Payload: { chatId, callId, sdp }\ncall:ice — ICE candidate. Payload: { callId, candidate }\n\n=================================================================",
+	Version:          "",
+	Host:             "",
+	BasePath:         "",
+	Schemes:          []string{},
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
