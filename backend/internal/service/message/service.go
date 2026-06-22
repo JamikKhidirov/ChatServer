@@ -726,6 +726,24 @@ func (s *messageService) buildSingleResponse(
 	return resp
 }
 
+func (s *messageService) GetExpiredSelfDestruct() ([]messagedomain.MessageSelfDestruct, error) {
+	return s.messageRepo.GetExpiredSelfDestruct()
+}
+
+func (s *messageService) ProcessExpiredSelfDestruct() ([]messagedomain.MessageSelfDestruct, error) {
+	expired, err := s.messageRepo.GetExpiredSelfDestruct()
+	if err != nil {
+		return nil, err
+	}
+	for _, sd := range expired {
+		if err := s.messageRepo.SoftDelete(sd.MessageID); err != nil {
+			continue
+		}
+		_ = s.messageRepo.DeleteSelfDestructByMessageID(sd.MessageID)
+	}
+	return expired, nil
+}
+
 func (s *messageService) SetSelfDestruct(msgID, userID string, seconds int) error {
 	msg, err := s.messageRepo.FindByID(msgID)
 	if err != nil {

@@ -127,6 +127,8 @@ type MessageRepository interface {
 	GetMentionsByMessageID(messageID string) ([]*messagedomain.Mention, error)
 	FindMediaByChatID(chatID string, mediaType string, limit, offset int) ([]*messagedomain.Message, error)
 	SetSelfDestruct(msgID, chatID string, deleteAt time.Time) error
+	GetExpiredSelfDestruct() ([]messagedomain.MessageSelfDestruct, error)
+	DeleteSelfDestructByMessageID(messageID string) error
 }
 
 type PollRepository interface {

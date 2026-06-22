@@ -299,6 +299,39 @@ func main() {
 		}
 	}()
 
+	// Self-destruct cleanup: delete expired messages and notify via WebSocket
+	go func() {
+		log.Println("self-destruct cleanup goroutine started")
+		ticker := time.NewTicker(10 * time.Second)
+		for range ticker.C {
+			expired, err := messageService.ProcessExpiredSelfDestruct()
+			if err != nil {
+				log.Printf("self-destruct cleanup error: %v", err)
+				continue
+			}
+			if len(expired) > 0 {
+				log.Printf("self-destruct: deleting %d expired messages", len(expired))
+			}
+			for _, sd := range expired {
+				participants, err := chatRepo.GetParticipants(sd.ChatID)
+				if err != nil {
+					continue
+				}
+				userIDs := make([]string, len(participants))
+				for i, p := range participants {
+					userIDs[i] = p.UserID
+				}
+				hub.BroadcastToChat(userIDs, ws.WSOutgoingMessage{
+					Type: "message:deleted",
+					Payload: map[string]string{
+						"messageId": sd.MessageID,
+						"chatId":    sd.ChatID,
+					},
+				})
+			}
+		}
+	}()
+
 	apiLimiter := middleware.NewRateLimiter(100, time.Minute)
 
 	r := gin.Default()

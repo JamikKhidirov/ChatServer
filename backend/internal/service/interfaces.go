@@ -94,6 +94,8 @@ type MessageService interface {
 	ExportChat(chatID, userID string) ([]*messagedomain.MessageResponse, error)
 	GetChatMedia(chatID, userID, mediaType string, limit, offset int) ([]*messagedomain.MessageResponse, int, error)
 	SetSelfDestruct(msgID, userID string, seconds int) error
+	ProcessExpiredSelfDestruct() ([]messagedomain.MessageSelfDestruct, error)
+	GetExpiredSelfDestruct() ([]messagedomain.MessageSelfDestruct, error)
 }
 
 type CallService interface {

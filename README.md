@@ -1,766 +1,1211 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge" alt="Version">
-  <img src="https://img.shields.io/badge/Go-1.21+-00ADD8?style=for-the-badge&logo=go" alt="Go">
-  <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite" alt="SQLite">
-  <img src="https://img.shields.io/badge/WebSocket-Real--Time-4A90D9?style=for-the-badge" alt="WebSocket">
-  <img src="https://img.shields.io/badge/WebRTC-Voice%2FVideo-FF5722?style=for-the-badge" alt="WebRTC">
-</p>
+# 💬 Go Messenger Server
 
-<h1 align="center">💬 Go Messenger Server</h1>
+High-performance chat messenger server with REST API + WebSocket real-time + WebRTC calls.
 
-<p align="center">
-  <b>High-performance chat messenger server</b><br>
-  REST API + WebSocket real-time + WebRTC calls + Voice Chats + Stories + Channels + Polls + Stickers + Bots
-</p>
-
-<p align="center">
-  <a href="#-quick-start">🚀 Quick Start</a> •
-  <a href="#-features">✨ Features</a> •
-  <a href="#-api-endpoints">📡 API</a> •
-  <a href="#-websocket">🔌 WebSocket</a> •
-  <a href="#-postman">📮 Postman</a> •
-  <a href="#-architecture">🏗️ Architecture</a>
-</p>
+**Base URL:** `http://localhost:8080`  
+**WebSocket:** `ws://localhost:8080/ws?token={jwt}`  
+**Swagger:** `http://localhost:8080/swagger/index.html`  
+**Postman:** `http://localhost:8080/postman`
 
 ---
 
-## 🚀 Quick Start
+## 📋 Содержание
+
+- [Quick Start](#quick-start)
+- [Авторизация (Auth Flow)](#авторизация-auth-flow)
+- [Формат ответов](#формат-ответов)
+- [API Endpoints](#api-endpoints)
+  - [🔐 Auth](#-auth)
+  - [👤 Users](#-users)
+  - [💬 Chats](#-chats)
+  - [✉️ Messages](#️-messages)
+  - [📱 Contacts](#-contacts)
+  - [📁 Folders](#-folders)
+  - [🔗 Invite Links](#-invite-links)
+  - [📊 Polls](#-polls)
+  - [🎨 Stickers](#-stickers)
+  - [🤖 Bots](#-bots)
+  - [📞 Calls](#-calls)
+  - [🎤 Voice Chats](#-voice-chats)
+  - [📸 Stories](#-stories)
+  - [📺 Channels](#-channels)
+  - [📝 Drafts](#-drafts)
+  - [⭐ Saved Messages](#-saved-messages)
+  - [🎭 Custom Emojis](#-custom-emojis)
+  - [🎨 GIFs](#-gifs)
+  - [🖥️ Sessions](#️-sessions)
+  - [🛡️ Verification](#️-verification)
+  - [⚙️ Settings](#️-settings)
+- [WebSocket](#websocket)
+- [Postman Collection](#postman-collection)
+
+---
+
+## Quick Start
 
 ```bash
-# 1. Clone and build
-git clone https://github.com/JamikKhidirov/ChatServer.git
-cd ChatServer
-go build -o ChatServer.exe .
-
-# 2. Run the server
-./ChatServer.exe
+go build -o backend/ChatServer.exe ./backend/main.go
+./backend/ChatServer.exe
 
 # Server starts on http://localhost:8080
 ```
 
-When the server starts, you'll see all available URLs:
+---
 
+## Авторизация (Auth Flow)
+
+### 1. Регистрация
 ```
-╔══════════════════════════════════════════════════════════════════════╗
-║                    CHAT MESSENGER SERVER v2.0                       ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  Server:   http://localhost:8080                                     ║
-║  Frontend: http://localhost:8080/app/                                ║
-║  Swagger:  http://localhost:8080/swagger/index.html                  ║
-║  Postman:  http://localhost:8080/postman                              ║
-║  WebSocket: ws://localhost:8080/ws?token={jwt}                       ║
-║  Health:   http://localhost:8080/health                              ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  Import Postman: Download from /postman, import into Postman        ║
-║  Auth: Register or Login → copy token → paste as Bearer token       ║
-╚══════════════════════════════════════════════════════════════════════╝
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "username": "john",          // min:3, max:32
+  "email": "john@mail.com",    // valid email
+  "password": "secret123",     // min:6
+  "display_name": "John Doe"   // min:1, max:64
+}
+```
+**Ответ:** `201 Created`
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "user": {
+      "id": "uuid",
+      "username": "john",
+      "displayName": "John Doe",
+      "email": "john@mail.com",
+      "avatarUrl": "",
+      "bio": "",
+      "phone": "",
+      "status": "online",
+      "lastSeen": "2026-01-01T00:00:00Z"
+    }
+  }
+}
 ```
 
-### 📝 Test with curl
+### 2. Логин
+```
+POST /api/auth/login
+Content-Type: application/json
 
-```bash
-# Register
-curl -s -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"john","email":"john@mail.com","password":"secret123","displayName":"John"}'
+{
+  "email": "john@mail.com",
+  "password": "secret123"
+}
+```
+**Ответ:** `200 OK` — тот же формат, что и регистрация. Сохраните `token` — он понадобится для всех запросов.
 
-# Login → copy the token
-curl -s -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"john@mail.com","password":"secret123"}'
-
-# Save token
-$TOKEN="eyJhbGciOiJIUzI1NiIs..."
-
-# Get profile
-curl -s http://localhost:8080/api/users/profile -H "Authorization: Bearer $TOKEN"
-
-# Create a chat
-curl -s -X POST http://localhost:8080/api/chats \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"type":"private","participantIds":["USER_ID"]}'
+### 3. Использование токена
+Все защищённые эндпоинты требуют заголовок:
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+Токен живёт 24 часа (настраивается через `JWT_TTL`). По истечении вызовите:
+```
+GET /api/auth/refresh
+Authorization: Bearer <token>
 ```
 
 ---
 
-## ✨ Features
-
-<details open>
-<summary><b>👤 User System</b></summary>
-
-| Feature | Description |
-|---------|-------------|
-| Registration | Email + username + password |
-| Login | Email/password, email code, phone code |
-| JWT Auth | Bearer token with configurable TTL |
-| Profiles | Display name, bio, avatar, status |
-| Contacts | Sync phone contacts, search registered users |
-| Blocks | Block/unblock users |
-| Sessions | Manage active sessions |
-</details>
-
-<details>
-<summary><b>💬 Messaging</b></summary>
-
-| Feature | Description |
-|---------|-------------|
-| Text messages | Send and receive text |
-| File uploads | Images, documents, voice messages |
-| Video circles | Circular video messages |
-| Location sharing | Send lat/lng coordinates |
-| Message effects | confetti, fireworks, hearts, balloons, stars |
-| Edit/Delete | Edit or delete sent messages |
-| Reactions | Any emoji as reaction |
-| Forward | Forward messages to other chats |
-| Pin/Star | Pin to chat or star for personal bookmarks |
-| Reply/Quote | Reply to specific messages |
-| Read receipts | Track who read what |
-| Scheduled | Schedule messages for later delivery |
-| Self-destruct | Auto-delete after TTL |
-| Search | Full-text search across all chats |
-</details>
-
-<details>
-<summary><b>👥 Chats & Groups</b></summary>
-
-| Feature | Description |
-|---------|-------------|
-| Private chats | 1-to-1 messaging |
-| Group chats | Multi-participant with roles |
-| Supergroup roles | Owner, admin, moderator, editor, member, read-only |
-| Slow mode | Configurable interval between messages |
-| Invite links | Generate with expiration and usage limits |
-| Chat folders | Organize chats into custom folders |
-| Archive/Hide | Archive or hide chats from list |
-| Transfer ownership | Transfer group ownership |
-| Promote/Demote | Change participant roles |
-</details>
-
-<details>
-<summary><b>📺 Broadcast Channels</b></summary>
-
-One-way broadcast channels with subscriber management and admin roles.
-</details>
-
-<details>
-<summary><b>📸 Stories</b></summary>
-
-Photo/video stories that disappear after 24 hours with view tracking.
-</details>
-
-<details>
-<summary><b>📞 Voice/Video Calls</b></summary>
-
-WebRTC-based 1-to-1 and group calls with signalling via REST + WebSocket.
-</details>
-
-<details>
-<summary><b>🎤 Voice Chats</b></summary>
-
-Persistent voice chat rooms in groups (join/leave/mute).
-</details>
-
-<details>
-<summary><b>📊 Polls</b></summary>
-
-Create polls with multiple options, vote, close, real-time updates via WebSocket.
-</details>
-
-<details>
-<summary><b>🎨 Custom Emojis</b></summary>
-
-Upload custom emoji images and use them via shortcodes.
-</details>
-
-<details>
-<summary><b>🤖 Bots</b></summary>
-
-Create and manage bot accounts with API tokens.
-</details>
-
-<details>
-<summary><b>🔒 Security</b></summary>
-
-| Feature | Description |
-|---------|-------------|
-| JWT authentication | HMAC-SHA256 signed tokens |
-| Password hashing | bcrypt |
-| E2E encryption | Support for encrypted messages |
-| IP blocking | Block abusive IPs at application level |
-| Rate limiting | Protect API from abuse |
-| Admin panel | Admin registration, moderation, reporting |
-</details>
-
-<details>
-<summary><b>🔔 Push Notifications</b></summary>
-
-Firebase Cloud Messaging (FCM) integration for mobile push notifications.
-</details>
-
----
-
-## 📡 API Endpoints
-
-All endpoints require `Authorization: Bearer <JWT_TOKEN>` unless marked with 🔓.
-
-<details open>
-<summary><b>🔐 Auth</b> — 9 endpoints</summary>
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|:----:|-------------|
-| `POST` | `/api/auth/register` | 🔓 | Register new user |
-| `POST` | `/api/auth/admin/register` | 🔓 | Register admin (requires `admin_secret`) |
-| `POST` | `/api/auth/login` | 🔓 | Login with email + password, returns JWT |
-| `POST` | `/api/auth/login/email` | 🔓 | Send login code to email |
-| `POST` | `/api/auth/login/email/verify` | 🔓 | Verify email login code and get JWT |
-| `POST` | `/api/auth/login/phone` | 🔓 | Send login code via SMS |
-| `POST` | `/api/auth/login/phone/verify` | 🔓 | Verify SMS login code and get JWT |
-| `GET` | `/api/auth/refresh` | ✅ | Refresh JWT token |
-| `PUT` | `/api/auth/change-password` | ✅ | Change password |
-</details>
-
-<details>
-<summary><b>👤 Users</b> — 12 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/users/profile` | Get current user profile |
-| `PUT` | `/api/users/profile` | Update profile (displayName, bio, etc.) |
-| `GET` | `/api/users/search?q=&offset=&limit=` | Search users (paginated) |
-| `GET` | `/api/users/{id}` | Get user by ID |
-| `GET` | `/api/users/username/{username}` | Get user by username |
-| `GET` | `/api/users/{id}/last-seen` | Get user's last seen time |
-| `PUT` | `/api/users/status` | Set online status (`online`/`offline`/`away`) |
-| `PUT` | `/api/users/push-token` | Update FCM push token |
-| `POST` | `/api/users/block` | Block a user |
-| `DELETE` | `/api/users/block/{userId}` | Unblock a user |
-| `GET` | `/api/users/blocked` | List blocked users |
-| `POST` | `/api/users/avatar` | Upload profile avatar |
-| `POST` | `/api/users/push-test` | Send test push notification |
-</details>
-
-<details>
-<summary><b>💬 Chats</b> — 20+ endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/chats` | Create chat (private/group/channel) |
-| `POST` | `/api/chats/start/{userId}` | Start or find private chat with user |
-| `GET` | `/api/chats` | List my chats |
-| `GET` | `/api/chats/search?q=` | Search chats by name |
-| `GET` | `/api/chats/archived` | List archived chats |
-| `GET` | `/api/chats/{id}` | Get chat details |
-| `PUT` | `/api/chats/{id}` | Update group info |
-| `DELETE` | `/api/chats/{id}` | Delete chat |
-| `POST` | `/api/chats/{id}/read` | Mark as read (up to last message) |
-| `POST` | `/api/chats/{id}/pin` | Pin chat to top |
-| `DELETE` | `/api/chats/{id}/pin` | Unpin chat |
-| `POST` | `/api/chats/{id}/archive` | Archive chat |
-| `POST` | `/api/chats/{id}/unarchive` | Unarchive chat |
-| `POST` | `/api/chats/{id}/hide` | Hide chat from list |
-| `POST` | `/api/chats/{id}/leave` | Leave group chat |
-| `POST` | `/api/chats/{id}/photo` | Upload chat photo |
-| `POST` | `/api/chats/{id}/wallpaper` | Set chat wallpaper |
-| `POST` | `/api/chats/{id}/transfer-ownership` | Transfer group ownership |
-| `PUT` | `/api/chats/{id}/slow-mode` | Set slow mode interval (0-3600s) |
-| `PUT` | `/api/chats/{id}/permissions` | Set chat permissions |
-| `PUT` | `/api/chats/{id}/notifications` | Mute/unmute notifications |
-| `GET` | `/api/chats/{id}/notifications` | Get notification settings |
-| `POST` | `/api/chats/{id}/participants` | Add participant to group |
-| `DELETE` | `/api/chats/{id}/participants/{userId}` | Remove participant |
-| `PUT` | `/api/chats/{id}/participants/{userId}/role` | Change participant role |
-| `POST` | `/api/chats/{id}/promote` | Promote to admin |
-| `POST` | `/api/chats/{id}/demote` | Demote from admin |
-| `GET` | `/api/chats/{id}/online` | Get online members |
-</details>
-
-<details>
-<summary><b>✉️ Messages</b> — 20+ endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/chats/{id}/messages` | Send a message |
-| `GET` | `/api/chats/{id}/messages` | List messages (paginated) |
-| `GET` | `/api/chats/{id}/messages/search?q=` | Search within chat |
-| `POST` | `/api/chats/{id}/messages/file` | Upload file attachment |
-| `POST` | `/api/chats/{id}/messages/voice` | Send voice message |
-| `POST` | `/api/chats/{id}/messages/location` | Send location (lat/lng) |
-| `POST` | `/api/chats/{id}/messages/video-circle` | Send circular video |
-| `POST` | `/api/chats/{id}/messages/{msgId}/resend` | Re-send a message |
-| `GET` | `/api/chats/{id}/pinned` | Get pinned messages |
-| `GET` | `/api/chats/{id}/media?type=photo` | Media gallery |
-| `GET` | `/api/chats/{id}/polls` | List polls in chat |
-| `GET` | `/api/chats/{id}/export?format=csv` | Export chat history as CSV |
-| `GET` | `/api/chats/{id}/calls` | Call history for chat |
-| `GET` | `/api/chats/{id}/active-calls` | Active calls in chat |
-| `GET` | `/api/chats/{id}/voice-chats/active` | Active voice chats |
-| `GET` | `/api/chats/{id}/voice-chats/history` | Voice chat history |
-| `GET` | `/api/messages/{id}` | Get message by ID |
-| `PUT` | `/api/messages/{id}` | Edit message |
-| `DELETE` | `/api/messages/{id}` | Delete message (for everyone) |
-| `DELETE` | `/api/messages/{id}/for-me` | Delete message (for me only) |
-| `GET` | `/api/messages/{id}/history` | Get edit history |
-| `POST` | `/api/messages/{id}/reactions` | Add reaction |
-| `DELETE` | `/api/messages/{id}/reactions` | Remove reaction |
-| `PUT` | `/api/messages/{id}/pin` | Pin/unpin message |
-| `POST` | `/api/messages/{id}/star` | Star message |
-| `DELETE` | `/api/messages/{id}/star` | Unstar message |
-| `POST` | `/api/messages/{id}/read` | Mark as read |
-| `POST` | `/api/messages/{id}/save` | Save message |
-| `POST` | `/api/messages/{id}/report` | Report message |
-| `GET` | `/api/messages/search?q=&offset=&limit=` | Global search |
-| `GET` | `/api/messages/starred` | List starred messages |
-| `GET` | `/api/messages/scheduled` | List scheduled messages |
-| `POST` | `/api/messages/forward` | Forward messages |
-| `POST` | `/api/messages/schedule` | Schedule a message |
-| `POST` | `/api/messages/read/bulk` | Bulk mark as read |
-| `DELETE` | `/api/messages/bulk` | Bulk delete messages |
-</details>
-
-<details>
-<summary><b>📱 Contacts</b> — 5 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/contacts/sync` | Sync phone contacts |
-| `GET` | `/api/contacts` | List contacts |
-| `GET` | `/api/contacts/search?q=` | Search contacts by phone |
-| `GET` | `/api/contacts/registered` | Contacts on the platform |
-| `POST` | `/api/contacts/photo` | Update contact photo |
-</details>
-
-<details>
-<summary><b>📁 Folders</b> — 4 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/folders` | Create folder |
-| `GET` | `/api/folders` | List folders |
-| `PUT` | `/api/folders/{id}` | Update folder |
-| `DELETE` | `/api/folders/{id}` | Delete folder |
-</details>
-
-<details>
-<summary><b>🔗 Invite Links</b> — 4 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/chats/{id}/invite-links` | Create invite link |
-| `GET` | `/api/chats/{id}/invite-links` | List invite links |
-| `DELETE` | `/api/chats/{id}/invite-links/{linkId}` | Revoke invite link |
-| `POST` | `/api/chats/join` | Join via invite link |
-</details>
-
-<details>
-<summary><b>📊 Polls</b> — 4 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/chats/{id}/polls` | Create poll |
-| `GET` | `/api/chats/{id}/polls` | List polls |
-| `POST` | `/api/polls/{pollId}/vote` | Cast vote |
-| `POST` | `/api/polls/{pollId}/close` | Close poll |
-</details>
-
-<details>
-<summary><b>🎨 Stickers</b> — 8 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/stickers/packs` | Create sticker pack |
-| `GET` | `/api/stickers/packs` | List all packs |
-| `GET` | `/api/stickers/packs/my` | My sticker packs |
-| `GET` | `/api/stickers/packs/{id}` | Get pack by ID |
-| `DELETE` | `/api/stickers/packs/{id}` | Delete pack |
-| `POST` | `/api/stickers/packs/{id}/stickers` | Add sticker to pack |
-| `POST` | `/api/stickers/library` | Add sticker to library |
-| `GET` | `/api/stickers/library` | My sticker library |
-</details>
-
-<details>
-<summary><b>🤖 Bots</b> — 5 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/bots` | Create bot |
-| `GET` | `/api/bots` | List my bots |
-| `PUT` | `/api/bots/{id}` | Update bot |
-| `DELETE` | `/api/bots/{id}` | Delete bot |
-| `POST` | `/api/bots/{id}/token` | Regenerate bot token |
-</details>
-
-<details>
-<summary><b>📞 Calls</b> — 5 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/calls` | Initiate WebRTC call |
-| `POST` | `/api/calls/{id}/respond` | Accept/reject call |
-| `POST` | `/api/calls/{id}/end` | End call |
-| `GET` | `/api/calls/{id}` | Get call details |
-| `GET` | `/api/chats/{chatId}/calls` | Call history |
-</details>
-
-<details>
-<summary><b>👥 Group Calls</b> — 5 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/calls/group/initiate` | Start group call |
-| `POST` | `/api/calls/group/respond` | Join/leave/mute |
-| `POST` | `/api/calls/group/{id}/end` | End group call |
-| `GET` | `/api/calls/group/{id}` | Get group call details |
-| `GET` | `/api/chats/{chatId}/active-calls` | Active calls |
-</details>
-
-<details>
-<summary><b>🎤 Voice Chats</b> — 8 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/chats/{id}/voice-chat` | Create voice chat |
-| `GET` | `/api/chats/{id}/voice-chats/active` | Active voice chats |
-| `GET` | `/api/chats/{id}/voice-chats/history` | Voice chat history |
-| `GET` | `/api/voice-chats/{id}` | Get voice chat details |
-| `POST` | `/api/voice-chats/{id}/join` | Join voice chat |
-| `POST` | `/api/voice-chats/{id}/leave` | Leave voice chat |
-| `POST` | `/api/voice-chats/{id}/end` | End voice chat |
-| `POST` | `/api/voice-chats/{id}/mute` | Mute/unmute participant |
-</details>
-
-<details>
-<summary><b>📸 Stories</b> — 6 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/stories` | Create story |
-| `GET` | `/api/stories` | Following stories |
-| `GET` | `/api/stories/my` | My active stories |
-| `GET` | `/api/stories/{id}` | View story |
-| `DELETE` | `/api/stories/{id}` | Delete story |
-| `GET` | `/api/stories/{id}/views` | Get story viewers |
-</details>
-
-<details>
-<summary><b>📺 Channels</b> — 6 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/channels/subscribe` | Subscribe to channel |
-| `POST` | `/api/channels/unsubscribe` | Unsubscribe |
-| `GET` | `/api/channels` | My channels |
-| `GET` | `/api/channels/{id}/subscribers` | List subscribers |
-| `GET` | `/api/channels/{id}/subscribed` | Check subscription |
-| `PUT` | `/api/channels/{id}/subscribers/{userId}/role` | Set subscriber role |
-</details>
-
-<details>
-<summary><b>📝 Drafts</b> — 3 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/drafts` | Save draft |
-| `GET` | `/api/drafts?chatId=` | Get draft for chat |
-| `DELETE` | `/api/drafts/{id}` | Delete draft |
-</details>
-
-<details>
-<summary><b>⏰ Scheduled Messages</b> — 3 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/messages/schedule` | Schedule message |
-| `GET` | `/api/messages/scheduled` | List scheduled |
-| `DELETE` | `/api/messages/scheduled/{id}` | Cancel scheduled |
-</details>
-
-<details>
-<summary><b>⭐ Saved Messages</b> — 3 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/messages/{id}/save` | Save message |
-| `GET` | `/api/saved-messages` | List saved |
-| `DELETE` | `/api/saved-messages/{id}` | Remove saved |
-</details>
-
-<details>
-<summary><b>🎭 Custom Emojis</b> — 4 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/emojis` | Upload emoji |
-| `GET` | `/api/emojis` | All public emojis |
-| `GET` | `/api/emojis/my` | My uploaded emojis |
-| `DELETE` | `/api/emojis/{id}` | Delete emoji |
-</details>
-
-<details>
-<summary><b>🎨 GIFs</b> — 3 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/gifs` | Save GIF |
-| `GET` | `/api/gifs` | List saved GIFs |
-| `DELETE` | `/api/gifs` | Remove GIF |
-</details>
-
-<details>
-<summary><b>🖥️ Sessions</b> — 3 endpoints</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/sessions` | List active sessions |
-| `DELETE` | `/api/sessions/{id}` | Terminate session |
-| `DELETE` | `/api/sessions` | Terminate all sessions |
-</details>
-
-<details>
-<summary><b>🛡️ Security & Admin</b> — miscellaneous</summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `PUT` | `/api/users/email` | Change email |
-| `PUT` | `/api/users/username` | Change username |
-| `DELETE` | `/api/account` | Delete account |
-| `GET` | `/api/account/settings` | Get account settings |
-| `PUT` | `/api/account/settings` | Update account settings |
-| `POST` | `/api/verification/email` | Send email verification |
-| `POST` | `/api/verification/email/verify` | Verify email code |
-| `POST` | `/api/verification/phone` | Send phone verification |
-| `POST` | `/api/verification/phone/verify` | Verify phone code |
-</details>
-
----
-
-## 🔌 WebSocket
-
-Connect in real-time to receive instant events and send commands.
-
-```bash
-# Connect (replace TOKEN with your JWT)
-wscat -c "ws://localhost:8080/ws?token=TOKEN"
+## Формат ответов
+
+### ✅ Успех
+```json
+{
+  "success": true,
+  "data": { ... }
+}
 ```
 
-### 📥 Server → Client Events
+### 📄 С пагинацией
+```json
+{
+  "success": true,
+  "data": [ ... ],
+  "meta": {
+    "total": 100,
+    "offset": 0,
+    "limit": 50
+  }
+}
+```
+Параметры пагинации: `?offset=0&limit=50` (по умолчанию limit=50).
 
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `newMessage` | `{message}` | New message sent |
-| `editMessage` | `{message}` | Message edited |
-| `deleteMessage` | `{chatId, messageId}` | Message deleted |
-| `readMessage` | `{chatId, userId, messageId}` | Message read |
-| `pinMessage` | `{message}` | Pin toggled |
-| `reaction` | `{message}` | Reaction added/removed |
-| `chatCreated` | `{chat}` | Chat created |
-| `chatUpdated` | `{chat}` | Chat updated |
-| `chatDeleted` | `{chatId}` | Chat deleted |
-| `callOffer` | `{chatId, callerId, type}` | Incoming call |
-| `callAccept` | `{callId, userId}` | Call accepted |
-| `callEnd` | `{callId, userId}` | Call ended |
-| `online` | `{userId, online}` | User online status |
-| `offline` | `{userId, online}` | User offline status |
+### ❌ Ошибка
+```json
+{
+  "success": false,
+  "error": "Описание ошибки",
+  "code": "ERROR_CODE"
+}
+```
 
-### 📤 Client → Server Events
+| HTTP Status | Code | Когда возникает |
+|:-----------:|------|-----------------|
+| 400 | `BAD_REQUEST` | Неверные данные запроса (валидация, JSON) |
+| 401 | `UNAUTHORIZED` | Отсутствует/недействителен JWT токен |
+| 403 | `FORBIDDEN` | Нет прав на действие (не участник чата, не владелец) |
+| 404 | `NOT_FOUND` | Ресурс не найден (сообщение, чат, пользователь) |
+| 400 | `VALIDATION_ERROR` | Поле не прошло валидацию |
+| 401 | `UNAUTHORIZED` | Нет токена или неверный формат |
+| 401 | `TOKEN_EXPIRED` | Токен истёк |
+| 403 | `FORBIDDEN` | Нет прав (не админ, не владелец) |
+| 404 | `NOT_FOUND` | Ресурс не найден |
+| 409 | `DUPLICATE` | Уже существует (username/email заняты) |
+| 429 | `RATE_LIMIT` | Слишком много запросов |
+| 500 | `INTERNAL_ERROR` | Ошибка сервера |
 
-Send JSON over the WebSocket connection:
+### 📤 Загрузка файлов
+Для загрузки файлов (аватар, фото чата, файлы в сообщениях) используйте `multipart/form-data`:
+```
+POST /api/chats/{id}/messages/file
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+file: (binary)
+caption: "Описание к файлу"
+replyToId: "uuid" (опционально)
+effect: "confetti" (опционально)
+```
+
+---
+
+## API Endpoints
+
+---
+
+### 🔐 Auth
+
+| Метод | Endpoint | Auth | Описание |
+|-------|----------|:----:|----------|
+| `POST` | `/api/auth/register` | 🔓 | Регистрация |
+| `POST` | `/api/auth/admin/register` | 🔓 | Регистрация админа (+ `admin_secret`) |
+| `POST` | `/api/auth/login` | 🔓 | Вход по email+password |
+| `POST` | `/api/auth/login/email` | 🔓 | Отправить код на email |
+| `POST` | `/api/auth/login/email/verify` | 🔓 | Подтвердить email-код |
+| `POST` | `/api/auth/login/phone` | 🔓 | Отправить SMS-код |
+| `POST` | `/api/auth/login/phone/verify` | 🔓 | Подтвердить SMS-код |
+| `GET` | `/api/auth/refresh` | ✅ | Обновить токен |
+| `PUT` | `/api/auth/change-password` | ✅ | Сменить пароль |
+
+**Register** → см. [Авторизация](#авторизация-auth-flow)
+
+**Login by email code:**
+```
+POST /api/auth/login/email
+{ "email": "john@mail.com" }
+
+→ Код отправлен на email
+
+POST /api/auth/login/email/verify
+{ "email": "john@mail.com", "code": "123456" }
+
+→ { "success": true, "data": { "token": "...", "user": {...} } }
+```
+
+**Admin registration:**
+```
+POST /api/auth/admin/register
+{
+  "username": "admin",
+  "email": "admin@mail.com",
+  "password": "admin123",
+  "display_name": "Admin",
+  "admin_secret": "admin-secret-change-me"
+}
+```
+
+**Change password:**
+```
+PUT /api/auth/change-password
+Authorization: Bearer <token>
+{ "oldPassword": "old123", "newPassword": "new456" }
+```
+
+---
+
+### 👤 Users
+
+#### GET /api/users/profile
+Получить профиль текущего пользователя.
+```json
+// Response 200
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "username": "john",
+    "displayName": "John Doe",
+    "email": "john@mail.com",
+    "phone": "",
+    "avatarUrl": "/uploads/avatar.jpg",
+    "bio": "Hello!",
+    "status": "online",
+    "lastSeen": "2026-01-01T00:00:00Z",
+    "isBot": false,
+    "isAdmin": false
+  }
+}
+```
+
+#### PUT /api/users/profile
+```json
+{
+  "displayName": "New Name",
+  "bio": "New bio text",
+  "username": "newusername"
+}
+```
+
+#### GET /api/users/search?q=john&offset=0&limit=50
+Поиск пользователей. `q` — обязательный параметр.
+
+#### POST /api/users/avatar
+`multipart/form-data` с полем `file`.
+
+#### PUT /api/users/status
+```json
+{ "status": "online" }     // online | offline | away
+```
+
+#### PUT /api/users/push-token
+```json
+{ "token": "fcm_token_here", "provider": "fcm" }
+```
+
+#### POST /api/users/block
+```json
+{ "userId": "uuid" }
+```
+
+#### DELETE /api/users/block/{userId}
+Разблокировать пользователя.
+
+#### GET /api/users/blocked
+Список заблокированных.
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `GET` | `/api/users/profile` | Профиль |
+| `PUT` | `/api/users/profile` | Обновить профиль |
+| `GET` | `/api/users/search?q=&offset=&limit=` | Поиск |
+| `GET` | `/api/users/{id}` | По ID |
+| `GET` | `/api/users/username/{username}` | По username |
+| `GET` | `/api/users/{id}/last-seen` | Был(а) в сети |
+| `PUT` | `/api/users/status` | Статус |
+| `PUT` | `/api/users/push-token` | FCM токен |
+| `POST` | `/api/users/avatar` | Аватар |
+| `POST` | `/api/users/block` | Заблокировать |
+| `DELETE` | `/api/users/block/{userId}` | Разблокировать |
+| `GET` | `/api/users/blocked` | Список блокировок |
+
+---
+
+### 💬 Chats
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/chats` | Создать чат |
+| `POST` | `/api/chats/start/{userId}` | Начать private chat |
+| `GET` | `/api/chats` | Список чатов |
+| `GET` | `/api/chats/{id}` | Инфо о чате |
+| `PUT` | `/api/chats/{id}` | Обновить группу |
+| `DELETE` | `/api/chats/{id}` | Удалить чат |
+| `POST` | `/api/chats/{id}/read` | Прочитать |
+| `POST` | `/api/chats/{id}/pin` | Закрепить |
+| `DELETE` | `/api/chats/{id}/pin` | Открепить |
+| `POST` | `/api/chats/{id}/archive` | Архивировать |
+| `POST` | `/api/chats/{id}/unarchive` | Разархивировать |
+| `POST` | `/api/chats/{id}/leave` | Выйти из группы |
+| `POST` | `/api/chats/{id}/photo` | Фото чата |
+| `POST` | `/api/chats/{id}/participants` | Добавить участника |
+| `DELETE` | `/api/chats/{id}/participants/{userId}` | Удалить участника |
+| `PUT` | `/api/chats/{id}/participants/{userId}/role` | Сменить роль |
+| `GET` | `/api/chats/{id}/online` | Онлайн участники |
+| `PUT` | `/api/chats/{id}/slow-mode` | Slow mode |
+| `GET` | `/api/chats/archived` | Архив чатов |
+
+#### POST /api/chats — Создать чат
+```json
+{
+  "type": "private",         // "private" | "group" | "channel"
+  "name": "My Group",        // обязательно для group/channel
+  "participantIds": ["uuid1", "uuid2"],  // минимум 1 участник
+  "description": "Описание"  // опционально
+}
+```
+```json
+// Response 201
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "type": "group",
+    "name": "My Group",
+    "description": "Описание",
+    "avatarUrl": "",
+    "participants": [
+      { "id": "uuid", "username": "john", "displayName": "John", "role": "owner" },
+      { "id": "uuid2", "username": "jane", "displayName": "Jane", "role": "member" }
+    ],
+    "lastMessage": null,
+    "unreadCount": 0,
+    "pinned": false,
+    "archived": false,
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+}
+```
+
+#### POST /api/chats/start/{userId}
+Создать или найти существующий private chat с пользователем.
+
+#### GET /api/chats — Список чатов
+```json
+// Response 200
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "type": "private",
+      "name": "",
+      "participants": [...],
+      "lastMessage": {
+        "id": "uuid",
+        "content": "Hello!",
+        "senderId": "uuid",
+        "type": "text",
+        "createdAt": "2026-01-01T00:00:00Z"
+      },
+      "unreadCount": 2,
+      "pinned": false,
+      "archived": false
+    }
+  ]
+}
+```
+
+**Добавить участника:**
+```
+POST /api/chats/{id}/participants
+{ "userId": "uuid" }
+```
+
+**Сменить роль:**
+```
+PUT /api/chats/{id}/participants/{userId}/role
+{ "role": "admin" }
+// role: "owner" | "admin" | "moderator" | "editor" | "member" | "read_only"
+```
+
+**Slow mode:**
+```
+PUT /api/chats/{id}/slow-mode
+{ "intervalSeconds": 10 }  // 0 = выключено, 1-3600
+```
+
+---
+
+### ✉️ Messages
+
+Заголовки: `Authorization: Bearer <token>` + `Content-Type: application/json`
+
+#### POST /api/chats/{chatId}/messages — Отправить сообщение
+```json
+{
+  "content": "Привет!",       // текст сообщения (обязательно)
+  "type": "text",            // text | image | file | gif | voice | video | audio | location | system
+  "replyToId": "uuid",       // ID сообщения, на которое отвечаем (опц.)
+  "latitude": 55.75,         // для type=location
+  "longitude": 37.62,
+  "locationTitle": "Москва",
+  "effect": "confetti"       // confetti | fireworks | hearts | balloons | stars
+}
+```
+```json
+// Response 201
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "chatId": "uuid",
+    "senderId": "uuid",
+    "content": "Привет!",
+    "type": "text",
+    "replyToId": null,
+    "forwardFrom": null,
+    "reactions": [],
+    "readBy": [],
+    "pinned": false,
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-01-01T00:00:00Z"
+  }
+}
+```
+
+#### GET /api/chats/{chatId}/messages?offset=0&limit=50
+Получить сообщения чата (пагинация от новых к старым).
+
+#### PUT /api/messages/{messageId} — Редактировать
+```json
+{ "content": "Новый текст" }
+```
+
+#### DELETE /api/messages/{messageId}
+Удалить сообщение для всех.
+
+#### POST /api/messages/{messageId}/reactions — Реакция
+```json
+{ "emoji": "👍" }
+```
+Популярные emoji: `👍` `❤️` `😆` `😮` `😢` `🙏`
+
+#### DELETE /api/messages/{messageId}/reactions?emoji=👍
+Удалить реакцию.
+
+#### PUT /api/messages/{messageId}/pin
+```json
+{ "pin": true }
+// true = закрепить, false = открепить
+```
+
+#### POST /api/messages/{messageId}/read
+Отметить сообщение как прочитанное.
+
+#### POST /api/messages/{messageId}/star / DELETE /api/messages/{messageId}/star
+Добавить/удалить из избранного.
+
+#### POST /api/messages/{messageId}/self-destruct
+Установить таймер самоуничтожения сообщения. Сервер автоматически удалит сообщение через N секунд и разошлёт `message:deleted` через WebSocket всем участникам чата.
+
+**Request (client → server):**
+```json
+{ "seconds": 60 }
+// seconds: 1-86400 (1 секунда — 24 часа)
+```
+
+**Response (server → client):**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "self-destruct timer set"
+  }
+}
+```
+
+**WebSocket Event (server → client, через 60 сек):**
+```json
+{
+  "type": "message:deleted",
+  "payload": {
+    "messageId": "uuid",
+    "chatId": "uuid"
+  }
+}
+```
+
+**Механизм работы:** Фоновый процесс (горутина) каждые 15 секунд проверяет таблицу `message_self_destruct` и удаляет сообщения, у которых `delete_at <= now()`. После удаления рассылает `message:deleted` через WebSocket.
+
+#### POST /api/messages/forward
+```json
+{
+  "messageId": "uuid",
+  "fromChatId": "uuid",
+  "toChatId": "uuid"
+}
+```
+
+#### GET /api/messages/search?q=text&offset=0&limit=50
+Глобальный поиск по всем чатам.
+
+#### POST /api/chats/{chatId}/messages/file
+`multipart/form-data` — поле `file` (файл), `caption` (опц.), `replyToId` (опц.), `effect` (опц.)
+
+#### POST /api/chats/{chatId}/messages/location
+```json
+{
+  "latitude": 55.75,
+  "longitude": 37.62,
+  "title": "Москва",
+  "replyToId": "uuid"
+}
+```
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/chats/{id}/messages` | Отправить сообщение |
+| `GET` | `/api/chats/{id}/messages` | Список сообщений |
+| `POST` | `/api/chats/{id}/messages/file` | Загрузить файл |
+| `POST` | `/api/chats/{id}/messages/voice` | Голосовое сообщение |
+| `POST` | `/api/chats/{id}/messages/location` | Геолокация |
+| `POST` | `/api/chats/{id}/messages/video-circle` | Видео-кружок |
+| `PUT` | `/api/messages/{id}` | Редактировать |
+| `DELETE` | `/api/messages/{id}` | Удалить |
+| `DELETE` | `/api/messages/{id}/for-me` | Удалить у себя |
+| `POST` | `/api/messages/{id}/reactions` | Реакция |
+| `DELETE` | `/api/messages/{id}/reactions` | Убрать реакцию |
+| `PUT` | `/api/messages/{id}/pin` | Закрепить |
+| `POST` | `/api/messages/{id}/star` | В избранное |
+| `POST` | `/api/messages/{id}/read` | Прочитано |
+| `POST` | `/api/messages/{id}/self-destruct` | Самоуничтожение |
+| `POST` | `/api/messages/{id}/save` | Сохранить |
+| `POST` | `/api/messages/{id}/report` | Пожаловаться |
+| `GET` | `/api/messages/{id}/history` | История правок |
+| `POST` | `/api/messages/forward` | Переслать |
+| `POST` | `/api/messages/schedule` | Запланировать |
+| `GET` | `/api/messages/search` | Поиск |
+| `GET` | `/api/messages/starred` | Избранное |
+| `GET` | `/api/messages/scheduled` | Запланированные |
+| `GET` | `/api/chats/{id}/pinned` | Закреплённые |
+| `GET` | `/api/chats/{id}/media` | Медиа-галерея |
+| `GET` | `/api/chats/{id}/export` | Экспорт чата |
+
+---
+
+### 📱 Contacts
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/contacts/sync` | Синхронизировать контакты телефона |
+| `GET` | `/api/contacts` | Список контактов |
+| `GET` | `/api/contacts/search?q=` | Поиск по номеру |
+| `GET` | `/api/contacts/registered` | Кто из контактов на платформе |
+| `POST` | `/api/contacts/photo` | Фото контакта |
+
+#### POST /api/contacts/sync
+```json
+{
+  "contacts": [
+    { "phone": "+79001234567", "name": "John", "lastName": "Doe" },
+    { "phone": "+79007654321", "name": "Jane" }
+  ]
+}
+```
+```json
+// Response 200 — список зарегистрированных контактов
+{
+  "success": true,
+  "data": [
+    {
+      "userId": "uuid",
+      "phone": "+79001234567",
+      "name": "John",
+      "displayName": "John Doe",
+      "avatarUrl": ""
+    }
+  ]
+}
+```
+
+---
+
+### 📁 Folders
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `GET` | `/api/folders` | Список папок |
+| `POST` | `/api/folders` | Создать папку |
+| `PUT` | `/api/folders/{id}` | Обновить папку |
+| `DELETE` | `/api/folders/{id}` | Удалить папку |
+
+#### POST /api/folders
+```json
+{
+  "name": "Work",
+  "chatIds": ["uuid1", "uuid2"],
+  "emoji": "💼",
+  "order": 1
+}
+```
+
+---
+
+### 🔗 Invite Links
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/chats/{id}/invite-links` | Создать ссылку |
+| `GET` | `/api/chats/{id}/invite-links` | Список ссылок |
+| `DELETE` | `/api/chats/{id}/invite-links/{linkId}` | Удалить ссылку |
+| `POST` | `/api/chats/join` | Присоединиться по ссылке |
+
+#### POST /api/chats/{id}/invite-links
+```json
+{
+  "expiresInMins": 1440,    // опц., 0 = без срока
+  "usageLimit": 100          // опц., 0 = без лимита
+}
+```
+
+#### POST /api/chats/join
+```json
+{ "code": "invite_link_code" }
+```
+
+---
+
+### 📊 Polls
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/chats/{id}/polls` | Создать опрос |
+| `GET` | `/api/chats/{id}/polls` | Список опросов |
+| `POST` | `/api/polls/{pollId}/vote` | Проголосовать |
+| `POST` | `/api/polls/{pollId}/close` | Закрыть опрос |
+
+#### POST /api/chats/{id}/polls
+```json
+{
+  "question": "Best programming language?",
+  "options": ["Go", "Rust", "Python"],
+  "isAnonymous": false,
+  "multipleChoice": false,
+  "expiresInMins": 1440      // опц., 0 = без срока
+}
+```
+
+#### POST /api/polls/{pollId}/vote
+```json
+{
+  "optionIndex": 0           // индекс выбранного варианта
+}
+```
+Для `multipleChoice: true` можно передать массив:
+```json
+{ "optionIndex": [0, 2] }
+```
+
+---
+
+### 🎨 Stickers
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `GET` | `/api/stickers/packs` | Все паки |
+| `GET` | `/api/stickers/packs/my` | Мои паки |
+| `POST` | `/api/stickers/packs` | Создать пак |
+| `GET` | `/api/stickers/packs/{id}` | Пак по ID |
+| `DELETE` | `/api/stickers/packs/{id}` | Удалить пак |
+| `POST` | `/api/stickers/packs/{id}/stickers` | Добавить стикер |
+| `POST` | `/api/stickers/library` | Добавить в библиотеку |
+| `GET` | `/api/stickers/library` | Моя библиотека |
+
+#### POST /api/stickers/packs
+```json
+{
+  "name": "My Stickers",
+  "emoji": "😎",
+  "stickers": [
+    { "fileUrl": "https://...", "emoji": "🔥" }
+  ]
+}
+```
+
+#### Добавить стикер в пак:
+```
+POST /api/stickers/packs/{id}/stickers
+Content-Type: multipart/form-data
+
+file: (image file, PNG/WEBP)
+emoji: "🔥"
+```
+
+---
+
+### 🤖 Bots
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/bots` | Создать бота |
+| `GET` | `/api/bots` | Мои боты |
+| `PUT` | `/api/bots/{id}` | Обновить |
+| `DELETE` | `/api/bots/{id}` | Удалить |
+| `POST` | `/api/bots/{id}/token` | Новый токен |
+
+#### POST /api/bots
+```json
+{
+  "username": "my_bot",
+  "name": "My Bot",
+  "description": "Bot description"
+}
+```
+```json
+// Response 201
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "username": "my_bot",
+    "name": "My Bot",
+    "token": "bot_token_here",
+    "description": "Bot description"
+  }
+}
+```
+
+---
+
+### 📞 Calls
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/calls/initiate` | Начать звонок |
+| `POST` | `/api/calls/{id}/respond` | Ответить |
+| `POST` | `/api/calls/{id}/end` | Завершить |
+| `GET` | `/api/calls/{id}` | Инфо о звонке |
+| `GET` | `/api/chats/{chatId}/calls` | История звонков |
+
+#### POST /api/calls/initiate
+```json
+{
+  "chatId": "uuid",
+  "type": "audio"     // "audio" | "video"
+}
+```
+
+#### POST /api/calls/{id}/respond
+```json
+{ "action": "accept" }    // "accept" | "reject"
+```
+
+---
+
+### 🎤 Voice Chats
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/chats/{id}/voice-chat` | Создать |
+| `GET` | `/api/chats/{id}/voice-chats/active` | Активные |
+| `GET` | `/api/chats/{id}/voice-chats/history` | История |
+| `GET` | `/api/voice-chats/{id}` | Детали |
+| `POST` | `/api/voice-chats/{id}/join` | Присоединиться |
+| `POST` | `/api/voice-chats/{id}/leave` | Покинуть |
+| `POST` | `/api/voice-chats/{id}/end` | Завершить |
+| `POST` | `/api/voice-chats/{id}/mute` | Заглушить |
+
+#### POST /api/chats/{id}/voice-chat
+```json
+{
+  "title": "Evening Chat",
+  "isPublic": true
+}
+```
+
+#### POST /api/voice-chats/{id}/mute
+```json
+{
+  "userId": "uuid",
+  "muted": true
+}
+```
+
+---
+
+### 📸 Stories
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/stories` | Создать историю |
+| `GET` | `/api/stories` | Истории подписок |
+| `GET` | `/api/stories/my` | Мои истории |
+| `GET` | `/api/stories/{id}` | Просмотр |
+| `DELETE` | `/api/stories/{id}` | Удалить |
+| `GET` | `/api/stories/{id}/views` | Просмотревшие |
+
+#### POST /api/stories
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <token>
+
+file: (image or video file)
+caption: "Story text"
+type: "photo"     // "photo" | "video"
+```
+
+---
+
+### 📺 Channels
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/channels/subscribe` | Подписаться |
+| `POST` | `/api/channels/unsubscribe` | Отписаться |
+| `GET` | `/api/channels` | Мои каналы |
+| `GET` | `/api/channels/{id}/subscribers` | Подписчики |
+| `GET` | `/api/channels/{id}/subscribed` | Проверить подписку |
+| `PUT` | `/api/channels/{id}/subscribers/{userId}/role` | Роль подписчика |
+
+#### POST /api/channels/subscribe
+```json
+{ "channelId": "uuid" }
+```
+
+---
+
+### 📝 Drafts
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/drafts` | Сохранить черновик |
+| `GET` | `/api/drafts?chatId=uuid` | Получить черновик |
+| `DELETE` | `/api/drafts/{id}` | Удалить |
+
+#### POST /api/drafts
+```json
+{
+  "chatId": "uuid",
+  "content": "Draft message text",
+  "replyToId": "uuid"    // опционально
+}
+```
+
+---
+
+### ⭐ Saved Messages
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/messages/{id}/save?chatId=uuid` | Сохранить сообщение |
+| `GET` | `/api/saved-messages` | Сохранённые |
+| `DELETE` | `/api/saved-messages/{id}` | Удалить |
+
+---
+
+### 🎭 Custom Emojis
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/emojis` | Загрузить emoji |
+| `GET` | `/api/emojis` | Все публичные |
+| `GET` | `/api/emojis/my` | Мои emoji |
+| `DELETE` | `/api/emojis/{id}` | Удалить |
+
+#### POST /api/emojis
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <token>
+
+file: (image file)
+shortcode: "my_emoji"    // как будет вызываться :my_emoji:
+```
+
+---
+
+### 🎨 GIFs
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/gifs` | Сохранить GIF |
+| `GET` | `/api/gifs` | Мои GIF |
+| `DELETE` | `/api/gifs?url=https://...` | Удалить |
+
+#### POST /api/gifs
+```json
+{
+  "url": "https://media.giphy.com/media/.../giphy.gif",
+  "title": "Funny cat"
+}
+```
+
+---
+
+### 🖥️ Sessions
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `GET` | `/api/sessions` | Список сессий |
+| `DELETE` | `/api/sessions/{id}` | Завершить сессию |
+| `DELETE` | `/api/sessions` | Все сессии |
+
+#### GET /api/sessions
+```json
+// Response 200
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "device": "Chrome on Windows",
+      "ip": "192.168.1.1",
+      "lastActive": "2026-01-01T00:00:00Z",
+      "createdAt": "2026-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### 🛡️ Verification
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/verification/email/send` | Отправить код на email |
+| `POST` | `/api/verification/email/verify` | Подтвердить email |
+| `POST` | `/api/verification/phone/send` | Отправить SMS |
+| `POST` | `/api/verification/phone/verify` | Подтвердить телефон |
 
 ```json
-{"type": "sendMessage", "payload": {"chatId": "...", "content": "Hello!"}}
-{"type": "editMessage", "payload": {"messageId": "...", "content": "New text"}}
-{"type": "deleteMessage", "payload": {"messageId": "...", "chatId": "..."}}
-{"type": "createChat", "payload": {"type": "private", "participantIds": ["..."]}}
-{"type": "addReaction", "payload": {"messageId": "...", "emoji": "🔥"}}
+// Отправка кода
+POST /api/verification/email/send
+{ "email": "user@mail.com" }
+
+// Подтверждение
+POST /api/verification/email/verify
+{ "email": "user@mail.com", "code": "123456" }
+// → { "success": true, "data": { "verified": true, "message": "Email verified" } }
 ```
 
 ---
 
-## 📮 Postman Collection
+### ⚙️ Settings
 
-Download the complete Postman collection with all **168 endpoints**:
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `GET` | `/api/account/settings` | Настройки |
+| `PUT` | `/api/account/settings` | Обновить |
 
+```json
+GET /api/account/settings
+// Response
+{
+  "success": true,
+  "data": {
+    "language": "ru",
+    "theme": "dark",
+    "notificationsEnabled": true,
+    "lastSeenEnabled": true,
+    "onlineStatusEnabled": true
+  }
+}
+
+PUT /api/account/settings
+{
+  "language": "en",
+  "theme": "light",
+  "notificationsEnabled": true
+}
+```
+
+---
+
+## WebSocket
+
+WebSocket используется для real-time событий — сообщения приходят мгновенно, без polling.
+
+### Подключение
+```javascript
+const ws = new WebSocket("ws://localhost:8080/ws?token=" + jwtToken);
+```
+
+### Формат всех сообщений
+```json
+{ "type": "название_события", "payload": { ... поля ... } }
+```
+
+### События от сервера к клиенту
+
+Сервер автоматически рассылает эти события всем участникам чата.
+
+#### Новое сообщение
+```json
+// Сервер отправляет всем участникам чата
+{
+  "type": "message:new",
+  "payload": {
+    "id": "uuid",
+    "chatId": "uuid",
+    "senderId": "uuid",
+    "content": "Привет!",
+    "type": "text",
+    "reactions": [],
+    "readBy": [],
+    "pinned": false,
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+}
+```
+
+#### Сообщение отредактировано
+```json
+{ "type": "message:edited", "payload": { ... Message ... } }
+```
+
+#### Сообщение удалено (вручную или самоуничтожение)
+```json
+{ "type": "message:deleted", "payload": { "messageId": "uuid", "chatId": "uuid" } }
+```
+Самоуничтожение: фоновый процесс проверяет таймеры каждые 15 секунд. Как только `delete_at` истекает — сообщение удаляется, и участники получают `message:deleted` через WebSocket.
+
+#### Сообщение прочитано
+```json
+{ "type": "message:read", "payload": { "messageId": "uuid", "userId": "uuid", "chatId": "uuid" } }
+```
+
+#### Реакция
+```json
+{ "type": "message:reaction", "payload": { ... Message с reactions ... } }
+```
+
+#### Закреплено
+```json
+{ "type": "message:pinned", "payload": { ... Message ... } }
+```
+
+#### Пользователь онлайн/офлайн
+```json
+{ "type": "user:online", "payload": { "userId": "uuid", "online": true } }
+{ "type": "user:offline", "payload": { "userId": "uuid", "online": false } }
+```
+
+#### Печатает
+```json
+{ "type": "user:typing", "payload": { "chatId": "uuid", "userId": "uuid" } }
+{ "type": "user:stop_typing", "payload": { "chatId": "uuid", "userId": "uuid" } }
+```
+
+#### Чат создан/обновлён/удалён
+```json
+{ "type": "chat:created", "payload": { ... Chat ... } }
+{ "type": "chat:updated", "payload": { ... Chat ... } }
+{ "type": "chat:deleted", "payload": {} }
+```
+
+#### Звонки (WebRTC)
+```json
+{ "type": "call:offer", "payload": { "chatId": "uuid", "callId": "uuid", "sdp": "offer_string" } }
+{ "type": "call:answer", "payload": { "chatId": "uuid", "callId": "uuid", "sdp": "answer_string" } }
+{ "type": "call:ice", "payload": { "callId": "uuid", "candidate": "ice_candidate" } }
+{ "type": "call:end", "payload": { "callId": "uuid", "userId": "uuid" } }
+{ "type": "call:reject", "payload": { "callId": "uuid", "userId": "uuid" } }
+```
+
+### События от клиента к серверу
+
+Клиент отправляет эти сообщения через WebSocket, чтобы выполнить действие.
+
+#### Отправить сообщение через WebSocket
+```json
+{
+  "type": "message:send",
+  "payload": {
+    "chatId": "uuid",
+    "content": "Привет!",
+    "type": "text",
+    "replyToId": "uuid"   // опционально
+  }
+}
+```
+Типы сообщений: `text` | `image` | `file` | `gif` | `voice` | `video` | `audio` | `location` | `system`
+
+#### Редактировать / Удалить
+```json
+{ "type": "message:edit", "payload": { "messageId": "uuid", "content": "Новый текст" } }
+{ "type": "message:delete", "payload": { "messageId": "uuid", "chatId": "uuid" } }
+```
+
+#### Прочитано
+```json
+{ "type": "message:read", "payload": { "messageId": "uuid", "chatId": "uuid" } }
+```
+
+#### Реакции
+```json
+{ "type": "message:react", "payload": { "messageId": "uuid", "emoji": "👍" } }
+{ "type": "message:unreact", "payload": { "messageId": "uuid", "emoji": "👍" } }
+```
+
+#### Закрепить / Избранное / Переслать
+```json
+{ "type": "message:pin", "payload": { "messageId": "uuid", "pin": true } }
+{ "type": "message:star", "payload": { "messageId": "uuid" } }
+{ "type": "message:forward", "payload": { "messageId": "uuid", "toChatId": "uuid" } }
+```
+
+#### Создать чат
+```json
+{
+  "type": "chat:create",
+  "payload": {
+    "type": "group",
+    "name": "Friends",
+    "participantIds": ["uuid1", "uuid2"],
+    "description": "Chat for friends"
+  }
+}
+```
+
+#### Обновить чат
+```json
+{ "type": "chat:update", "payload": { "chatId": "uuid", "name": "New Name", "description": "...", "avatarUrl": "..." } }
+```
+
+#### Управление участниками
+```json
+{ "type": "chat:add_participant", "payload": { "chatId": "uuid", "userId": "uuid" } }
+{ "type": "chat:remove_participant", "payload": { "chatId": "uuid", "userId": "uuid" } }
+{ "type": "chat:leave", "payload": { "chatId": "uuid" } }
+```
+
+#### Чат: закрепить / архив
+```json
+{ "type": "chat:pin", "payload": { "chatId": "uuid" } }
+{ "type": "chat:archive", "payload": { "chatId": "uuid" } }
+```
+
+#### Печатание
+```json
+{ "type": "user:typing", "payload": { "chatId": "uuid" } }
+{ "type": "user:stop_typing", "payload": { "chatId": "uuid" } }
+```
+
+#### Блокировки
+```json
+{ "type": "user:block", "payload": { "userId": "uuid" } }
+{ "type": "user:unblock", "payload": { "userId": "uuid" } }
+```
+
+#### WebRTC звонки через WebSocket
+```json
+{ "type": "call:offer", "payload": { "chatId": "uuid", "callId": "uuid", "sdp": "..." } }
+{ "type": "call:answer", "payload": { "chatId": "uuid", "callId": "uuid", "sdp": "..." } }
+{ "type": "call:ice", "payload": { "callId": "uuid", "candidate": "..." } }
+```
+
+---
+
+## Postman Collection
+
+Готовая коллекция Postman со всеми 168 эндпоинтами:
 ```
 http://localhost:8080/postman
 ```
 
-Or access it directly from the repository:
-`docs/postman_collection.json`
+Или в репозитории: `docs/postman_collection.json`
 
-<details>
-<summary><b>How to import into Postman</b></summary>
-
-1. Start the server: `./ChatServer.exe`
-2. Open browser: `http://localhost:8080/postman`
-3. Save the JSON file
-4. Open Postman → **File** → **Import** → select the file
-5. Set `base_url` variable to `http://localhost:8080`
-6. Register/Login → copy JWT → set as `token` variable
-</details>
+**Импорт:** Postman → File → Import → выбрать файл → установить переменные:
+- `base_url`: `http://localhost:8080`
+- `token`: (вставится автоматически после Register/Login)
 
 ---
 
-## 📊 Response Format
+## ⚙️ Конфигурация
 
-### ✅ Success
-```json
-{ "success": true, "data": { ... } }
-```
-
-### 📄 Paginated
-```json
-{ "success": true, "data": [ ... ], "meta": { "total": 100, "offset": 0, "limit": 50 } }
-```
-
-### ❌ Error
-```json
-{ "success": false, "error": "Description", "code": "ERROR_CODE" }
-```
-
-| Code | Status | Description |
-|------|:------:|-------------|
-| `BAD_REQUEST` | 400 | Invalid request |
-| `VALIDATION_ERROR` | 400 | Field validation failed |
-| `UNAUTHORIZED` | 401 | Missing/invalid JWT |
-| `TOKEN_EXPIRED` | 401 | JWT expired |
-| `FORBIDDEN` | 403 | Insufficient permissions |
-| `NOT_FOUND` | 404 | Resource not found |
-| `DUPLICATE` | 409 | Already exists |
-| `RATE_LIMIT` | 429 | Too many requests |
-| `INTERNAL_ERROR` | 500 | Server error |
-
----
-
-## 🏗️ Architecture
-
-```
-internal/
-├── domain/              # Domain models (auth, chat, message, user, ...)
-│   ├── auth/            #   Register, Login, AdminRegister
-│   ├── bot/             #   Bot accounts
-│   ├── call/            #   WebRTC calls + group calls
-│   ├── channel/         #   Broadcast channels
-│   ├── chat/            #   Chats, folders, invite links
-│   ├── contact/         #   Phone contacts
-│   ├── draft/           #   Drafts + scheduled messages
-│   ├── e2e/             #   E2E encryption keys
-│   ├── emoji/           #   Custom emojis
-│   ├── ipblock/         #   IP block list
-│   ├── link/            #   Link previews
-│   ├── message/         #   Messages, reactions, read receipts
-│   ├── notification/    #   Notification settings
-│   ├── poll/            #   Polls & votes
-│   ├── report/          #   Abuse reports
-│   ├── savedmsg/        #   Saved messages
-│   ├── session/         #   User sessions
-│   ├── sticker/         #   Sticker packs & library
-│   ├── story/           #   Stories & views
-│   ├── user/            #   Users, blocks, settings
-│   ├── verification/    #   Email/phone verification
-│   └── voicechat/       #   Voice chat rooms
-├── repository/          # SQLite data access (interface + impl)
-│   └──                 #   20+ sub-packages
-├── service/             # Business logic layer
-│   └──                 #   20+ sub-packages
-├── handler/             # HTTP handlers (Gin)
-│   ├── ws/              #   WebSocket handler + events
-│   └──                 #   18+ sub-packages
-├── middleware/          # JWT auth, admin, rate limiting
-├── ws/                  # WebSocket hub, client, event bus
-├── config/              # Environment configuration
-└── database/            # Migrations + initializer
-
-pkg/
-└── response/            # JSON response helpers
-
-docs/                    # API documentation
-├── swagger.json         #   OpenAPI spec
-├── swagger.yaml         #   YAML format
-└── postman_collection.json  # Postman collection (168 endpoints)
-
-frontend/                # React SPA (Vite + TypeScript)
-└── dist/               #   Built frontend (served at /app/)
-```
-
----
-
-## ⚙️ Configuration
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SERVER_PORT` | `8080` | HTTP server port |
-| `DATABASE_PATH` | `file:chat.db?...` | SQLite connection string (WAL mode) |
-| `JWT_SECRET` | `super-secret-change-me` | HMAC-SHA256 key for JWT |
-| `ADMIN_SECRET` | `admin-secret-change-me` | Admin registration secret |
-| `JWT_TTL` | `86400` | Token lifetime (seconds, 24h) |
-| `CORS_ORIGIN` | `*` | Allowed CORS origin |
-| `FCM_KEY_PATH` | — | Firebase service account JSON path |
-| `ENCRYPTION_KEY` | — | E2E encryption key |
-
----
-
-## 🐳 Docker
-
-```bash
-# Build
-docker build -t chatserver .
-
-# Run
-docker run -d --name chatserver -p 8080:8080 \
-  -v chatserver-data:/app/data \
-  -v chatserver-uploads:/app/uploads \
-  -e DATABASE_PATH=/app/data/chatserver.db \
-  -e JWT_SECRET=change-me-in-production \
-  -e GIN_MODE=release \
-  chatserver
-```
-
-## 🔄 CI/CD
-
-GitHub Actions pipeline (`.github/workflows/deploy.yml`):
-1. ✅ Checkout + setup Go
-2. ✅ Download dependencies + build
-3. ✅ `go vet` + Swagger validation
-4. ✅ Build Docker image
-5. ✅ Push to container registry
-
-## 🛠 Build
-
-### Prerequisites
-- Go 1.21+
-- Node.js 18+ (for frontend)
-
-### Commands
-```bash
-# Backend
-go build -o ChatServer.exe .
-./ChatServer.exe
-
-# Frontend (optional — only if modifying)
-cd frontend
-npm install
-npm run build    # production build
-npm run dev      # dev server with HMR on :5173
-
-# Cross-compile
-GOOS=linux GOARCH=amd64 go build -o chat-server-linux .
-GOOS=darwin GOARCH=amd64 go build -o chat-server-darwin .
-
-# Tests
-go test ./... -v
-```
-
-## 🧰 Tech Stack
-
-| Component | Technology |
-|-----------|-----------|
-| **Language** | Go 1.21+ |
-| **Database** | SQLite (WAL, modernc.org/sqlite — no CGO) |
-| **HTTP** | Gin framework |
-| **WebSocket** | gorilla/websocket |
-| **Auth** | JWT (HMAC-SHA256) + bcrypt |
-| **Push** | Firebase Cloud Messaging (FCM) |
-| **Docs** | Swaggo (OpenAPI 2.0) |
-| **Frontend** | React 19 + Vite + TypeScript |
-| **Calls** | WebRTC signalling |
-| **Real-time** | Custom WebSocket hub (per-client channels) |
+| Переменная | По умолчанию | Описание |
+|-----------|-------------|----------|
+| `SERVER_PORT` | `8080` | Порт сервера |
+| `DATABASE_PATH` | `file:chat.db?mode=memory...` | SQLite |
+| `JWT_SECRET` | `super-secret-change-me` | Ключ для JWT |
+| `ADMIN_SECRET` | `admin-secret-change-me` | Секрет админа |
+| `JWT_TTL` | `86400` | Время жизни токена (сек) |
+| `CORS_ORIGIN` | `*` | CORS |
+| `FCM_KEY_PATH` | — | Firebase ключ |
+| `ENCRYPTION_KEY` | — | Ключ шифрования |

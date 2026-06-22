@@ -40,7 +40,7 @@ func (r *messageRepository) Create(msg *messagedomain.Message) error {
 func (r *messageRepository) FindByID(id string) (*messagedomain.Message, error) {
 	row := r.db.QueryRow(
 		`SELECT id, chat_id, sender_id, content, type, reply_to_id, forward_from, file_name, file_size, file_path, pinned, created_at, updated_at, deleted_at
-		FROM messages WHERE id = ?`, id,
+		FROM messages WHERE id = ? AND deleted_at IS NULL`, id,
 	)
 	return scanMessage(row)
 }
@@ -586,8 +586,35 @@ func scanMessage(row repository.MessageScanner) (*messagedomain.Message, error) 
 func (r *messageRepository) SetSelfDestruct(msgID, chatID string, deleteAt time.Time) error {
 	_, err := r.db.Exec(
 		`INSERT OR REPLACE INTO message_self_destruct (message_id, chat_id, delete_at) VALUES (?, ?, ?)`,
-		msgID, chatID, deleteAt.Format(time.RFC3339),
+		msgID, chatID, deleteAt.UTC().Format(time.RFC3339),
 	)
+	return err
+}
+
+func (r *messageRepository) GetExpiredSelfDestruct() ([]messagedomain.MessageSelfDestruct, error) {
+	now := time.Now().UTC().Format(time.RFC3339)
+	rows, err := r.db.Query(
+		`SELECT message_id, chat_id, delete_at FROM message_self_destruct WHERE delete_at <= ?`,
+		now,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []messagedomain.MessageSelfDestruct
+	for rows.Next() {
+		var sd messagedomain.MessageSelfDestruct
+		if err := rows.Scan(&sd.MessageID, &sd.ChatID, &sd.DeleteAt); err != nil {
+			return nil, err
+		}
+		results = append(results, sd)
+	}
+	return results, rows.Err()
+}
+
+func (r *messageRepository) DeleteSelfDestructByMessageID(messageID string) error {
+	_, err := r.db.Exec(`DELETE FROM message_self_destruct WHERE message_id = ?`, messageID)
 	return err
 }
 
