@@ -3,7 +3,11 @@ import { api } from '../api/client'
 
 type MessageHandler = (msg: { type: string; payload: any }) => void
 
-export default function useWebSocket(onMessage: MessageHandler, enabled: boolean) {
+interface UseWSReturn {
+  send: (type: string, payload: any) => void
+}
+
+export default function useWebSocket(onMessage: MessageHandler, enabled: boolean): UseWSReturn {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectRef = useRef<number>(0)
 
@@ -42,4 +46,13 @@ export default function useWebSocket(onMessage: MessageHandler, enabled: boolean
       if (wsRef.current) { wsRef.current.close(); wsRef.current = null }
     }
   }, [enabled, connect])
+
+  const send = useCallback((type: string, payload: any) => {
+    const ws = wsRef.current
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type, payload }))
+    }
+  }, [])
+
+  return { send }
 }

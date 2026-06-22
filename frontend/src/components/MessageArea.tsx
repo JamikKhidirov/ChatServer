@@ -8,14 +8,19 @@ interface Props {
   token: string
   wsMessage?: any
   onWsConsumed?: () => void
+  wsSend?: (type: string, payload: any) => void
 }
 
-export default function MessageArea({ chatId, chatInfo, wsMessage, onWsConsumed }: Props) {
+export default function MessageArea({ chatId, chatInfo, wsMessage, onWsConsumed, wsSend }: Props) {
   const [messages, setMessages] = useState<any[]>([])
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const [chatName, setChatName] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const typingTimerRef = useRef<number>(0)
+  const isTypingRef = useRef(false)
 
   useEffect(() => {
     if (chatInfo?.name || chatInfo?.Name) {
@@ -50,9 +55,30 @@ export default function MessageArea({ chatId, chatInfo, wsMessage, onWsConsumed 
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
+  const sendTyping = (isTyping: boolean) => {
+    if (!chatId || !wsSend) return
+    wsSend(isTyping ? 'user:typing' : 'user:stop_typing', { chatId })
+  }
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setText(e.target.value)
+    if (!chatId || !wsSend) return
+    if (!isTypingRef.current) {
+      isTypingRef.current = true
+      sendTyping(true)
+    }
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+    typingTimerRef.current = window.setTimeout(() => {
+      isTypingRef.current = false
+      sendTyping(false)
+    }, 3000)
+  }
+
   const sendMessage = async () => {
     if (!text.trim() || !chatId || sending) return
     setSending(true)
+    if (isTypingRef.current) { isTypingRef.current = false; sendTyping(false) }
+    if (typingTimerRef.current) { clearTimeout(typingTimerRef.current) }
     const res = await api.call('POST', `/api/chats/${chatId}/messages`, {
       content: text.trim(),
       type: 'text',
@@ -62,6 +88,18 @@ export default function MessageArea({ chatId, chatInfo, wsMessage, onWsConsumed 
       setText('')
       loadMessages()
     }
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !chatId) return
+    setUploading(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await api.call('POST', `/api/chats/${chatId}/messages/file`, fd, true)
+    setUploading(false)
+    if (!res.error) loadMessages()
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -104,15 +142,30 @@ export default function MessageArea({ chatId, chatInfo, wsMessage, onWsConsumed 
 
       <div className="message-input-area">
         <input
+          ref={fileInputRef}
+          type="file"
+          id="file-upload-input"
+          style={{ display: 'none' }}
+          onChange={handleFileSelect}
+        />
+        <button
+          className="attach-btn"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          title="Attach file"
+        >
+          {uploading ? <span className="spinner-sm" /> : '📎'}
+        </button>
+        <input
           className="message-input"
           type="text"
           value={text}
-          onChange={e => setText(e.target.value)}
+          onChange={handleTextChange}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
-          disabled={sending}
+          disabled={sending || uploading}
         />
-        <button className="send-btn" onClick={sendMessage} disabled={sending || !text.trim()}>
+        <button className="send-btn" onClick={sendMessage} disabled={sending || !text.trim() || uploading}>
           {sending ? <span className="spinner-sm" /> : '➤'}
         </button>
       </div>

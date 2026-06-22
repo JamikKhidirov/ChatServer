@@ -525,10 +525,51 @@ PUT /api/chats/{id}/slow-mode
 #### GET /api/messages/search?q=text&offset=0&limit=50
 Глобальный поиск по всем чатам.
 
-#### POST /api/chats/{chatId}/messages/file
+#### POST /api/chats/{chatId}/messages/file — Загрузить файл
 `multipart/form-data` — поле `file` (файл), `caption` (опц.), `replyToId` (опц.), `effect` (опц.)
 
-#### POST /api/chats/{chatId}/messages/location
+Поддерживаемые типы: `image/*`, `video/*`, `audio/*`, `application/*`, `text/*`, `image/gif`
+Сервер определяет `type` автоматически по MIME:
+- image/* → `image`
+- image/gif → `gif`
+- video/* → `video`
+- audio/* → `audio` (кроме voice-сообщений)
+- остальное → `file`
+
+**Response 201:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "chatId": "uuid",
+    "senderId": "uuid",
+    "content": "",
+    "type": "image",
+    "fileUrl": "/uploads/filename-uuid.jpg",
+    "fileName": "photo.jpg",
+    "fileSize": 102400,
+    "mimeType": "image/jpeg",
+    "width": 1920,
+    "height": 1080,
+    "caption": "Optional caption",
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+}
+```
+
+#### POST /api/chats/{chatId}/messages/voice — Голосовое сообщение
+`multipart/form-data` — поле `voice` (audio-файл), `replyToId` (опц.)
+
+**Response 201:**
+```json
+{ "success": true, "data": { "id": "uuid", "type": "voice", "fileUrl": "/uploads/voice/...", "duration": 15, ... } }
+```
+
+#### POST /api/chats/{chatId}/messages/video-circle — Видео-кружок
+`multipart/form-data` — поле `video` (MP4), `caption` (опц.), `replyToId` (опц.)
+
+#### POST /api/chats/{chatId}/messages/location — Геолокация
 ```json
 {
   "latitude": 55.75,
@@ -538,11 +579,41 @@ PUT /api/chats/{id}/slow-mode
 }
 ```
 
+### Создание группы
+#### POST /api/chats — Создать групповой чат
+```json
+{
+  "type": "group",
+  "name": "Friends",           // 1-64 символа
+  "description": "Chat for friends", // 0-512 символов (опц.)
+  "participantIds": ["uuid1", "uuid2", "uuid3"]
+}
+```
+**Response 201:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "name": "Friends",
+    "type": "group",
+    "description": "Chat for friends",
+    "participants": [
+      { "userId": "uuid", "role": "owner", "displayName": "You" },
+      { "userId": "uuid1", "role": "member" },
+      { "userId": "uuid2", "role": "member" }
+    ],
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+}
+```
+После создания сервер отправляет `chat:created` через WebSocket всем участникам.
+
 | Метод | Endpoint | Описание |
 |-------|----------|----------|
-| `POST` | `/api/chats/{id}/messages` | Отправить сообщение |
+| `POST` | `/api/chats/{id}/messages` | Отправить сообщение (text/image/location) |
 | `GET` | `/api/chats/{id}/messages` | Список сообщений |
-| `POST` | `/api/chats/{id}/messages/file` | Загрузить файл |
+| `POST` | `/api/chats/{id}/messages/file` | Загрузить файл (image/gif/video/audio/file) |
 | `POST` | `/api/chats/{id}/messages/voice` | Голосовое сообщение |
 | `POST` | `/api/chats/{id}/messages/location` | Геолокация |
 | `POST` | `/api/chats/{id}/messages/video-circle` | Видео-кружок |
@@ -1066,11 +1137,23 @@ const ws = new WebSocket("ws://localhost:8080/ws?token=" + jwtToken);
 { "type": "user:offline", "payload": { "userId": "uuid", "online": false } }
 ```
 
-#### Печатает
+#### Печатает (Индикаторы печатания)
+
+**Сервер → Клиент** (ретранслируется всем участникам, кроме отправителя):
 ```json
-{ "type": "user:typing", "payload": { "chatId": "uuid", "userId": "uuid" } }
-{ "type": "user:stop_typing", "payload": { "chatId": "uuid", "userId": "uuid" } }
+// Пользователь начал печатать
+{
+  "type": "user:typing",
+  "payload": { "chatId": "uuid", "userId": "uuid" }
+}
+
+// Пользователь остановил печатание
+{
+  "type": "user:stop_typing",
+  "payload": { "chatId": "uuid", "userId": "uuid" }
+}
 ```
+Клиент показывает индикатор "{user} печатает..." при получении `user:typing` и убирает при `user:stop_typing`. Если через 4 секунды не пришёл `user:stop_typing` — индикатор убирается автоматически (серверный тайм-аут).
 
 #### Чат создан/обновлён/удалён
 ```json
@@ -1161,11 +1244,30 @@ const ws = new WebSocket("ws://localhost:8080/ws?token=" + jwtToken);
 { "type": "chat:archive", "payload": { "chatId": "uuid" } }
 ```
 
-#### Печатание
+#### Печатает (Индикаторы печатания)
+
+**Клиент → Сервер** (клиент отправляет при начале/остановке печатания):
 ```json
+// Начало печатания
 { "type": "user:typing", "payload": { "chatId": "uuid" } }
+
+// Остановка печатания
 { "type": "user:stop_typing", "payload": { "chatId": "uuid" } }
 ```
+
+**Сервер → Клиент** (сервер ретранслирует всем участникам чата, кроме отправителя):
+```json
+{ "type": "user:typing", "payload": { "chatId": "uuid", "userId": "uuid" } }
+{ "type": "user:stop_typing", "payload": { "chatId": "uuid", "userId": "uuid" } }
+```
+
+**Логика на клиенте:**
+- При изменении текста (onChange) отправить `user:typing` (только при первом символе)
+- Через 3 секунды бездействия автоматически отправить `user:stop_typing`
+- При отправке сообщения отправить `user:stop_typing`
+- На получение `user:typing` — показать индикатор "{username} печатает..."
+- На получение `user:stop_typing` — убрать индикатор
+- Автоматический тайм-аут на сервере: 4 секунды (если клиент не отправил stop_typing)
 
 #### Блокировки
 ```json

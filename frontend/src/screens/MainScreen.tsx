@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { api } from '../api/client'
 import ChatList from '../components/ChatList'
 import MessageArea from '../components/MessageArea'
+import CreateGroupModal from '../components/CreateGroupModal'
 import useWebSocket from '../hooks/useWebSocket'
 import * as authApi from '../features/auth/auth'
 
@@ -15,17 +16,38 @@ export default function MainScreen({ onLogout }: Props) {
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [activeChatInfo, setActiveChatInfo] = useState<any>(null)
   const [wsMessage, setWsMessage] = useState<any>(null)
+  const [showCreateGroup, setShowCreateGroup] = useState(false)
+  const [typingUsers, setTypingUsers] = useState<Record<string, { userId: string; name: string }[]>>({})
 
   const token = api.getToken()
   const chatRef = useRef(activeChat)
   chatRef.current = activeChat
 
-  useWebSocket((msg: any) => {
+  const { send: wsSend } = useWebSocket((msg: any) => {
     if (msg.type === 'message:new' && msg.payload?.chatId === chatRef.current) {
       setWsMessage(msg.payload)
     }
     if (msg.type === 'chat:created' || msg.type === 'chat:deleted') {
       loadChats()
+    }
+    if (msg.type === 'user:typing' && msg.payload?.chatId === chatRef.current) {
+      setTypingUsers(prev => {
+        const chatId = msg.payload.chatId
+        const existing = prev[chatId] || []
+        if (existing.some(u => u.userId === msg.payload.userId)) return prev
+        return { ...prev, [chatId]: [...existing, { userId: msg.payload.userId, name: msg.payload.userId }] }
+      })
+    }
+    if (msg.type === 'user:stop_typing' && msg.payload?.chatId === chatRef.current) {
+      setTypingUsers(prev => {
+        const chatId = msg.payload.chatId
+        const existing = (prev[chatId] || []).filter(u => u.userId !== msg.payload.userId)
+        if (existing.length === 0) {
+          const { [chatId]: _, ...rest } = prev
+          return rest
+        }
+        return { ...prev, [chatId]: existing }
+      })
     }
   }, true)
 
@@ -68,23 +90,19 @@ export default function MainScreen({ onLogout }: Props) {
     setActiveChatInfo(chat)
   }
 
-  const createGroup = async () => {
-    const name = prompt('Group name:')
-    if (!name) return
-    const members = prompt('Participant IDs (comma-separated):')
-    if (!members) return
-    const ids = members.split(',').map(s => s.trim()).filter(Boolean)
-    const res = await api.call('POST', '/api/chats', {
-      type: 'group', name, participantIds: ids,
-    })
-    if (!res.error) {
-      setActiveChat(null)
-      loadChats()
-    }
-  }
+  const currentTyping = activeChat ? typingUsers[activeChat] || [] : []
+  const typingText = currentTyping.length > 0
+    ? currentTyping.map(u => u.name).join(', ') + (currentTyping.length === 1 ? ' is typing...' : ' are typing...')
+    : ''
 
   return (
     <div className="main-screen">
+      {showCreateGroup && (
+        <CreateGroupModal
+          onClose={() => setShowCreateGroup(false)}
+          onCreated={() => { setActiveChat(null); loadChats() }}
+        />
+      )}
       <div className="sidebar">
         <div className="sidebar-header">
           <div className="sidebar-brand">
@@ -93,7 +111,7 @@ export default function MainScreen({ onLogout }: Props) {
           </div>
           <div className="sidebar-actions">
             <button className="icon-btn" onClick={() => setShowSearch(!showSearch)} title="Search users">🔍</button>
-            <button className="icon-btn" onClick={createGroup} title="New group">➕</button>
+            <button className="icon-btn" onClick={() => setShowCreateGroup(true)} title="New group">➕</button>
             <button className="icon-btn" onClick={onLogout} title="Logout">🚪</button>
           </div>
         </div>
@@ -129,13 +147,19 @@ export default function MainScreen({ onLogout }: Props) {
         />
       </div>
 
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
         <MessageArea
-        chatId={activeChat}
-        chatInfo={activeChatInfo}
-        token={token}
-        wsMessage={wsMessage}
-        onWsConsumed={() => setWsMessage(null)}
-      />
+          chatId={activeChat}
+          chatInfo={activeChatInfo}
+          token={token}
+          wsMessage={wsMessage}
+          onWsConsumed={() => setWsMessage(null)}
+          wsSend={wsSend}
+        />
+        {typingText && (
+          <div className="typing-indicator">{typingText}</div>
+        )}
+      </div>
     </div>
   )
 }
